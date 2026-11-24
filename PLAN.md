@@ -1,5 +1,8 @@
 # PLAN: Storm Catcher — Arrow Escape
 
+> Drugi tor projektu: **Symulator Janusza Biznesu** (polski idle z satyrą), patrz `JANUSZ_GDD.md` i `prototypes/janusz/`.
+> Ten plan dotyczy Arrow Escape.
+
 ## Cel
 Gra puzzle na Androida, status „opublikowano" w Google Play. Rdzeń: tap-to-escape (łodzie-strzałki).
 Wybór na podstawie researchu rynku (puzzle ≈ 44% wydatków w casualu, gatunek „arrows" w top pobrań Google Play w 2026)

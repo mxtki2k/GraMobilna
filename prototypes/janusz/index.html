@@ -1,0 +1,302 @@
+<title>Symulator Janusza Biznesu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@500;700&display=swap&subset=latin-ext">
+<style>
+  /* Układ: jedna kolumna jak ekran telefonu. Wygląd: tablica budowy, beton i żółty kask. */
+  :root {
+    --bg: #1b1e22; --panel: #272b31; --panel2: #31363d; --line: #454c55;
+    --fg: #f4f1e8; --muted: #a8afb8; --hi: #ffc300; --hi-ink: #1b1e22;
+    --ok: #6ccf7f; --bad: #ef5350; --risk: #ef5350;
+    --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+    --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: var(--body); color: var(--fg); background: var(--bg); font-size: 16px;
+    padding-block: 10px 28px;
+    padding-left: max(14px, env(safe-area-inset-left, 0px));
+    padding-right: max(14px, env(safe-area-inset-right, 0px));
+  }
+  main { max-width: 560px; margin: 0 auto; display: grid; gap: 12px; }
+  h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+  .top { display: grid; gap: 8px; }
+  .brand { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .brand h1 { font-size: 1.1rem; letter-spacing: .08em; text-transform: uppercase; color: var(--hi); font-weight: 800; }
+  .brand button { min-height: 0; padding: 4px 8px; font-size: .78rem; border: 1px solid var(--line); background: transparent; color: var(--muted); }
+  .money { font-family: var(--display); font-weight: 800; font-size: 2.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .money small { font-size: 1.2rem; color: var(--muted); margin-left: 6px; font-weight: 600; }
+  .rate { color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+  .riskwrap { display: grid; gap: 4px; }
+  .riskhead { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); }
+  .bar { height: 14px; background: var(--panel2); border-radius: 7px; overflow: hidden; border: 1px solid var(--line); }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--hi); transition: width .12s linear; }
+  #riskbar > i { background: linear-gradient(90deg, var(--hi), var(--risk)); }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .tab { min-height: 58px; padding: 6px 4px; display: grid; gap: 2px; place-items: center; font-family: var(--display); font-size: .95rem; line-height: 1.05; text-align: center; }
+  .tab .em { font-size: 1.35rem; }
+  .tab[aria-selected="true"] { background: var(--hi); color: var(--hi-ink); border-color: var(--hi); }
+  .tab[disabled] { opacity: .5; }
+  .tab small { font-family: var(--body); font-size: .7rem; font-weight: 700; }
+  button {
+    font: inherit; font-weight: 700; color: var(--fg); background: var(--panel2);
+    border: 2px solid var(--line); border-radius: 8px; min-height: 48px; padding: 0 12px; cursor: pointer;
+  }
+  button:hover:not([disabled]) { border-color: var(--hi); }
+  button[disabled] { cursor: not-allowed; }
+  button:focus-visible { outline: 3px solid var(--hi); outline-offset: 2px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 10px; }
+  .client { font-size: 1.02rem; line-height: 1.35; min-height: 3.9em; }
+  .jobmeta { display: flex; justify-content: space-between; color: var(--muted); font-size: .88rem; font-variant-numeric: tabular-nums; }
+  .tap {
+    min-height: 92px; font-family: var(--display); font-size: 2rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+    background: var(--hi); color: var(--hi-ink); border-color: #b98f00; border-bottom-width: 6px; user-select: none; touch-action: manipulation;
+  }
+  .tap:active { transform: translateY(3px); border-bottom-width: 3px; }
+  .cheat { background: transparent; border-style: dashed; color: var(--fg); min-height: 52px; font-size: .95rem; line-height: 1.2; padding: 6px 12px; }
+  .cheat small { display: block; font-weight: 500; color: var(--muted); }
+  h3 { font-size: 1.15rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .list { display: grid; gap: 8px; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 8px 8px 12px; }
+  .row b { font-size: 1rem; }
+  .row .sub { color: var(--muted); font-size: .82rem; line-height: 1.25; min-width: 0; }
+  .row button { min-width: 108px; min-height: 52px; font-size: .9rem; line-height: 1.15; }
+  .row button.can { background: var(--ok); color: #0e2a14; border-color: #3f9b54; }
+  .log { display: grid; gap: 6px; font-size: .88rem; color: var(--muted); min-height: 5em; }
+  .log div:first-child { color: var(--fg); }
+  .ad { border-style: dashed; color: var(--hi); }
+  .float { position: fixed; pointer-events: none; font-family: var(--display); font-weight: 800; font-size: 1.4rem; color: var(--ok); animation: up .9s ease-out forwards; z-index: 5; text-shadow: 0 1px 2px #000; }
+  @keyframes up { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-48px); } }
+  .modal { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.7); padding: 16px; z-index: 10; }
+  .modal[hidden] { display: none; }
+  .modal .card { max-width: 480px; width: 100%; border-color: var(--hi); }
+  .modal h2 { color: var(--hi); font-size: 1.5rem; text-transform: uppercase; }
+  .modal p { margin: 0; line-height: 1.4; }
+  .choices { display: grid; gap: 8px; }
+  .choices button { text-align: left; padding: 10px 12px; line-height: 1.25; }
+  .choices small { display: block; color: var(--muted); font-weight: 500; }
+  .note { color: var(--muted); font-size: .78rem; text-align: center; }
+  @media (prefers-reduced-motion: reduce) { .float { animation-duration: .01s; } }
+</style>
+
+<main>
+  <div class="top">
+    <div class="brand"><h1>Symulator Janusza Biznesu</h1><button id="reset">Zacznij od zera</button></div>
+    <div><div class="money"><span id="money">0</span><small>zł</small></div><div class="rate" id="rate"></div></div>
+    <div class="riskwrap">
+      <div class="riskhead"><span>Ryzyko kontroli</span><span id="riskval">0%</span></div>
+      <div class="bar" id="riskbar" role="progressbar" aria-label="Ryzyko kontroli"><i></i></div>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Branże"></nav>
+  <section class="card" id="jobcard">
+    <h2 id="jobtitle"></h2>
+    <div class="client" id="client"></div>
+    <div class="bar" id="jobbar"><i></i></div>
+    <div class="jobmeta"><span id="jobprog"></span><span id="jobrew"></span></div>
+    <button class="tap" id="tap">Klikaj</button>
+    <button class="cheat" id="cheat">Zrób po taniości<small>pół roboty, więcej kasy, więcej ryzyka</small></button>
+  </section>
+  <button class="ad" id="ad">Obejrzyj reklamę: x2 zarobków na 60 s (symulacja)</button>
+  <section><h3>Ekipa</h3><div class="list" id="workers"></div></section>
+  <section><h3>Sprzęt i „rozwiązania"</h3><div class="list" id="tools"></div></section>
+  <section><h3>Dziennik firmy</h3><div class="log" id="log"></div></section>
+  <div class="note">Prototyp do testów. Postacie i sytuacje są fikcyjne, a humor to satyra. Reklama jest symulowana.</div>
+</main>
+
+<div class="modal" id="modal" hidden><div class="card" role="dialog" aria-modal="true" aria-labelledby="mtitle">
+  <h2 id="mtitle"></h2><p id="mtext"></p><div class="choices" id="mchoices"></div>
+</div></div>
+
+<script>
+(() => {
+  // ---------- dane branż (każda seria to osobny pakiet danych) ----------
+  const BR = [
+    { id:"remonty", name:"Remonty", em:"🔧", V:1, unlock:0, tap:"Młotek!", title:"Złota rączka",
+      clients:[
+        "Pani Grażyna: „Fuga krzywa, ale tylko trochę. Ma być na wczoraj.”",
+        "Pan Mirek: „Kran cieknie od 2019, ale teraz się pilnuje.”",
+        "Sebix: „Zrób mi ściankę jak w telewizji. Tylko tanio.”",
+        "Karyna: „Płytki z internetu, a hydraulik sam wie, co robi.”",
+        "Sąsiad: „Tylko zerknij, na pięć minut. Szafa jest w całym mieszkaniu.”",
+        "Teściowa: „Nie tak. Jeszcze raz. I szybciej.”"],
+      done:["Gotowe. Prawie prosto.","Klient zadowolony, bo nie zauważył.","Wyszło na oko, czyli idealnie.","Pianka montażowa załatwiła sprawę.","Sąsiad przyszedł zerknąć. Został na obiad."],
+      workers:[["Praktykant Kacper","płaci się później",15,.5],["Szwagier","zna się na wszystkim",120,2.5],["Pan Heniek","30 lat na rynku, 0 papierów",900,10],["Brygada „Tanio i Szybko”","dwie ekipy, jeden kierownik",7000,40]],
+      tools:[["Pianka montażowa","na wszystko, także na dziury w rachunkach",60],["Taśma srebrna","naprawia wszystko, co nie jest elektryką",500],["Wiertarka z ogłoszenia","działa, gdy się ją odpowiednio uderzy",4000]],
+      events:[["Pani Grażyna dzwoni o 22:00","„Przecież mówiłam, że ma być równo!” Co robisz?",[["Przeproś i popraw","−6% kasy, −12 ryzyka",-.06,-12],["Zwal na pogodę","+0 kasy, +8 ryzyka",0,8]]],
+              ["Klient chce fakturę „na mniej”","Płaci gotówką, żebyś nie pytał.",[["Weź gotówkę","+4% kasy, +10 ryzyka",.04,10],["Odmów uprzejmie","bez zmian",0,0]]]] },
+    { id:"koparka", name:"Koparka", em:"🚜", V:12, unlock:800, tap:"Kop!", title:"Usługi koparką",
+      clients:[
+        "Pan Zdzisiek: „Dół pod szambo. Pozwolenie? A po co to komu.”",
+        "Pan Mirek: „Wykop pod garaż. Ile? Ja tylko pytam.”",
+        "Gmina: „Rów melioracyjny, ale tak żeby było tanio i szybko.”",
+        "Sąsiad: „Przesuń mi tę górkę, tylko troszkę.”",
+        "Pani Grażyna: „Staw w ogrodzie. Bez rybek, ale z klimatem.”"],
+      done:["Wykopane. Gazowni nic nie mówimy.","Dół jest. Szambo też. Chyba nie tam.","Górka przesunięta o metr. Sąsiad zadowolony.","Ziemia poszła do sąsiada. On też zadowolony."],
+      workers:[["Operator Staszek","koparka starsza od niego",15,.5],["Druga koparka","po bracie szwagra",120,2.5],["Szwagier z wywrotką","wozi wszystko, nie pyta dokąd",900,10],["Ekipa na sobotę","do poniedziałku też",7000,40]],
+      tools:[["Nowy ząb do łyżki","z odzysku, ale ostry",60],["Hydraulika z demobilu","ciekła tylko w poniedziałek",500],["Radio w kabinie","wydajność +100%, bo rytm",4000]],
+      events:[["Przekopałeś kabel","Cała ulica bez internetu. Pan z energetyki już idzie.",[["Zapłać za naprawę","−10% kasy, −10 ryzyka",-.10,-10],["Odjedź na bok","+0 kasy, +15 ryzyka",0,15]]],
+              ["Znalazłeś coś w ziemi","Wygląda na stare. Wygląda na cenne.",[["Sprzedaj po cichu","+6% kasy, +12 ryzyka",.06,12],["Zgłoś do urzędu","bez zmian, urzędnik ci dziękuje",0,-5]]]] },
+    { id:"auta", name:"Handel autami", em:"🚗", V:150, unlock:12000, tap:"Targuj się!", title:"Komis na placu",
+      clients:[
+        "Pan Heniek: „Niemiec płakał, jak sprzedawał. My płaczemy, jak kupujemy.”",
+        "Młody: „Stan idealny, prawie nie jeżdżone, przebieg 140 tysięcy od 2011.”",
+        "Kuzyn: „Bezwypadkowy. Tylko rama trochę krzywa.”",
+        "Janusz z sąsiedniego placu: „Sprowadzę, sprzedam, nie pytaj skąd.”",
+        "Pani Grażyna: „Auto dla syna, pierwsze, tanie, żeby się nie psuło.”"],
+      done:["Sprzedane. Gwarancja do wyjazdu z placu.","Klient wyjechał. Dym też.","Pachnąca choinka zrobiła robotę.","„Jeszcze pan nie zapalił, a już pan chwali.”"],
+      workers:[["Chłopak od mycia","myje także drzwi, które się nie otwierają",15,.5],["Pan od lakierowania","po lakierze nie widać historii",120,2.5],["Kolega z Niemiec","wie, gdzie stoi najtańsza „sztuka”",900,10],["Plac w stodole","skala, o której marzył dziadek",7000,40]],
+      tools:[["Pachnące choinki","3 w cenie 1, auto pachnie nowością",60],["Lakier w sprayu","do poprawek na miejscu sprzedaży",500],["Ogłoszenie ze zdjęciem innego auta","lepsze od oryginału",4000]],
+      events:[["Klient robi oględziny","Ogląda pod maską, zagląda pod spód. Dziwne.",[["Zagadaj go na śmierć","−3% kasy, +6 ryzyka",-.03,6],["Pokaż papiery","−8% kasy, −14 ryzyka",-.08,-14]]],
+              ["Telefon ze skarbówki","„Dzień dobry, mamy pytanie o kilka transakcji.”",[["Udawaj, że to pomyłka","bez zmian, +14 ryzyka",0,14],["Zapłać „to, co trzeba”","−9% kasy, −18 ryzyka",-.09,-18]]]] },
+    { id:"budowlanka", name:"Budowlanka", em:"🏗️", V:2000, unlock:300000, tap:"Betoniarka!", title:"Dom pod klucz",
+      clients:[
+        "Deweloper Mirosław: „Osiedle z widokiem na inne osiedle.”",
+        "Pan Mirek: „Dom na lato, bez papierów. Szwagier zna kogoś w urzędzie.”",
+        "Inwestor: „Wylewka do czwartku, a jest wtorek.”",
+        "Gmina: „Przetarg wygra najtańszy. Ten, co nie zna cen.”",
+        "Pani Grażyna: „Dach mi przecieka, ale dopiero od nowego domu.”"],
+      done:["Oddane z opóźnieniem. Tylko trzy lata.","Dziennik budowy: jedna strona, napisana wczoraj.","Odbiór bez uwag. Bo nie było odbioru.","Ściany stoją. Prawie wszystkie."],
+      workers:[["Betoniarka z odzysku","kręci się, gdy ma ochotę",15,.5],["Ekipa z wiaderkiem","wiaderko jest najważniejsze",120,2.5],["Kierownik budowy","bywa. Czasem na zdjęciach",900,10],["Podwykonawca podwykonawcy","nikt go nie widział, wszyscy mu płacą",7000,40]],
+      tools:[["Cement „oszczędny”","mniej cementu, więcej optymizmu",60],["Rusztowanie z dechy","trzyma, jeśli nikt nie patrzy",500],["Dziennik budowy","pusty, ale ładnie oprawiony",4000]],
+      events:[["Przyszedł nadzór budowlany","Pan z teczką chodzi po placu i coś zapisuje.",[["Pokaż dokumenty","−8% kasy, −16 ryzyka",-.08,-16],["Zagadaj o pogodzie","+0 kasy, +14 ryzyka",0,14]]],
+              ["Brakuje materiału","Magazyn pusty, termin jutro.",[["Kup z hurtowni","−7% kasy",-.07,0],["Użyj „zamiennika”","+3% kasy, +12 ryzyka",.03,12]]]] },
+  ];
+  const GLOBAL_EVENTS = [
+    ["Szwagier dzwoni","Zna kogoś, kto „pomoże z papierami”.",[["Skorzystaj z pomocy","−6% kasy, −15 ryzyka",-.06,-15],["Poradzę sobie sam","bez zmian",0,0]]],
+    ["Zlecenie za gotówkę","Klient płaci od ręki, ale „proszę nie wystawiać papierów”.",[["Weź zlecenie","+5% kasy, +10 ryzyka",.05,10],["Odmów","bez zmian",0,0]]],
+  ];
+  const GROWTH = 1.18, TOOL_MULT = 2;
+  const $ = id => document.getElementById(id);
+
+  // ---------- stan ----------
+  const fresh = () => ({ money:0, risk:0, total:0, t:Date.now(), boost:0, cur:"remonty",
+    br:Object.fromEntries(BR.map(b=>[b.id,{owned:b.unlock===0, w:[0,0,0,0], tools:[false,false,false], job:null}])), logs:[] });
+  let S = fresh();
+  function load(){ try{ const r=localStorage.getItem("janusz_v1"); if(r){ const o=JSON.parse(r); if(o&&o.br) S=Object.assign(fresh(),o); } }catch(e){} }
+  function save(){ try{ localStorage.setItem("janusz_v1",JSON.stringify(S)); }catch(e){} }
+
+  // ---------- formatowanie ----------
+  function fmt(n){
+    const a=Math.abs(n), f=(x,d)=>x.toLocaleString("pl-PL",{maximumFractionDigits:d,minimumFractionDigits:0});
+    if(a<1000) return f(n, a<10?1:0);
+    if(a<1e6) return f(n/1e3,1)+" tys.";
+    if(a<1e9) return f(n/1e6,2)+" mln";
+    if(a<1e12) return f(n/1e9,2)+" mld";
+    return f(n/1e12,2)+" bln";
+  }
+  const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+
+  // ---------- logika ----------
+  const B = id => BR.find(b=>b.id===id);
+  const toolMult = (b,st) => Math.pow(TOOL_MULT, st.tools.filter(Boolean).length);
+  const autoRate = (b,st) => b.workers.reduce((s,w,i)=>s+st.w[i]*w[3],0)*toolMult(b,st);
+  const gm = () => (S.boost>0?2:1);
+  function newJob(b){
+    const need = 10+Math.floor(Math.random()*6);
+    S.br[b.id].job = { text:pick(b.clients), need, prog:0, reward:Math.round(need*b.V*(0.8+Math.random()*0.45)*100)/100, cheat:false };
+  }
+  function addMoney(x){ S.money+=x; if(x>0)S.total+=x; }
+  function log(m){ S.logs.unshift(m); S.logs.length=Math.min(S.logs.length,6); }
+  function addRisk(x){ S.risk=Math.max(0,Math.min(100,S.risk+x)); }
+
+  function progress(b, amount, fromClick, ev){
+    const st=S.br[b.id], j=st.job; if(!j) return;
+    j.prog+=amount;
+    while(j.prog>=j.need){
+      const gain=j.reward*gm();
+      addMoney(gain);
+      log(b.em+" +"+fmt(gain)+" zł. "+pick(b.done));
+      if(fromClick&&ev) floatText("+"+fmt(gain)+" zł",ev.clientX,ev.clientY);
+      const carry=j.prog-j.need; newJob(b); st.job.prog=Math.min(carry,st.job.need*.9);
+      break;
+    }
+  }
+
+  function tick(dt){
+    if(S.boost>0) S.boost=Math.max(0,S.boost-dt);
+    for(const b of BR){ const st=S.br[b.id]; if(!st.owned) continue; const r=autoRate(b,st); if(r>0) progress(b,r*dt,false); }
+    if(S.risk<100) addRisk(-0.15*dt);
+    if(S.risk>=100 && modalOpen===false) control();
+    if(modalOpen===false && Math.random()<dt/70) randomEvent();
+  }
+
+  // ---------- zdarzenia ----------
+  let modalOpen=false;
+  function openModal(title,text,choices){
+    modalOpen=true; $("mtitle").textContent=title; $("mtext").textContent=text;
+    const box=$("mchoices"); box.innerHTML="";
+    choices.forEach(c=>{ const bt=document.createElement("button"); bt.innerHTML=c.label+"<small>"+c.sub+"</small>";
+      bt.onclick=()=>{ c.run(); modalOpen=false; $("modal").hidden=true; render(); }; box.appendChild(bt); });
+    $("modal").hidden=false;
+  }
+  function control(){
+    openModal("KONTROLA!","Pan z teczką wszedł na plac. Ryzyko doszło do końca, więc coś trzeba z tym zrobić.",[
+      {label:"Szwagier załatwi",sub:"−20% kasy, ryzyko spada do 40%",run:()=>{addMoney(-S.money*.2);S.risk=40;log("😅 Szwagier załatwił. Dziwnie szybko.");}},
+      {label:"Zrzuć na podwykonawcę",sub:"tracisz jednego pracownika, ryzyko do 50%",run:()=>{
+        const opts=BR.filter(b=>S.br[b.id].owned&&S.br[b.id].w.some(x=>x>0));
+        if(opts.length){const b=pick(opts),st=S.br[b.id];const idx=[0,1,2,3].filter(i=>st.w[i]>0);st.w[pick(idx)]--;log("😬 Podwykonawca „nagle” odszedł z firmy.");}
+        else addMoney(-S.money*.1);S.risk=50;}},
+      {label:"Zapłać mandat",sub:"−35% kasy, ryzyko do 30%",run:()=>{addMoney(-S.money*.35);S.risk=30;log("📄 Mandat zapłacony. Kwitek poszedł do szuflady.");}},
+    ]);
+  }
+  function randomEvent(){
+    const pool=[...GLOBAL_EVENTS];
+    BR.forEach(b=>{ if(S.br[b.id].owned) b.events.forEach(e=>pool.push(e)); });
+    const e=pick(pool);
+    openModal(e[0],e[1],e[2].map(c=>({label:c[0],sub:c[1],run:()=>{ if(c[2]) addMoney(S.money*c[2]); addRisk(c[3]); log("📞 "+e[0]+": "+c[0].toLowerCase()+"."); }})));
+  }
+
+  // ---------- interfejs ----------
+  function floatText(t,x,y){ const d=document.createElement("div"); d.className="float"; d.textContent=t; d.style.left=(x-30)+"px"; d.style.top=(y-30)+"px"; document.body.appendChild(d); setTimeout(()=>d.remove(),900); }
+  function totalRate(){ let r=0; for(const b of BR){const st=S.br[b.id]; if(st.owned) r+=autoRate(b,st)*b.V;} return r*gm(); }
+  function render(){
+    $("money").textContent=fmt(S.money);
+    $("rate").textContent="Ekipa zarabia ok. "+fmt(totalRate())+" zł/s"+(S.boost>0?"  ·  x2 jeszcze "+Math.ceil(S.boost)+" s":"");
+    $("riskval").textContent=Math.floor(S.risk)+"%"; $("riskbar").firstElementChild.style.width=S.risk+"%";
+    $("riskbar").setAttribute("aria-valuenow",Math.floor(S.risk));
+    // zakładki
+    $("tabs").innerHTML=""; 
+    BR.forEach(b=>{ const st=S.br[b.id]; const bt=document.createElement("button"); bt.className="tab"; bt.setAttribute("aria-selected",S.cur===b.id);
+      if(st.owned){ bt.innerHTML='<span class="em">'+b.em+'</span><span>'+b.name+'</span>'; bt.onclick=()=>{S.cur=b.id;render();}; }
+      else { const can=S.money>=b.unlock; bt.innerHTML='<span class="em">'+(can?b.em:"🔒")+'</span><span>'+b.name+'</span><small>'+fmt(b.unlock)+' zł</small>';
+        bt.disabled=!can; bt.onclick=()=>{ if(S.money>=b.unlock){ addMoney(-b.unlock); st.owned=true; newJob(b); S.cur=b.id; log("🎉 Nowa branża: "+b.name+". Wszystko jest do załatwienia."); render(); } }; }
+      $("tabs").appendChild(bt); });
+    const b=B(S.cur), st=S.br[b.id]; if(!st.job) newJob(b);
+    const j=st.job;
+    $("jobtitle").textContent=b.em+" "+b.title; $("client").textContent=j.text;
+    $("jobbar").firstElementChild.style.width=Math.min(100,j.prog/j.need*100)+"%";
+    $("jobprog").textContent="Robota: "+Math.floor(j.prog)+" / "+j.need; $("jobrew").textContent="Zapłata: "+fmt(j.reward*gm())+" zł";
+    $("tap").textContent=b.tap; $("cheat").disabled=j.cheat; $("cheat").style.opacity=j.cheat?.5:1;
+    renderLists(b,st);
+    $("ad").disabled=S.boost>0;
+    $("log").innerHTML=S.logs.map(l=>"<div>"+l+"</div>").join("");
+  }
+  function renderLists(b,st){
+    $("workers").innerHTML=b.workers.map((w,i)=>{ const cost=Math.ceil(b.V*w[2]*Math.pow(GROWTH,st.w[i])); const can=S.money>=cost;
+      return '<div class="row"><div><b>'+w[0]+' ×'+st.w[i]+'</b><div class="sub">'+w[1]+' · +'+fmt(w[3]*toolMult(b,st))+' roboty/s</div></div><button data-w="'+i+'" class="'+(can?"can":"")+'" '+(can?"":"disabled")+'>Zatrudnij<br>'+fmt(cost)+' zł</button></div>'; }).join("");
+    $("tools").innerHTML=b.tools.map((t,i)=>{ const cost=Math.ceil(b.V*t[2]); const own=st.tools[i]; const can=!own&&S.money>=cost;
+      return '<div class="row"><div><b>'+t[0]+'</b><div class="sub">'+t[1]+' · x2 do roboty</div></div><button data-t="'+i+'" class="'+(can?"can":"")+'" '+(can?"":"disabled")+'>'+(own?"Kupione":"Kup<br>"+fmt(cost)+" zł")+'</button></div>'; }).join("");
+  }
+  $("workers").addEventListener("click",e=>{ const bt=e.target.closest("button[data-w]"); if(!bt) return; const b=B(S.cur),st=S.br[b.id],i=+bt.dataset.w;
+    const cost=Math.ceil(b.V*b.workers[i][2]*Math.pow(GROWTH,st.w[i])); if(S.money>=cost){ addMoney(-cost); st.w[i]++; render(); } });
+  $("tools").addEventListener("click",e=>{ const bt=e.target.closest("button[data-t]"); if(!bt) return; const b=B(S.cur),st=S.br[b.id],i=+bt.dataset.t;
+    const cost=Math.ceil(b.V*b.tools[i][2]); if(!st.tools[i]&&S.money>=cost){ addMoney(-cost); st.tools[i]=true; render(); } });
+  $("tap").addEventListener("pointerdown",e=>{ if(modalOpen) return; const b=B(S.cur); progress(b,toolMult(b,S.br[b.id]),true,e); render(); });
+  $("cheat").onclick=()=>{ if(modalOpen) return; const b=B(S.cur),j=S.br[b.id].job; if(j.cheat) return; j.cheat=true; j.need=Math.max(1,Math.round(j.need*.5)); j.reward=Math.round(j.reward*1.5*100)/100; addRisk(10); log("🤫 Zrobione po taniości. Klient nic nie zauważy. Chyba."); render(); };
+  $("ad").onclick=()=>{ if(S.boost>0) return; $("ad").textContent="Reklama… (symulacja)"; setTimeout(()=>{ S.boost=60; $("ad").textContent="Obejrzyj reklamę: x2 zarobków na 60 s (symulacja)"; render(); },1500); };
+  $("reset").onclick=()=>{ if($("reset").dataset.s){ S=fresh(); newJob(B("remonty")); save(); $("reset").textContent="Zacznij od zera"; delete $("reset").dataset.s; render(); } else { $("reset").dataset.s="1"; $("reset").textContent="Na pewno? Kliknij jeszcze raz"; setTimeout(()=>{ $("reset").textContent="Zacznij od zera"; delete $("reset").dataset.s; },3000); } };
+
+  // ---------- start i pętla ----------
+  load();
+  const away=Math.min(7200,(Date.now()-S.t)/1000);
+  if(away>30){ let g=0; for(const b of BR){const st=S.br[b.id]; if(st.owned) g+=autoRate(b,st)*b.V*away*.5;} if(g>0){ addMoney(g); log("💤 Ekipa pracowała pod nieobecność: +"+fmt(g)+" zł."); } }
+  if(!S.br.remonty.job) newJob(B("remonty"));
+  let last=performance.now(), acc=0, saveAcc=0;
+  function loop(now){ const dt=Math.min(.25,(now-last)/1000); last=now; if(!modalOpen) tick(dt); acc+=dt; saveAcc+=dt;
+    if(acc>.1){ acc=0; if(!modalOpen) render(); } if(saveAcc>3){ saveAcc=0; S.t=Date.now(); save(); } requestAnimationFrame(loop); }
+  addEventListener("visibilitychange",()=>{ S.t=Date.now(); save(); });
+  window.__j={ get S(){return S;}, addMoney:x=>{addMoney(x);render();}, tick, render, BR, control, randomEvent };
+  render(); requestAnimationFrame(loop);
+})();
+</script>
