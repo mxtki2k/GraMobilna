@@ -18,6 +18,7 @@ GODOT=/ścieżka/do/godot ./tests/run.sh
 ```
 Godot 4.4.1 headless wystarcza (bez edytora). Testy muszą przechodzić przed każdym commitem.
 Dodatkowo test dymny prototypu: `godot --headless --path . --script tests/smoke_game.gd`.
+Moduł oceny fuszerki (prototyp Janusza): `node tests/fuszerka.test.js`.
 
 ## Workflow
 1. Mała zmiana → test → zielone → commit.
