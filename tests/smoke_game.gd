@@ -41,12 +41,15 @@ func _init() -> void:
 	check(game.state == "won", "level won after all arrows left")
 	# porażka po 3 błędach
 	game.load_level(30)
-	var cnt := 0
+	var target := -1
 	for i in game.level.arrows.size():
-		if not game.blockers[i].is_empty() and cnt < 3:
-			game.tap_cell(game.level.arrows[i].cells[0])
-			cnt += 1
-	check(game.state == "lost", "lost after 3 mistakes (blocked taps: %d)" % cnt)
+		if not game.blockers[i].is_empty():
+			target = i
+			break
+	check(target >= 0, "level 30 has a blocked arrow")
+	for k in 3:
+		game.tap_cell(game.level.arrows[target].cells[0])
+	check(game.state == "lost", "lost after 3 mistakes")
 	# podpowiedź wskazuje wolną łódź
 	game.load_level(12)
 	game.give_hint()

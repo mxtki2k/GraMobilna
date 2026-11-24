@@ -122,9 +122,9 @@ func test_generator_solvable_many_seeds() -> void:
 
 
 func test_difficulty_curve() -> void:
-	var buckets := [[1, 10], [50, 60], [100, 110], [190, 200]]
+	var buckets := [[1, 10], [50, 69], [100, 119], [181, 200]]
 	var depth_avg: Array[float] = []
-	print("\nlevels      size  arrows  fill  depth  avg_blk  free0  ms/level")
+	print("\nlevels      size  arrows  fill  depth  avg_blk  free0  free%  ms/level")
 	var all_ok := true
 	for bk in buckets:
 		var n := 0
@@ -149,9 +149,9 @@ func test_difficulty_curve() -> void:
 			n += 1
 		var ms := float(Time.get_ticks_msec() - t0) / float(n)
 		depth_avg.append(sum_depth / n)
-		print("%3d-%-3d    %2dx%-2d  %5.1f  %.2f  %5.1f  %6.2f  %5.1f  %6.1f" % [
+		print("%3d-%-3d    %2dx%-2d  %5.1f  %.2f  %5.1f  %6.2f  %5.1f  %4.0f%%  %6.1f" % [
 			bk[0], bk[1], size, size, sum_arrows / n, sum_fill / n,
-			sum_depth / n, sum_blk / n, sum_free / n, ms])
+			sum_depth / n, sum_blk / n, sum_free / n, 100.0 * sum_free / sum_arrows, ms])
 	check(all_ok, "every level on the curve is valid and solvable")
 	check(depth_avg[3] > depth_avg[0] * 2.0, "late levels much deeper than early (%.1f vs %.1f)" % [depth_avg[3], depth_avg[0]])
 	print("\nPrzykład: poziom 25")

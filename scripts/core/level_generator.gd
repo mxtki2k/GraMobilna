@@ -6,11 +6,11 @@ extends RefCounted
 ## rozwiązywalny (kolejność wypływania = odwrotność kolejności układania).
 ##
 ## Głębokość łańcuchów blokad: z prawdopodobieństwem chain_bias nowa strzałka
-## jest celowo stawiana w pasie wypłynięcia strzałki o największym "up"
-## (najdłuższy łańcuch zależności za nią), co wydłuża najdłuższy łańcuch.
+## jest celowo stawiana w pasie wypłynięcia jeszcze niezasłoniętej strzałki
+## o największym "up" (najdłuższy łańcuch zależności za nią).
 ##
 ## params: width, height, fill (0..1), min_len, max_len, bend (0..1),
-##         chain_bias (0..1)
+##         chain_bias (0..1), edge_reject (0..1), min_ray (>=1)
 ## Uwaga: używamy wyłącznie własnego RandomNumberGenerator (determinizm).
 
 const ArrowData = preload("res://scripts/core/arrow_data.gd")
@@ -27,6 +27,8 @@ static func generate(params: Dictionary, seed_value: int):
 	var max_len: int = params.get("max_len", 5)
 	var bend: float = params.get("bend", 0.3)
 	var chain_bias: float = params.get("chain_bias", 0.6)
+	var edge_reject: float = params.get("edge_reject", 0.0)
+	var min_ray: int = params.get("min_ray", 1)
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
@@ -40,6 +42,7 @@ static func generate(params: Dictionary, seed_value: int):
 	var occupied := {}  # Vector2i -> arrow idx
 	var ray_map := {}  # Vector2i -> Array of arrow idx whose ray crosses it
 	var up: Array[int] = []  # najdłuższy łańcuch zależności za strzałką
+	var cover: Array[int] = []  # ile strzałek aktualnie zasłania daną strzałkę
 	var target_cells := int(float(w * h) * fill)
 	var filled := 0
 	var fails := 0
@@ -53,8 +56,9 @@ static func generate(params: Dictionary, seed_value: int):
 		for k in 12:
 			var forced = null
 			if level.arrows.size() > 0 and rng.randf() < chain_bias:
-				forced = _pick_chain_cell(rng, level, occupied, up, tournament, w, h)
-			cand = _try_candidate(rng, w, h, occupied, cur_min, max_len, bend, forced)
+				forced = _pick_chain_cell(rng, level, occupied, up, cover, tournament, w, h)
+			var reject := edge_reject if fails < max_fails / 2 else 0.0
+			cand = _try_candidate(rng, w, h, occupied, cur_min, max_len, bend, reject, min_ray, forced)
 			if cand != null:
 				break
 		if cand == null:
@@ -74,6 +78,9 @@ static func generate(params: Dictionary, seed_value: int):
 		for j in blocked.keys():
 			best_up = maxi(best_up, up[j])
 		up.append(best_up + 1)
+		cover.append(0)
+		for j in blocked.keys():
+			cover[j] += 1
 		for c in arrow.cells:
 			occupied[c] = idx
 		filled += arrow.cells.size()
@@ -91,13 +98,23 @@ static func _pick_chain_cell(
 	level,
 	occupied: Dictionary,
 	up: Array[int],
+	cover: Array[int],
 	tournament: int,
 	w: int,
 	h: int
 ):
+	# Cel: strzałki jeszcze niezasłonięte (wolne od startu) o najdłuższym łańcuchu "up".
+	# Zasłonięcie wolnej strzałki zmniejsza odsetek wolnych i wydłuża łańcuch.
+	var pool: Array[int] = []
+	for j in cover.size():
+		if cover[j] == 0:
+			pool.append(j)
+	if pool.is_empty():
+		for j in cover.size():
+			pool.append(j)
 	var best := -1
 	for t in tournament:
-		var j := rng.randi_range(0, level.arrows.size() - 1)
+		var j: int = pool[rng.randi_range(0, pool.size() - 1)]
 		if best == -1 or up[j] > up[best]:
 			best = j
 	var free_cells: Array[Vector2i] = []
@@ -129,6 +146,8 @@ static func _try_candidate(
 	min_len: int,
 	max_len: int,
 	bend: float,
+	edge_reject: float,
+	min_ray: int,
 	forced_head = null
 ):
 	var head: Vector2i
@@ -160,6 +179,10 @@ static func _try_candidate(
 			ray_cells = rc
 			break
 	if dir == Vector2i.ZERO:
+		return null
+	# Strzałka z krótkim pasem (dziób przy krawędzi) jest prawie zawsze wolna i trudno ją zasłonić.
+	# Im trudniejszy poziom, tym rzadziej je dopuszczamy.
+	if ray_cells.size() < min_ray and rng.randf() < edge_reject:
 		return null
 
 	var want := rng.randi_range(min_len, max_len)
