@@ -66,3 +66,26 @@ Dylemat gracza: fuszerka jest tańsza i szybsza, a u pobłażliwego klienta nawe
 ### Do zrobienia
 Więcej zleceń i scenek (hydraulika, płytki, koparka, auta), animacje narzędzi, dźwięk, połączenie z trybem idle (ekipa robi proste zlecenia),
 reputacja wpływająca na napływ klientów, balans kar, więcej klientów i tekstów.
+
+## Ekipa, pensje i nastroje (`prototypes/janusz/ekipa.js`, testy: `node tests/ekipa.test.js`)
+
+Zatrudniasz pracowników (wpisowe = jedna pensja), a co 3 zlecenia jest **dzień wypłaty**, w którym sam rozpisujesz, kto ile dostaje.
+
+**Pracownik:** umiejętności, solidność, pazerność, oczekiwana pensja, cierpliwość (bazowy nastrój), nastrój 0–100, zaległości.
+Kandydaci: Kacper (praktykant), Szwagier Zbyszek, Zdzisiek (złota rączka), Mistrz Staszek (fachowiec).
+
+**Wypłata:** kwota pokrywa najpierw bieżącą pensję, potem zaległości, reszta to premia. Wpływ na nastrój:
+brak części pensji (mocniej u pazernych), narastające zaległości, premia, **zazdrość** (wykwalifikowany obraża się, gdy słabszy dostał więcej w złotówkach)
+i powolny powrót do cierpliwości. Niedopłata zostaje jako zaległość.
+
+**Skutki złego nastroju:**
+- **Upomina się** (nastrój < 45 lub spore zaległości): zaliczka albo odmowa, odmowa dalej obniża nastrój.
+- **Nie przychodzi do roboty**: szansa = (1 − solidność)·0,45 + niski nastrój. Tracisz czas, robisz sam.
+- **Wystawia na robotę**: wkurzony pomocnik znika w połowie zlecenia (−6 min, bałagan jako wada widoczna, dalsza obniżka nastroju).
+- **Odchodzi** po dwóch wypłatach z rzędu ze skrajnym nastrojem i zaległościami, a po osiedlu rozpowiada o tobie (reputacja −).
+
+**Skutki dobrego nastroju:** pomocnik poprawia celność w krokach „na wyczucie” i skraca czas, a ekipa przywozi **fuchy na boku** (dochód zależny od umiejętności, nastroju i obecności).
+
+Dylemat gracza: oszczędzanie na płacach poprawia kasę dziś, ale kosztuje jakość, terminy i ludzi jutro. Wyróżnianie jednych budzi zazdrość u pozostałych.
+
+Do strojenia: wysokość pensji względem zleceń, częstotliwość wypłat, siła zazdrości i fuch.

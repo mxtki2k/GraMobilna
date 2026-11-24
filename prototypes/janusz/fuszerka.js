@@ -59,10 +59,13 @@
     return defects;
   }
 
-  function evaluate(job, picks, client) {
+  /* adj (opcjonalne): { time: korekta czasu w minutach, defects: dodatkowe wady } np. od pomocnika lub bałaganu. */
+  function evaluate(job, picks, client, adj) {
     if (picks.length !== job.steps.length) throw new Error('Brak wyborów dla wszystkich kroków');
+    adj = adj || {};
     const defects = collectDefects(job, picks);
-    let time = 0, cost = 0;
+    (adj.defects || []).forEach(d => defects.push({ label: d.label, sev: d.sev, vis: d.vis, hazard: d.hazard || 0, step: 'ekipa', option: 'ekipa' }));
+    let time = adj.time || 0, cost = 0;
     picks.forEach((pk, i) => {
       const opt = job.steps[i].options.find(o => o.id === pk.optionId);
       time += opt.time || 0; cost += opt.cost || 0;
