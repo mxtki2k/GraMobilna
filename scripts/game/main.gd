@@ -14,9 +14,12 @@ const PALETTE: Array[Color] = [
 	Color("f4a259"), Color("e76f51"), Color("f6d55c"), Color("8ecae6"),
 	Color("b5e48c"), Color("cdb4db"), Color("ff8fa3"), Color("90e0ef"),
 ]
-const SEA_TOP := Color("0b2a43")
-const SEA_BOTTOM := Color("12486b")
-const BOARD_COL := Color(1, 1, 1, 0.07)
+const BOARD_COL := Color(0.05, 0.16, 0.26, 0.55)
+const SHADOW_COL := Color(0.03, 0.09, 0.15)
+
+const TEX_SEA: Texture2D = preload("res://assets/art/sea_bg.svg")
+const TEX_BOW: Texture2D = preload("res://assets/art/bow.svg")
+const TEX_RING: Texture2D = preload("res://assets/art/life_ring.svg")
 
 var level_no := 1
 var level
@@ -226,16 +229,19 @@ func _draw() -> void:
 
 
 func _draw_sea() -> void:
-	var steps := 16
-	for k in steps:
-		var t := float(k) / float(steps)
-		var y := VIEW.y * t
-		draw_rect(Rect2(0, y, VIEW.x, VIEW.y / steps + 1.0), SEA_TOP.lerp(SEA_BOTTOM, t))
+	draw_texture_rect(TEX_SEA, Rect2(Vector2.ZERO, VIEW), false)
 
 
 func _draw_board() -> void:
 	var size := Vector2(cell * level.width, cell * level.height)
-	draw_rect(Rect2(origin - Vector2(10, 10), size + Vector2(20, 20)), BOARD_COL)
+	var panel := StyleBoxFlat.new()
+	panel.bg_color = BOARD_COL
+	panel.set_corner_radius_all(26)
+	panel.border_color = Color(1, 1, 1, 0.16)
+	panel.set_border_width_all(3)
+	panel.shadow_color = Color(0, 0, 0, 0.35)
+	panel.shadow_size = 14
+	draw_style_box(panel, Rect2(origin - Vector2(14, 14), size + Vector2(28, 28)))
 	for y in level.height:
 		for x in level.width:
 			draw_circle(_cell_center(Vector2i(x, y)), cell * 0.05, Color(1, 1, 1, 0.18))
@@ -256,14 +262,20 @@ func _draw_arrow(i: int) -> void:
 	var w := cell * 0.5
 	if hint_idx == i and hint_t > 0.0:
 		var glow := 0.5 + 0.5 * sin(hint_t * 12.0)
-		_draw_body(pts, w + cell * 0.22, Color(0.75, 0.8, 0.85).lerp(Color.WHITE, glow))
+		_draw_body(pts, w + cell * 0.3, Color(0.75, 0.8, 0.85).lerp(Color.WHITE, glow))
+	# cień, obrys kadłuba, kolor, jaśniejszy pas pokładu
+	var shadow := PackedVector2Array()
+	for p in pts:
+		shadow.append(p + Vector2(0, cell * 0.07))
+	_draw_body(shadow, w + cell * 0.1, SHADOW_COL)
+	_draw_body(pts, w + cell * 0.1, col.darkened(0.45))
 	_draw_body(pts, w, col)
-	# dziób
-	var hc := pts[0]
-	var tip := hc + d * cell * 0.46
-	var l := hc - d * cell * 0.02 + perp * cell * 0.34
-	var r := hc - d * cell * 0.02 - perp * cell * 0.34
-	draw_colored_polygon(PackedVector2Array([tip, l, r]), col.lightened(0.25))
+	_draw_body(pts, w * 0.34, col.lightened(0.35))
+	# dziób: sprite barwiony kolorem łodzi, obrócony zgodnie z kierunkiem
+	var sz := cell * 0.98
+	draw_set_transform(pts[0], d.angle(), Vector2.ONE)
+	draw_texture_rect(TEX_BOW, Rect2(Vector2(-sz * 0.5, -sz * 0.5), Vector2(sz, sz)), false, col)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 func _draw_body(pts: PackedVector2Array, width: float, col: Color) -> void:
@@ -280,8 +292,9 @@ func _draw_hud() -> void:
 	draw_string(font, Vector2(0, 168), "Łodzie: %d / %d" % [left, level.arrows.size()], HORIZONTAL_ALIGNMENT_CENTER, VIEW.x, 28, Color(1, 1, 1, 0.7))
 	# życia
 	for k in MAX_LIVES:
-		var p := Vector2(VIEW.x * 0.5 - (MAX_LIVES - 1) * 24 + k * 48, 1080 + 0)
-		draw_circle(p, 14, Color("ff6b6b") if k < lives else Color(1, 1, 1, 0.15))
+		var p := Vector2(VIEW.x * 0.5 - (MAX_LIVES - 1) * 32 + k * 64, 1078)
+		var tint := Color.WHITE if k < lives else Color(0.5, 0.55, 0.6, 0.35)
+		draw_texture_rect(TEX_RING, Rect2(p - Vector2(24, 24), Vector2(48, 48)), false, tint)
 	# nawigacja poziomów (prototyp)
 	_draw_button(btn_prev, "<")
 	_draw_button(btn_next, ">")

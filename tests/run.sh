@@ -3,4 +3,6 @@
 set -e
 cd "$(dirname "$0")/.."
 GODOT="${GODOT:-godot}"
+# Import zasobów (SVG) potrzebny przy świeżym klonie; w edytorze dzieje się automatycznie.
+"$GODOT" --headless --path . --import >/dev/null 2>&1 || true
 "$GODOT" --headless --path . --script tests/run_tests.gd

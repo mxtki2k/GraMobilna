@@ -13,8 +13,8 @@ itch.io (test webowy) · Google Play Console · polityka prywatności na darmowy
 | Dni | Cel | Status |
 |---|---|---|
 | 1–3 | Logika: model, solver, generator, krzywa trudności, testy | **zrobione (v1)** |
-| 4–5 | Strojenie trudności: głębokość łańcuchów, odsetek wolnych na starcie, boty | do zrobienia |
-| 6–8 | Szary prototyp w Godocie: plansza, tap, wypływanie, życia, wygrana/porażka | |
+| 4–5 | Strojenie trudności: głębokość łańcuchów, odsetek wolnych na starcie | **zrobione (v2), do sprawdzenia na graczach** |
+| 6–8 | Prototyp w Godocie: plansza, tap, wypływanie, życia, wygrana/porażka | **zrobione (v1, z przykładową grafiką)** |
 | 9–10 | Podpowiedź, cofnięcie, zapis po każdym ruchu, ekran wyników | |
 | 11–14 | Grafika i UI: łodzie, morze, 9-slice, safe area, fonty z polskimi znakami | |
 | 15–16 | Dźwięk, efekty wody, przełącznik „mniej efektów" | |
@@ -26,17 +26,26 @@ itch.io (test webowy) · Google Play Console · polityka prywatności na darmowy
 Uwaga: nowe konta deweloperskie zwykle wymagają zamkniętego testu z testerami przed produkcją. Sprawdź aktualne
 wymagania w konsoli i zostaw bufor poza 20 dniami.
 
-## Stan generatora (v1, wyniki testów headless)
+## Stan generatora (v2, wyniki testów headless)
 | Poziomy | Plansza | Strzałek | Wypełnienie | Głębokość | Wolnych na starcie |
 |---|---|---|---|---|---|
-| 1–10 | 3x3 | 3,4 | 0,48 | 1,9 | 2,5 |
-| 50–60 | 6x6 | 6,3 | 0,60 | 3,1 | 3,7 |
-| 100–110 | 8x8 | 12,9 | 0,68 | 4,6 | 6,9 |
-| 190–200 | 12x12 | 27,3 | 0,80 | 6,2 | 15,0 |
+| 1–10 | 3x3 | 3,4 | 0,49 | 2,1 | 68% |
+| 50–69 | 6x6 | 7,0 | 0,60 | 4,0 | 41% |
+| 100–119 | 8x8 | 12,9 | 0,68 | 6,2 | 33% |
+| 181–200 | 12x12 | 26,4 | 0,79 | 10,4 | 37% |
 
-Wniosek: wszystkie poziomy są poprawne i rozwiązywalne, ale późne poziomy są wciąż zbyt łatwe
-(ponad połowa strzałek wolna od startu). To jest następny krok: dodać miarę trudności (np. cel dla
-odsetka wolnych na starcie i głębokości) i dostroić generator, najlepiej z playtestem na ludziach.
+Co zmieniło trudność względem v1 (głębokość na 12x12: 6,2 → 10,4, wolnych na starcie: 55% → 37%):
+1. Nowe strzałki celują w jeszcze niezasłonięte strzałki o najdłuższym łańcuchu.
+2. Strzałki z krótkim pasem wypłynięcia (dziób przy krawędzi) są rzadziej dopuszczane, bo prawie nie da się ich zasłonić.
+3. Dla każdego poziomu generujemy kilka kandydatów (do 5) i bierzemy najtrudniejszego wg `Difficulty.score`.
+
+Ryzyko: na największych planszach generowanie trwa ok. 120 ms na komputerze (w GDScript na telefonie kilka razy dłużej).
+Rozwiązanie na później: wygenerować poziomy z góry do pliku i ładować gotowe.
+
+## Grafika
+Przykładowe grafiki robocze SVG (tło morza, dziób łodzi barwiony w grze, koło ratunkowe jako życie, ikona, oraz
+przeszkody na później: rekin, skała, skrzynia) są w `assets/art/`, generowane skryptem `tools/make_art.py`.
+Pochodzenie: `assets/ASSETS.md`. To placeholdery, docelowa grafika ma zachować role i proporcje plików.
 
 ## Ryzyka
 1. Rynek jest na fali, więc konkurencja już jest. Wyróżniki: motyw burzy/morza, „sok" (efekty, dźwięk), czytelny UI.
