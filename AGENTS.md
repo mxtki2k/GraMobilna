@@ -17,6 +17,7 @@ Szczegóły mechaniki: `GDD.md`. Zasady nienaruszalne: `RULES.md`. Plan i status
 GODOT=/ścieżka/do/godot ./tests/run.sh
 ```
 Godot 4.4.1 headless wystarcza (bez edytora). Testy muszą przechodzić przed każdym commitem.
+Dodatkowo test dymny prototypu: `godot --headless --path . --script tests/smoke_game.gd`.
 
 ## Workflow
 1. Mała zmiana → test → zielone → commit.
