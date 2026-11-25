@@ -8,42 +8,42 @@
 })(typeof self !== 'undefined' ? self : this, function () {
 
   const CLIENTS = {
-    mirek: { id: 'mirek', name: 'Pan Mirek', em: '🧔', attention: 0.35, strict: 0.7, expert: false, note: 'Patrzy, czy działa. Reszta go nie obchodzi.',
+    mirek: { id: 'mirek', name: 'Pan Mirek', em: '@mirek', attention: 0.35, strict: 0.7, expert: false, note: 'Patrzy, czy działa. Reszta go nie obchodzi.',
       lines: {
         5: ['No pięknie, jak u Niemca.', 'Działa! Zapraszam na kawę.'],
         4: ['Dobrze, dobrze. Może być.', 'Ujdzie w tłoku, tfu, w porządku.'],
         3: ['No… działa. Mniej więcej.', 'Zapłacę, ale bez entuzjazmu.'],
         2: ['Coś mi tu nie pasuje, ale nie wiem co.', 'Hm. Szwagier by zrobił lepiej.'],
         1: ['To ma tak wyglądać?!', 'Oddaj mi pieniądze albo zadzwonię do szwagra.'] } },
-    karyna: { id: 'karyna', name: 'Karyna', em: '💅', attention: 0.8, strict: 1.0, expert: false, note: 'Zrobi zdjęcie i wrzuci do internetu.',
+    karyna: { id: 'karyna', name: 'Karyna', em: '@karyna', attention: 0.8, strict: 1.0, expert: false, note: 'Zrobi zdjęcie i wrzuci do internetu.',
       lines: {
         5: ['Idealnie! Zostawię pięć gwiazdek.', 'Ooo, jak z katalogu!'],
         4: ['Jest ładnie, tylko trochę widać ślady.', 'Okej, polecę znajomym. Może.'],
         3: ['No jest… takie sobie.', 'Zrobię zdjęcie i zapytam internet.'],
         2: ['Przecież to widać!', 'Wrzucam to na grupę osiedlową.'],
         1: ['Tragedia! Wszyscy się dowiedzą.', 'To jest skandal. Zdjęcia już poszły.'] } },
-    sebix: { id: 'sebix', name: 'Sebix', em: '🧢', attention: 0.6, strict: 0.9, expert: false, note: 'Chce tanio i „żeby wyglądało”.',
+    sebix: { id: 'sebix', name: 'Sebix', em: '@sebix', attention: 0.6, strict: 0.9, expert: false, note: 'Chce tanio i „żeby wyglądało”.',
       lines: {
         5: ['Git, brachu. Dobra robota.', 'Elegancko, wypłata leci.'],
         4: ['Spoko, może być.', 'Dobra, zostaw wizytówkę.'],
         3: ['No nie wiem, ale niech będzie.', 'Mogło być lepiej, ale kasę dam.'],
         2: ['Ej, tu coś nie gra.', 'Za to bym nie płacił, ale płacę.'],
         1: ['Ty chyba sobie żartujesz.', 'Zwrot kasy, bo zadzwonię do kumpli.'] } },
-    grazyna: { id: 'grazyna', name: 'Pani Grażyna', em: '👵', attention: 0.95, strict: 1.2, expert: false, note: 'Widzi wszystko. Naprawdę wszystko.',
+    grazyna: { id: 'grazyna', name: 'Pani Grażyna', em: '@grazyna', attention: 0.95, strict: 1.2, expert: false, note: 'Widzi wszystko. Naprawdę wszystko.',
       lines: {
         5: ['Dziękuję, panie majster, bardzo ładnie.', 'Wreszcie ktoś, kto robi jak trzeba.'],
         4: ['Dobrze, ale ja bym jeszcze poprawiła.', 'Prawie dobrze. Prawie.'],
         3: ['No nie jest to najlepsze.', 'Przecież widzę, że krzywo.'],
         2: ['Co to ma być?! Przecież ja widzę!', 'Pan to nazywa naprawą?'],
         1: ['Skandal! Dzwonię do administracji!', 'Takiego fuszera jeszcze nie widziałam!'] } },
-    tesciowa: { id: 'tesciowa', name: 'Teściowa', em: '👩‍🦳', attention: 1.0, strict: 1.4, expert: false, note: 'Nic nie jest wystarczająco dobre.',
+    tesciowa: { id: 'tesciowa', name: 'Teściowa', em: '@tesciowa', attention: 1.0, strict: 1.4, expert: false, note: 'Nic nie jest wystarczająco dobre.',
       lines: {
         5: ['No. W końcu. Ale i tak bym zrobiła inaczej.', 'Może być. Nie powiem córce.'],
         4: ['Ujdzie. Za moich czasów robiło się lepiej.', 'No dobrze. Ale pan się nie zadufa.'],
         3: ['Nie tak. Jeszcze raz.', 'Zięć by to zrobił lepiej.'],
         2: ['Wstyd, no wstyd.', 'Powiem wszystkim sąsiadkom.'],
         1: ['Wyjdź! I nie wracaj!', 'Moja córka o tym usłyszy.'] } },
-    heniek: { id: 'heniek', name: 'Pan Heniek', em: '👷', attention: 1.0, strict: 1.3, expert: true, note: 'Fachowiec na emeryturze. Widzi też to, co ukryte.',
+    heniek: { id: 'heniek', name: 'Pan Heniek', em: '@heniek', attention: 1.0, strict: 1.3, expert: true, note: 'Fachowiec na emeryturze. Widzi też to, co ukryte.',
       lines: {
         5: ['Młody, ty masz rękę. Szanuję.', 'No, zrobione jak się patrzy.'],
         4: ['Dobra robota, tylko tu dałbym inaczej.', 'Solidnie. Prawie jak ja.'],

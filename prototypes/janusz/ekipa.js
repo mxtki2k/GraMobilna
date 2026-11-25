@@ -23,13 +23,13 @@
   const PAYDAY_EVERY = 3; // co tyle zleceń jest dzień wypłaty
 
   const CANDIDATES = [
-    { id: 'kacper', name: 'Kacper', role: 'praktykant', em: '🧑‍🎓', skill: 0.25, reliab: 0.6, greed: 0.6, wage: 60, patience: 55, diligence: 0.5, alcohol: 0.1, license: false, driving: 0.3,
+    { id: 'kacper', name: 'Kacper', role: 'praktykant', em: '@kacper', skill: 0.25, reliab: 0.6, greed: 0.6, wage: 60, patience: 55, diligence: 0.5, alcohol: 0.1, license: false, driving: 0.3,
       quirk: 'Szybko się uczy, mało umie. Wystarczy mu „doświadczenie”.' },
-    { id: 'zbyszek', name: 'Szwagier Zbyszek', role: 'rodzina', em: '🧔', skill: 0.45, reliab: 0.45, greed: 0.8, wage: 90, patience: 65, diligence: 0.35, alcohol: 0.55, license: true, driving: 0.5,
+    { id: 'zbyszek', name: 'Szwagier Zbyszek', role: 'rodzina', em: '@zbyszek', skill: 0.45, reliab: 0.45, greed: 0.8, wage: 90, patience: 65, diligence: 0.35, alcohol: 0.55, license: true, driving: 0.5,
       quirk: 'Rodzina, więc nie wypada nie zapłacić. Lubi zaliczki, nie lubi poniedziałków.' },
-    { id: 'zdzisiek', name: 'Zdzisiek', role: 'złota rączka', em: '🛠️', skill: 0.6, reliab: 0.5, greed: 1.0, wage: 110, patience: 50, diligence: 0.55, alcohol: 0.75, license: true, driving: 0.75,
+    { id: 'zdzisiek', name: 'Zdzisiek', role: 'złota rączka', em: '@zdzisiek', skill: 0.6, reliab: 0.5, greed: 1.0, wage: 110, patience: 50, diligence: 0.55, alcohol: 0.75, license: true, driving: 0.75,
       quirk: 'Zdolny, ale co środę „coś mu wypadło”.' },
-    { id: 'staszek', name: 'Mistrz Staszek', role: 'fachowiec', em: '👷', skill: 0.9, reliab: 0.9, greed: 1.3, wage: 200, patience: 40, diligence: 0.9, alcohol: 0.2, license: true, driving: 0.8,
+    { id: 'staszek', name: 'Mistrz Staszek', role: 'fachowiec', em: '@staszek', skill: 0.9, reliab: 0.9, greed: 1.3, wage: 200, patience: 40, diligence: 0.9, alcohol: 0.2, license: true, driving: 0.8,
       quirk: 'Najlepszy w branży. Nie znosi, kiedy ktoś gorszy dostaje więcej.' },
   ];
 

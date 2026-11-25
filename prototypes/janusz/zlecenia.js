@@ -301,14 +301,14 @@
         const cmp = Math.round((l.price / ref - 1) * 100), sus = l.price < ref * cls.price * 0.88;
         const buy = l.mode === 'buynow' ? '<button data-buy="' + l.id + '" class="primary" style="min-height:46px;font-size:1rem" ' + (ST.money >= l.price + l.shipping ? '' : 'disabled') + '>Kup teraz · ' + zl(l.price + l.shipping) + '</button>'
           : '<div class="hint">Licytacja: wybierz limit (konkurent ma swój, nie wiesz jaki).</div><div class="quick">' + [0.9, 1.05, 1.25].map(m => '<button data-bid="' + l.id + ':' + Math.round(l.price * m) + '" ' + (ST.money >= Math.round(l.price * m) + l.shipping ? '' : 'disabled') + '>Do ' + zl(l.price * m) + '</button>').join('') + '</div>';
-        return '<div class="prow alle"><div class="hd"><span class="nm">' + T.name + ' „' + l.brand + '”</span><span class="chip skill">' + cls.name + '</span></div>' +
+        return '<div class="prow alle"><div class="hd"><span class="nm">' + Pix.icon(l.type) + ' ' + T.name + ' „' + l.brand + '”</span><span class="chip skill">' + cls.name + '</span></div>' +
           '<div class="hint">poziom: ' + Alledrogo.TIER_NAME[l.tier - 1] + ' · pomaga przy: ' + T.jobs.map(x => ({ kran: 'kran', sciana: 'ściana', gniazdko: 'gniazdko', polka: 'półka' })[x]).join(', ') + '</div>' +
           '<div>„' + l.desc + '”</div>' +
           '<div class="hint">Sprzedawca: <b>' + l.seller.name + '</b> (' + (l.seller.kind === 'sklep' ? 'sklep' : 'osoba prywatna') + ') · ' + l.seller.stars.toFixed(1).replace('.', ',') + ' ★ · ' + l.seller.reviews + ' opinii</div>' +
           '<div class="money"><span>Cena</span><span>' + zl(l.price) + ' + ' + zl(l.shipping) + ' wysyłka</span><span>Nowe: ' + zl(ref) + '</span><span style="color:' + (sus ? 'var(--warn)' : 'var(--muted)') + '">' + (cmp > 0 ? '+' : '') + cmp + '% do nowego' + (sus ? ' ⚠ tanio jak na tę klasę' : '') + '</span></div>' +
           '<div class="hint">Dostawa: ok. ' + l.eta + ' zlec.</div>' + (alleAsk[l.id] ? '<div class="banner">Odpowiedź: „' + alleAsk[l.id] + '”</div>' : '<button data-ask="' + l.id + '" style="min-height:40px">Zadaj pytanie sprzedawcy</button>') + buy + '</div>'; }).join('');
     } else if (alleTab === 'zam') {
-      body = ST.orders.length ? ST.orders.map(o => '<div class="prow"><div class="hd"><span class="nm">' + Alledrogo.TYPES[o.type].name + ' „' + o.brand + '”</span><span>' + zl(o.paid) + '</span></div><div class="hint">od: ' + o.sellerName + ' · status: ' + o.status + ' · dotrze za ok. ' + o.eta + ' zlec. (paczkomat ma 80 km do ciebie)</div></div>').join('') : '<div class="hint">Nic nie jest w drodze.</div>';
+      body = ST.orders.length ? ST.orders.map(o => '<div class="prow"><div class="hd"><span class="nm">' + Pix.icon(o.type) + ' ' + Alledrogo.TYPES[o.type].name + ' „' + o.brand + '”</span><span>' + zl(o.paid) + '</span></div><div class="hint">od: ' + o.sellerName + ' · status: ' + o.status + ' · dotrze za ok. ' + o.eta + ' zlec. (paczkomat ma 80 km do ciebie)</div></div>').join('') : '<div class="hint">Nic nie jest w drodze.</div>';
     } else {
       const cov = Alledrogo.coverage(ST.inv), nm = { kran: 'kran', sciana: 'ściana', gniazdko: 'gniazdko', polka: 'półka' };
       const covHtml = '<div class="prow"><div class="hd"><span class="nm">Pokrycie zleceń</span><span>jakość ekwipunku ' + Math.round(Alledrogo.toolScore(ST.inv) * 100) + '%</span></div><div class="hint">' + Object.keys(nm).map(k => nm[k] + ': +' + Math.round(cov[k].acc * 100) + ' pkt celności, −' + Math.round(cov[k].time * 100) + '% czasu').join(' · ') + '</div><div class="hint">To jedyny system narzędzi w grze. Premia zależy od poziomu i stanu, zepsute narzędzia nie liczą się wcale.</div></div>';
@@ -319,7 +319,7 @@
           (it.unboxed ? '<div class="row2"><button data-sell="' + it.id + ':honest" style="min-height:44px">Sprzedaj uczciwie · ' + zl(Alledrogo.sell(it, 'honest', () => 1).price) + '</button><button data-sell="' + it.id + ':lie" style="min-height:44px">Naciągnij · ' + zl(Alledrogo.sell(it, 'lie', () => 1).price) + '</button></div>' : '') +
           (it.unboxed && (!ok || it.cond < 100) ? '<button data-repair="' + it.id + '" style="min-height:44px" ' + (ST.money >= Alledrogo.repairCost(it) ? '' : 'disabled') + '>Serwis · ' + zl(Alledrogo.repairCost(it)) + (ok ? '' : ' (60% szans)') + '</button>' : '') +
           (!ok && it.unboxed && it.source !== 'start' && it.source !== 'spadek' ? '<button data-dispute="' + it.id + '" style="min-height:44px">Otwórz spór (' + (it.source === 'sklep' ? 'sklep zwykle zwraca' : 'prywatny rzadko zwraca') + ')</button>' : '');
-        return '<div class="prow"><div class="hd"><span class="nm">' + T.name + ' „' + it.brand + '”</span><span>' + stan + '</span></div>' + (it.unboxed ? '<div class="mbar ' + (ok ? moodCls(it.cond) : 'low') + '"><i style="width:' + (ok ? Math.round(it.cond) : 0) + '%"></i></div>' : '') + '<div class="hint">poziom: ' + Alledrogo.TIER_NAME[it.tier - 1] + ' · pomaga przy: ' + jobs + ' · użyć: ' + it.uses + ' · od: ' + it.sellerName + ' · wartość ok. ' + zl(Alledrogo.value(it)) + '</div>' + acts + '</div>'; }).join('') : '<div class="hint">Nie masz jeszcze żadnych narzędzi. Kup zestaw ręczny (pasuje do wszystkich zleceń) albo narzędzia specjalistyczne.</div>');
+        return '<div class="prow"><div class="hd"><span class="nm">' + Pix.icon(it.type) + ' ' + T.name + ' „' + it.brand + '”</span><span>' + stan + '</span></div>' + (it.unboxed ? '<div class="mbar ' + (ok ? moodCls(it.cond) : 'low') + '"><i style="width:' + (ok ? Math.round(it.cond) : 0) + '%"></i></div>' : '') + '<div class="hint">poziom: ' + Alledrogo.TIER_NAME[it.tier - 1] + ' · pomaga przy: ' + jobs + ' · użyć: ' + it.uses + ' · od: ' + it.sellerName + ' · wartość ok. ' + zl(Alledrogo.value(it)) + '</div>' + acts + '</div>'; }).join('') : '<div class="hint">Nie masz jeszcze żadnych narzędzi. Kup zestaw ręczny (pasuje do wszystkich zleceń) albo narzędzia specjalistyczne.</div>');
     }
     $('alle').innerHTML = '<div class="alle-h"><b>Alledrogo</b><span>Okazje, których nie powstydzi się Janusz</span></div>' +
       '<div class="seg">' + tabs.map(t => '<button data-tab="' + t[0] + '" class="' + (alleTab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('') + '</div>' +
@@ -475,7 +475,7 @@
     // auto / bus
     const van = a.bus === 0 ? '<rect x="238" y="152" width="48" height="20" rx="6" fill="#8d99a3"/><circle cx="252" cy="173" r="5" fill="#222"/><circle cx="274" cy="173" r="5" fill="#222"/>'
       : '<rect x="228" y="140" width="68" height="32" rx="6" fill="' + (a.bus === 3 ? '#ffc300' : '#f4f4f4') + '" stroke="#555" stroke-width="2"/><rect x="274" y="146" width="18" height="12" fill="#8ecae6"/>' + (a.bus >= 2 ? '<path d="M232 164h40" stroke="#1565c0" stroke-width="4"/>' : '') + (a.bus === 3 ? '<circle cx="250" cy="154" r="6" fill="#1b1e22"/>' : '') + '<circle cx="244" cy="173" r="6" fill="#222"/><circle cx="282" cy="173" r="6" fill="#222"/>';
-    return '<div class="scene" style="background:#9ec5e0"><svg viewBox="0 0 320 200" role="img" aria-label="Siedziba firmy"><rect width="320" height="200" fill="#9ec5e0"/><rect y="170" width="320" height="30" fill="#6b6f73"/><rect y="168" width="320" height="4" fill="#4d5156"/>' + b + van + '</svg></div>';
+    return '<div class="scene" data-pxw="192" style="background:#9ec5e0"><svg viewBox="0 0 320 200" role="img" aria-label="Siedziba firmy"><rect width="320" height="200" fill="#9ec5e0"/><rect y="170" width="320" height="30" fill="#6b6f73"/><rect y="168" width="320" height="4" fill="#4d5156"/>' + b + van + '</svg></div>';
   }
   function chipsFor(l) {
     const c = [];
@@ -675,6 +675,13 @@
 
   $('reset').onclick = () => { if ($('reset').dataset.s) { ST = fresh(); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; }, 3000); } };
 
+  // pikselizacja: emoji i znaczniki @postać zamieniane na sprite'y, sceny SVG na obrazy w małej rozdzielczości
+  (function () {
+    let busy = false;
+    const run = () => { if (busy) return; busy = true; try { Pix.pixelize(document.body); Pix.scenify(document.body, 128); } finally { busy = false; } };
+    new MutationObserver(() => requestAnimationFrame(run)).observe(document.body, { childList: true, subtree: true });
+    run();
+  })();
   window.__z = { get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
   renderMenu();
 })();

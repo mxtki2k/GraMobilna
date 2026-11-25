@@ -1,7 +1,7 @@
 <meta charset="utf-8">
 <title>Zlecenia Janusza Biznesu</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@500;700&display=swap&subset=latin-ext">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&family=VT323&display=swap&subset=latin-ext">
 <style>
   /* Układ: jedna kolumna jak ekran telefonu: pasek firmy, potem lista zleceń albo scenka naprawy. */
   :root {
@@ -107,12 +107,62 @@
   @media (prefers-reduced-motion: reduce) { .drip, .spark { animation: none; } }
 </style>
 
+
+<style id="pixel-theme">
+  /* Motyw pixel art: twarde krawędzie, czcionki pikselowe, skok o całe piksele zamiast gładkich cieni. */
+  :root { --px: "Jersey 10", "VT323", monospace; --vt: "VT323", monospace; --font: var(--vt); --display: var(--px); --body: var(--vt); }
+  * { border-radius: 0 !important; font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0; }
+  body { font-family: var(--vt); font-size: 21px; line-height: 1.1; background-color: #101316;
+    background-image: linear-gradient(45deg, #161b1f 25%, transparent 25%, transparent 75%, #161b1f 75%), linear-gradient(45deg, #161b1f 25%, transparent 25%, transparent 75%, #161b1f 75%);
+    background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+  h1, h2, h3, .nm, .lvname, .bignum, .tabbtn, .primary, .alle-h b, .verdict { font-family: var(--px) !important; font-weight: 400 !important; letter-spacing: 0 !important; line-height: 1.15 !important; text-transform: none !important; }
+  .verdict { font-size: 30px; }
+  h1 { font-size: 24px !important; } h2 { font-size: 28px !important; } h3 { font-size: 20px !important; }
+  .nm { font-size: 24px !important; } .lvname { font-size: 28px !important; } .bignum { font-size: 40px !important; }
+  .stat b { font-family: var(--px); font-size: 28px; line-height: 1.2; font-weight: 400; } .stat small { font-size: 16px; letter-spacing: 0; }
+  button { font-family: var(--vt); font-size: 21px; font-weight: 400; border: 0 !important; background: #3a424b; color: #f4f1e8; margin: 3px;
+    box-shadow: inset -3px -3px 0 #1c2126, inset 3px 3px 0 #5a646f, 0 0 0 3px #000; }
+  button:hover:not([disabled]) { background: #465059; }
+  button:active:not([disabled]) { box-shadow: inset 3px 3px 0 #1c2126, inset -3px -3px 0 #5a646f, 0 0 0 3px #000; transform: none; }
+  button[disabled] { opacity: .45; }
+  .primary { background: #ffc300 !important; color: #14171a !important; font-size: 26px !important; min-height: 52px; box-shadow: inset -3px -3px 0 #b98f00, inset 3px 3px 0 #ffe27a, 0 0 0 3px #000 !important; }
+  .primary:active { box-shadow: inset 3px 3px 0 #b98f00, inset -3px -3px 0 #ffe27a, 0 0 0 3px #000 !important; }
+  .tabbtn { font-size: 22px !important; }
+  .tap { font-size: 34px !important; min-height: 84px; }
+  .card, .prow, .stat, .bubble, .banner, .alle-h, .row, .lvl { border: 0 !important; box-shadow: 0 0 0 3px #000, inset 0 0 0 3px #3b434b; }
+  .card { background: #20262c; } .prow, .row { background: #2b3239; } .stat { background: #2b3239; } .bubble { background: #323940; }
+  .lvl { background: #2b3239 !important; margin: 4px 3px; }
+  .lvl b { font-family: var(--px); font-size: 24px; font-weight: 400; line-height: 1.2; }
+  .banner { background: #4a3714; color: #ffd98a; }
+  .modal .card { box-shadow: 0 0 0 3px #000, 0 0 0 6px #ffc300, inset 0 0 0 3px #3b434b; }
+  .bar, .mbar, .gauge, .track { border: 0 !important; box-shadow: 0 0 0 2px #000; height: 14px; }
+  .track { height: 40px; }
+  .bar > i, .mbar > i { background-image: repeating-linear-gradient(90deg, transparent 0 6px, rgba(0,0,0,.35) 6px 8px); }
+  .mark { background: #fff; box-shadow: 0 0 0 2px #000; }
+  .scene { border: 0 !important; box-shadow: 0 0 0 3px #000; background: #14171a !important; }
+  .pxscene { image-rendering: pixelated; }
+  .seg button.on { background: #ffc300; color: #14171a; box-shadow: inset -3px -3px 0 #b98f00, inset 3px 3px 0 #ffe27a, 0 0 0 3px #000; }
+  .tag { font-family: var(--vt); font-size: 16px; }
+  .chip { font-size: 17px; } .hint, .sub, .tally, .jobmeta { font-size: 19px; }
+  .opt b, .opt span { font-size: 20px; } .opt b { font-family: var(--vt); }
+  img.pxs { image-rendering: pixelated; vertical-align: middle; }
+  img.pxi.inline { width: 22px; height: 22px; margin: 0 2px; } img.pxp.inline { width: 40px; height: 40px; margin: 0 2px; }
+  .nm img.pxi { width: 28px; height: 28px; }
+  .bubble { grid-template-columns: 52px 1fr !important; } .bubble .av img { width: 44px !important; height: 44px !important; }
+  .lvl { grid-template-columns: 48px 1fr auto !important; } .lvl .av img { width: 44px !important; height: 44px !important; }
+  .alle-h { background: #ff5a00 !important; } .alle-h b { font-size: 38px !important; } .alle-h span { font-size: 18px; }
+  .money { font-family: var(--vt); font-size: 22px; } .money .tot { font-family: var(--px); font-size: 26px; }
+  .note { font-size: 17px; }
+  .brow { font-size: 18px; }
+  .def { font-size: 19px; }
+</style>
+
 <main>
   <div class="bar"><h1>Zlecenia Janusza Biznesu</h1><button id="reset" style="min-height:0;padding:4px 8px;font-size:.78rem;background:transparent;color:var(--muted)">Zacznij od zera</button></div>
   <div class="stats">
-    <div class="stat"><small>Kasa</small><b id="money">0 zł</b></div>
-    <div class="stat"><small>Ocena firmy</small><b id="rep">–</b></div>
-    <div class="stat"><small>Reklamacje</small><b id="claims">0</b></div>
+    <div class="stat"><small>💰 Kasa</small><b id="money">0 zł</b></div>
+    <div class="stat"><small>⭐ Ocena firmy</small><b id="rep">–</b></div>
+    <div class="stat"><small>📄 Reklamacje</small><b id="claims">0</b></div>
   </div>
   <section id="menu" class="list"></section>
   <section id="job" hidden class="card"></section>
@@ -128,6 +178,7 @@
 </main>
 <div class="modal" id="modal" hidden><div class="card" role="dialog" aria-modal="true" aria-labelledby="mtitle"><h2 id="mtitle"></h2><p id="mtext"></p><div class="choices" id="mchoices"></div></div></div>
 
+<script src="pixel.js"></script>
 <script src="fuszerka.js"></script>
 <script src="jobs.js"></script>
 <script src="ekipa.js"></script>
