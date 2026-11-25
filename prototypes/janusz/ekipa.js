@@ -46,7 +46,8 @@
   function moodEmoji(m) { return m >= 80 ? '😄' : m >= 60 ? '🙂' : m >= 40 ? '😐' : m >= 20 ? '😠' : '🤬'; }
 
   /* pay: { id: kwota }. Zwraca nową ekipę (kopie) i szczegóły rozliczenia. */
-  function applyPay(workers, pay) {
+  function applyPay(workers, pay, opts) {
+    const pb = (opts && opts.patienceBonus) || 0; // komfort siedziby podnosi bazowy nastrój
     const rows = workers.map(w => {
       const paid = Math.max(0, pay[w.id] || 0);
       const toWage = Math.min(paid, w.wage);
@@ -68,7 +69,7 @@
       for (const o of rows) if (o.w.id !== w.id && o.w.skill < w.skill && o.paid > r.paid) envyHits++;
       parts.envy = -Math.min(16, 8 * envyHits);
       const after = w.mood + parts.short + parts.owed + parts.bonus + parts.exact + parts.envy;
-      parts.drift = (w.patience - after) * 0.1;
+      parts.drift = (w.patience + pb - after) * 0.1;
       const mood = clamp(Math.round(after + parts.drift), 0, 100);
       const owedNow = Math.round(r.owed);
       const strikes = (mood < 15 && owedNow >= w.wage) ? (w.strikes || 0) + 1 : 0;

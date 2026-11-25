@@ -33,7 +33,7 @@
     if (mode === 'courier') return { accident: 0, police: 0 };
     if (mode === 'owner') return { accident: 0.03, police: 0 };
     const alc = ALC[state] || 0, skill = w.driving == null ? 0.5 : w.driving;
-    const accident = clamp(0.03 + alc * 0.40 * (1 - 0.5 * skill) + (1 - skill) * 0.05, 0, 0.8);
+    const accident = clamp((0.03 + alc * 0.40 * (1 - 0.5 * skill) + (1 - skill) * 0.05) * (world.accMult == null ? 1 : world.accMult), 0, 0.8);
     const police = clamp(world.heat * (0.35 + alc * 0.35), 0, 0.8);
     return { accident, police };
   }
@@ -74,7 +74,7 @@
         res.incident = true;
         const heavy = rng() < 0.1 + alc * 0.5;
         if (heavy) {
-          const repair = Math.round(500 + rng() * 500);
+          const repair = Math.round((500 + rng() * 500) * (world.accMult == null ? 1 : Math.max(0.6, world.accMult)));
           res.accident = { severity: 'ciezki', repair }; res.cost += repair; res.timeAdj += 12;
           res.driverPatch.outJobs = 2; res.claim = { kind: 'wypadek', amount: Math.round(repair * 1.2), riskDelta: 25, defect: 'wypadek służbowego auta' };
           res.notes.push('🚑 ' + w.name + ' wylądował w szpitalu, a auto nadaje się na złom. Naprawa ' + repair + ' zł, ' + w.name + ' wypada na dwa zlecenia.');

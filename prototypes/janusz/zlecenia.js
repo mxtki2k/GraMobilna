@@ -6,9 +6,10 @@
   const rnd = Math.random;
 
   // ---------- stan ----------
-  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1 });
+  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [] });
   let ST = fresh();
   try { const r = localStorage.getItem('zlecenia_v1'); if (r) ST = Object.assign(fresh(), JSON.parse(r)); } catch (e) {}
+  (() => { const f = Siedziba.fresh(); ST.hq = Object.assign(f, ST.hq || {}, { up: Object.assign(f.up, (ST.hq || {}).up), assets: Object.assign(f.assets, (ST.hq || {}).assets) }); if (!ST.hist) ST.hist = []; })();
   const save = () => { try { localStorage.setItem('zlecenia_v1', JSON.stringify(ST)); } catch (e) {} };
   const reputation = () => { const r = ST.ratings.slice(-10); return r.length ? r.reduce((a, b) => a + b, 0) / r.length : null; };
 
@@ -25,22 +26,24 @@
 
   // ---------- poziomy ----------
   let cur = null; // bieżące zlecenie
+  const co = () => Siedziba.rating(ST.hq, ST.hist, ST.ratings, ST.claims.length);
   function renderTop() {
     $('money').textContent = zl(ST.money);
-    const r = reputation(); $('rep').textContent = r == null ? '–' : r.toFixed(1).replace('.', ',') + ' ★';
+    $('rep').textContent = co().stars.toFixed(1).replace('.', ',') + ' ★';
     $('claims').textContent = ST.claims.length;
   }
   function stars(n) { return '★'.repeat(n) + '☆'.repeat(5 - n); }
   function renderMenu() {
-    renderTop(); ['job', 'result', 'crew', 'payday'].forEach(x => $(x).hidden = true); $('menu').hidden = false;
+    renderTop(); ['job', 'result', 'crew', 'payday', 'hq'].forEach(x => $(x).hidden = true); $('menu').hidden = false;
     const toPay = Math.max(0, ST.nextPay - ST.done);
-    $('menu').innerHTML = '<div class="row2"><button class="tabbtn' + (ST.crew.some(w => Ekipa.demand(w)) ? ' alert' : '') + '" id="goCrew">👷 Ekipa (' + ST.crew.length + ')</button><div class="stat" style="display:grid;place-items:center;text-align:center"><small>Dzień wypłaty za</small><b>' + (ST.crew.length ? toPay + ' zlec.' : '–') + '</b></div></div>' +
+    $('menu').innerHTML = '<div class="row2"><button class="tabbtn' + (ST.crew.some(w => Ekipa.demand(w)) ? ' alert' : '') + '" id="goCrew">👷 Ekipa (' + ST.crew.length + ')</button><button class="tabbtn" id="goHq">🏢 Siedziba</button></div>' +
+      '<div class="hint" style="text-align:center">Dzień wypłaty za ' + toPay + ' zlec. · utrzymanie: ' + zl(Siedziba.effects(ST.hq).upkeep) + ' · ' + Siedziba.TIERS[ST.hq.tier].name + '</div>' +
       '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Zlecenia</h3>' + LEVELS.map((l, i) => {
       const job = JOBS[l.job], cl = CLIENTS[l.client], locked = i + 1 > ST.unlocked, b = ST.best[i];
       return '<button class="lvl" data-i="' + i + '" ' + (locked ? 'disabled' : '') + '><span class="av">' + (locked ? '🔒' : cl.em) + '</span><span><b>' + (i + 1) + '. ' + job.title + '</b><small>' + job.place + ' · ' + cl.name + ' · ok. ' + zl(job.base * l.mult) + '</small></span><span class="res">' +
         (b ? '<span class="stars">' + stars(b.stars) + '</span><br>fuszerka ' + b.index + '%' : (locked ? '' : 'nowe')) + '</span></button>';
     }).join('');
-    $('goCrew').onclick = renderCrew;
+    $('goCrew').onclick = renderCrew; $('goHq').onclick = renderHq;
     nextEvent();
   }
   $('menu').addEventListener('click', e => { const b = e.target.closest('.lvl'); if (b && !b.disabled) startJob(+b.dataset.i); });
@@ -84,6 +87,7 @@
   }
   function doDrive(id) {
     const mode = id === 'owner' || id === 'courier' ? id : 'worker', w = mode === 'worker' ? ST.crew.find(x => x.id === id) : null;
+    ST.world.accMult = Siedziba.effects(ST.hq).accMult;
     const res = Swiat.resolveDrive(w, w ? (cur.states[w.id] || 'trzezwy') : 'trzezwy', ST.world, mode, rnd);
     ST.money = Math.max(0, ST.money - res.cost); cur.timeAdj += res.timeAdj; cur.notes.push(...res.notes);
     if (res.cost) cur.costExtra = (cur.costExtra || 0) + res.cost;
@@ -132,6 +136,10 @@
       if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + he.accBonus));
       cur.timeAdj -= Math.round(opt.time * (1 - he.timeFactor) * 10) / 10;
     }
+    const eff = Siedziba.effects(ST.hq);
+    if (rnd() < Siedziba.breakChance(ST.hq)) { cur.extraDefects.push({ label: 'zużyte narzędzie złamało się w trakcie', sev: 2, vis: 0.5 }); cur.notes.push('🔧 Zużyte narzędzie złamało się w trakcie roboty. Czas na serwis.'); }
+    if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + eff.accBonus));
+    cur.timeAdj -= Math.round(opt.time * eff.timeBonus * 10) / 10;
     cur.picks.push({ stepId: cur.job.steps[cur.step].id, optionId: opt.id, accuracy });
     cur.time += opt.time; cur.cost += opt.cost;
     // wystawienie na robotę: po połowie kroków wkurzony pomocnik znika
@@ -174,10 +182,18 @@
   // ---------- odbiór ----------
   function finish() {
     const job = Object.assign({}, cur.job, { base: Math.round(cur.job.base * cur.mult) });
-    const r = Fuszerka.evaluate(job, cur.picks, cur.client, { time: Math.round(cur.timeAdj), defects: cur.extraDefects });
+    const rt = co();
+    const r = Fuszerka.evaluate(job, cur.picks, cur.client, { time: Math.round(cur.timeAdj), defects: cur.extraDefects, satBonus: rt.satBonus, payMult: rt.payMult });
     const comment = Fuszerka.clientComment(cur.client, r, rnd);
     const claim = Fuszerka.rollClaim(r, rnd);
     ST.money += r.profit; ST.ratings.push(r.stars); ST.done++;
+    ST.hist.push({ index: r.index }); ST.hist = ST.hist.slice(-12);
+    const th = Siedziba.resolveTheft(ST.hq, rnd);
+    if (th) {
+      ST.hq = th.hq; ST.money = Math.max(0, ST.money - th.net);
+      cur.notes.push('🕵️ W nocy ktoś włamał się do siedziby: strata ' + zl(th.loss) + (th.recovered ? ', ale kamery pomogły odzyskać ' + zl(th.recovered) : '') + (th.toolLost ? '. Zniknął też sprzęt (narzędzia −1 poziom).' : '.') + (th.cameras ? '' : ' Kamery i mocniejsze drzwi by pomogły.'));
+    }
+    ST.hq = Siedziba.wear(ST.hq, 5 + (r.index >= 40 ? 3 : 0));
     ST.crew = Swiat.tickWorkers(ST.crew); Swiat.tickWorld(ST.world, 0);
     const prev = ST.best[cur.i];
     if (!prev || r.stars > prev.stars || (r.stars === prev.stars && r.index < prev.index)) ST.best[cur.i] = { stars: r.stars, index: r.index };
@@ -198,7 +214,7 @@
       '<div class="break"><div class="brow"><span>Wady widoczne</span>' + bar(r.V, 12) + '<b>' + r.V.toFixed(1) + '</b></div><div class="brow"><span>Wady ukryte</span>' + bar(r.H, 12) + '<b>' + r.H.toFixed(1) + '</b></div><div class="brow"><span>Zagrożenie</span>' + bar(r.Z, 12) + '<b>' + r.Z.toFixed(1) + '</b></div></div>' +
       '<div class="defs">' + defs + '</div>' +
       (cur.notes.length ? '<div class="banner">' + cur.notes.join('<br>') + '</div>' : '') +
-      '<div class="hint">Zadowolenie klienta: ' + r.satisfaction + '%' + (r.late ? ' (spóźnienie: ' + r.time + ' z ' + job.deadline + ' min)' : '') + '. Szansa reklamacji: ' + Math.round(r.claim.chance * 100) + '%.</div>' +
+      '<div class="hint">Zadowolenie klienta: ' + r.satisfaction + '%' + (r.late ? ' (spóźnienie: ' + r.time + ' z ' + job.deadline + ' min)' : '') + '. Szansa reklamacji: ' + Math.round(r.claim.chance * 100) + '%. Ocena firmy ' + rt.stars.toFixed(1).replace('.', ',') + ' ★ (wypłata ×' + rt.payMult.toFixed(2).replace('.', ',') + ', +' + rt.satBonus + ' pkt zadowolenia).</div>' +
       '<div class="money"><span>Wypłata</span><span>' + zl(r.payout) + '</span><span>Materiały</span><span>−' + zl(r.cost) + '</span><span class="tot">Zysk</span><span class="tot">' + zl(r.profit) + '</span></div>' +
       '<button class="primary" id="next">Dalej</button><button id="again" style="background:transparent">Spróbuj to zlecenie jeszcze raz</button>';
     $('next').onclick = () => renderMenu(); $('again').onclick = () => startJob(cur.i);
@@ -206,6 +222,79 @@
   }
 
   let modalOpen = false;
+  // ---------- siedziba ----------
+  function hqSVG(hq) {
+    const t = hq.tier, u = hq.up, a = hq.assets;
+    const wall = ['#8a8f94', '#a9b4bb', '#b9a98e', '#d3cbb9', '#b7c1c8', '#a7bfd1'][t];
+    const roof = ['#7a3b24', '#2b2b2b', '#b5472f', '#34495e'][u.dach];
+    const frame = ['#5b3a29', '#9c7a53', '#f4f4f4', '#f4f4f4'][u.okna], glass = u.okna >= 3 ? '#8ecae6' : '#cfd8dc';
+    const doorC = ['#8a4b2a', '#7b5a3b', '#6b7a86', '#4a5a66'][u.drzwi];
+    let b = '';
+    const win = (x, y, w, h) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + glass + '" stroke="' + frame + '" stroke-width="3"/>' + (u.okna === 0 ? '<path d="M' + x + ' ' + y + 'l' + w + ' ' + h + '" stroke="#555" stroke-width="1"/>' : '');
+    let dx = 150, dy = 120, dw = 22, dh = 50, x0 = 90, x1 = 230, top = 100;
+    if (t === 0) { x0 = 90; x1 = 230; top = 105; b += '<rect x="90" y="105" width="140" height="65" fill="' + wall + '"/><rect x="90" y="98" width="140" height="8" fill="' + roof + '"/>' + '<rect x="108" y="120" width="70" height="50" fill="#6f7479"/><path d="M108 132h70M108 144h70M108 156h70" stroke="#5a5f64"/>'; dx = 190; dy = 130; dw = 24; dh = 40; }
+    else if (t === 1) { x0 = 55; x1 = 265; top = 95; b += '<rect x="55" y="95" width="210" height="75" fill="' + wall + '"/>' + Array.from({ length: 20 }, (_, i) => '<path d="M' + (60 + i * 10) + ' 95v75" stroke="#8b979f"/>').join('') + '<rect x="50" y="86" width="220" height="10" fill="' + roof + '"/>'; dx = 215; dy = 122; }
+    else if (t === 2) { x0 = 85; x1 = 235; top = 95; b += '<g transform="rotate(-1 160 140)"><rect x="85" y="100" width="150" height="70" fill="' + wall + '"/><polygon points="75,102 160,48 245,102" fill="' + roof + '"/><rect x="205" y="52" width="14" height="30" fill="#8d5a46"/>' + (u.ogrz >= 1 ? '<circle cx="212" cy="44" r="6" fill="#cfcfcf" opacity=".8"/><circle cx="218" cy="34" r="8" fill="#cfcfcf" opacity=".6"/>' : '') + '</g>'; dx = 150; }
+    else if (t === 3) { x0 = 80; x1 = 240; top = 62; b += '<rect x="80" y="62" width="160" height="108" fill="' + wall + '"/><rect x="76" y="54" width="168" height="10" fill="' + roof + '"/><path d="M20 170v-26h40v26M260 170v-26h40v26" stroke="#7a7a7a" stroke-width="3"/>'; dx = 150; }
+    else if (t === 4) { x0 = 40; x1 = 280; top = 80; b += '<rect x="40" y="80" width="170" height="90" fill="' + wall + '"/><rect x="210" y="62" width="70" height="108" fill="#c9d3da"/><rect x="36" y="72" width="178" height="10" fill="' + roof + '"/><rect x="206" y="54" width="78" height="10" fill="' + roof + '"/>'; dx = 140; }
+    else { x0 = 80; x1 = 240; top = 30; b += '<rect x="80" y="30" width="160" height="140" fill="' + wall + '"/>' + Array.from({ length: 4 }, (_, r) => Array.from({ length: 5 }, (_, c) => '<rect x="' + (90 + c * 30) + '" y="' + (40 + r * 22) + '" width="24" height="16" fill="#8ecae6" opacity=".9"/>').join('')).join('') + '<rect x="76" y="24" width="168" height="8" fill="' + roof + '"/>'; dx = 150; dy = 126; dh = 44; }
+    // okna (poza hurtem szklanych lokali)
+    if (t <= 2) b += win(x0 + 14, top + 22, 30, 22) + (t === 1 ? win(x0 + 60, top + 22, 30, 22) : '') + (t === 2 ? win(x1 - 54, top + 22, 30, 22) : '');
+    if (t === 3) b += win(95, 80, 30, 22) + win(195, 80, 30, 22) + win(95, 122, 30, 22) + win(195, 122, 30, 22);
+    if (t === 4) b += win(60, 96, 30, 22) + win(110, 96, 30, 22) + win(228, 80, 34, 24) + win(228, 122, 34, 24);
+    // drzwi
+    b += '<rect x="' + dx + '" y="' + dy + '" width="' + dw + '" height="' + dh + '" fill="' + doorC + '" stroke="#222" stroke-width="2"/>' + (u.drzwi >= 3 ? '<circle cx="' + (dx + dw + 5) + '" cy="' + (dy + 20) + '" r="3" fill="#ffd54f"/>' : '') + (u.alarm >= 1 ? '<rect x="' + (dx + 3) + '" y="' + (dy + 24) + '" width="6" height="6" fill="#aaa" stroke="#444"/>' : '');
+    // szyld
+    if (u.szyld === 1) b += '<rect x="' + (dx - 36) + '" y="' + (top - 4) + '" width="76" height="16" fill="#f4f4f4" stroke="#999"/><path d="M' + (dx - 30) + ' ' + (top + 4) + 'h64" stroke="#c33" stroke-width="3"/>';
+    if (u.szyld >= 2) b += '<rect x="' + (dx - 40) + '" y="' + (top - 8) + '" width="84" height="20" rx="4" fill="#ffc300" stroke="#8a6a00" stroke-width="2"/><path d="M' + (dx - 32) + ' ' + (top + 2) + 'h68" stroke="#1b1e22" stroke-width="4"/>' + (u.szyld === 3 ? '<circle cx="' + (dx + 54) + '" cy="' + (top + 2) + '" r="5" fill="#8ecae6"/>' : '');
+    // alarm / kamera
+    if (u.alarm >= 2) b += '<circle cx="' + (x1 - 6) + '" cy="' + (top + 8) + '" r="4" fill="#e53935"/>';
+    // narzędzia
+    if (a.narzedzia > 0) b += '<rect x="' + (dx - 30) + '" y="160" width="20" height="10" fill="#c62828" stroke="#6a1b1b"/>';
+    // auto / bus
+    const van = a.bus === 0 ? '<rect x="238" y="152" width="48" height="20" rx="6" fill="#8d99a3"/><circle cx="252" cy="173" r="5" fill="#222"/><circle cx="274" cy="173" r="5" fill="#222"/>'
+      : '<rect x="228" y="140" width="68" height="32" rx="6" fill="' + (a.bus === 3 ? '#ffc300' : '#f4f4f4') + '" stroke="#555" stroke-width="2"/><rect x="274" y="146" width="18" height="12" fill="#8ecae6"/>' + (a.bus >= 2 ? '<path d="M232 164h40" stroke="#1565c0" stroke-width="4"/>' : '') + (a.bus === 3 ? '<circle cx="250" cy="154" r="6" fill="#1b1e22"/>' : '') + '<circle cx="244" cy="173" r="6" fill="#222"/><circle cx="282" cy="173" r="6" fill="#222"/>';
+    return '<div class="scene" style="background:#9ec5e0"><svg viewBox="0 0 320 200" role="img" aria-label="Siedziba firmy"><rect width="320" height="200" fill="#9ec5e0"/><rect y="170" width="320" height="30" fill="#6b6f73"/><rect y="168" width="320" height="4" fill="#4d5156"/>' + b + van + '</svg></div>';
+  }
+  function chipsFor(l) {
+    const c = [];
+    if (l.trust) c.push('zaufanie +' + l.trust); if (l.comfort) c.push('komfort +' + l.comfort); if (l.sec) c.push('ochrona +' + l.sec);
+    if (l.demand) c.push('popyt +' + l.demand + '%'); if (l.time) c.push('czas −' + Math.round(l.time * 100) + '%'); if (l.acc) c.push('celność +' + Math.round(l.acc * 100));
+    if (l.accMult) c.push('wypadki ×' + String(l.accMult).replace('.', ',')); if (l.upkeep) c.push('utrzymanie +' + l.upkeep + ' zł');
+    return c.map(x => '<span class="chip">' + x + '</span>').join('');
+  }
+  function renderHq() {
+    ['menu', 'job', 'result', 'crew', 'payday'].forEach(x => $(x).hidden = true); $('hq').hidden = false;
+    const rt = co(), e = rt.effects, hq = ST.hq, nt = Siedziba.nextTier(hq), t = e.tier, pct = x => Math.round(x * 100);
+    const parts = [['Siedziba', rt.parts.siedziba], ['Sprzęt', rt.parts.sprzet], ['Opinie klientów', rt.parts.opinie], ['Rzetelność', rt.parts.rzetelnosc]];
+    const card = (title, sub, chips, key, cost, label) => '<div class="prow"><div class="hd"><span class="nm">' + title + '</span><span>' + sub + '</span></div>' + (chips ? '<div class="chips">' + chips + '</div>' : '') +
+      (key ? '<button data-buy="' + key + '" class="' + (ST.money >= cost ? 'primary' : '') + '" style="min-height:46px;font-size:1rem" ' + (ST.money >= cost ? '' : 'disabled') + '>' + label + ' · ' + zl(cost) + '</button>' : '<div class="hint">Maksymalny poziom.</div>') + '</div>';
+    const upCards = Object.keys(Siedziba.UPGRADES).map(k => { const def = Siedziba.UPGRADES[k], cur = hq.up[k], nl = Siedziba.nextLevel('up', k, hq);
+      return card(def.name, cur ? 'obecnie: ' + def.levels[cur - 1].name : 'obecnie: stan zastany', nl ? chipsFor(nl) : '', nl ? 'up:' + k : '', nl ? nl.cost : 0, nl ? nl.name : ''); }).join('');
+    const asCards = Object.keys(Siedziba.ASSETS).map(k => { const def = Siedziba.ASSETS[k], cur = hq.assets[k], nl = Siedziba.nextLevel('assets', k, hq);
+      return card(def.name, cur ? 'obecnie: ' + def.levels[cur - 1].name : 'obecnie: ' + (def.base || 'brak'), nl ? chipsFor(nl) : '', nl ? 'assets:' + k : '', nl ? nl.cost : 0, nl ? nl.name : ''); }).join('');
+    const eff = ['Klienci płacą ×' + rt.payMult.toFixed(2).replace('.', ','), '+' + rt.satBonus + ' pkt zadowolenia klientów', 'komfort ekipy: +' + Math.round(e.comfort * 0.5) + ' do bazowego nastroju',
+      'ochrona ' + e.security + '%: mniej kradzieży', 'narzędzia: −' + pct(e.timeBonus) + '% czasu, +' + pct(e.accBonus) + ' pkt celności', 'flota: wypadki ×' + String(e.accMult).replace('.', ','), 'utrzymanie: ' + zl(e.upkeep) + ' co dzień wypłaty'];
+    $('hq').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Siedziba firmy</h2>' + hqSVG(hq) +
+      '<div class="hd" style="display:flex;justify-content:space-between;align-items:baseline"><span class="nm" style="font-family:var(--display);font-size:1.4rem">' + t.name + '</span><span class="bignum" style="font-size:2rem;color:var(--hi)">' + rt.stars.toFixed(1).replace('.', ',') + ' ★</span></div>' +
+      '<div class="hint">' + t.desc + '</div>' +
+      '<div class="break">' + parts.map(p => '<div class="brow"><span>' + p[0] + '</span><span class="b"><i style="width:' + pct(p[1]) + '%"></i></span><b>' + pct(p[1]) + '%</b></div>').join('') + '</div>' +
+      '<div class="defs">' + eff.map(x => '<div class="def"><span>' + x + '</span></div>').join('') + '</div>' +
+      '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Lokal</h3>' +
+      (nt ? card('Następny: ' + nt.name, '', '<span class="chip">' + nt.desc + '</span><span class="chip">utrzymanie ' + zl(nt.upkeep) + '</span><span class="chip">remonty budynku zaczynasz od zera</span>', 'tier', nt.cost, 'Kup i przeprowadź się') : '<div class="hint">Masz najlepszą siedzibę.</div>') +
+      '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Remont budynku</h3>' + upCards +
+      '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Sprzęt i flota (zostaje po przeprowadzce)</h3>' + asCards +
+      (hq.assets.narzedzia ? '<div class="prow"><div class="hd"><span class="nm">Stan narzędzi</span><span>' + Math.round(hq.cond) + '%</span></div><div class="mbar ' + moodCls(hq.cond) + '"><i style="width:' + hq.cond + '%"></i></div><div class="hint">Zużyte narzędzia tracą premię do szybkości i celności, a poniżej 30% potrafią się złamać w trakcie roboty. Im lepszy sprzęt, tym bardziej opłaca się go ukraść.</div><button data-buy="repair:x" style="min-height:44px" ' + (hq.cond < 100 && ST.money >= Siedziba.repairCost(hq) ? '' : 'disabled') + '>Serwis · ' + zl(Siedziba.repairCost(hq)) + '</button></div>' : '') +
+      '<div class="hint">Ocena firmy zależy od siedziby, sprzętu, opinii klientów i rzetelności (średnia fuszerka z ostatnich zleceń, minus otwarte reklamacje).</div>' +
+      '<button class="primary" id="hqBack">Wróć</button>';
+    $('hqBack').onclick = renderMenu;
+    $('hq').onclick = ev => {
+      const bt = ev.target.closest('[data-buy]'); if (!bt) return;
+      const [g, k] = bt.dataset.buy.split(':'); const r = g === 'tier' ? Siedziba.buyTier(ST.hq, ST.money) : g === 'repair' ? Siedziba.repair(ST.hq, ST.money) : Siedziba.buy(ST.hq, g, k, ST.money);
+      if (r.ok) { ST.hq = r.hq; ST.money -= r.cost; save(); renderTop(); renderHq(); }
+    };
+  }
+
   // ---------- ekipa ----------
   const moodCls = m => m < 30 ? 'low' : m < 60 ? 'mid' : '';
   function crewCard(w, extra) {
@@ -214,7 +303,7 @@
       '<div class="hint">' + w.role + ' · umiejętności ' + Math.round(w.skill * 100) + '% · solidność ' + Math.round(w.reliab * 100) + '% · pracowitość ' + Math.round((w.diligence == null ? 0.5 : w.diligence) * 100) + '% · prawo jazdy: ' + (w.license ? 'tak' : 'nie') + ' · pensja ' + zl(w.wage) + (w.outJobs > 0 ? ' · <span class="warn">na zwolnieniu (' + w.outJobs + ')</span>' : '') + ((w.grudge || 0) >= 30 ? ' · <span class="warn">pamięta krzywdy</span>' : '') + ((w.gratitude || 0) >= 30 ? ' · czuje wdzięczność' : '') + (w.owed ? ' · <span class="warn">zaległości ' + zl(w.owed) + '</span>' : '') + '</div>' + (extra || '') + '</div>';
   }
   function renderCrew() {
-    ['menu', 'job', 'result', 'payday'].forEach(x => $(x).hidden = true); $('crew').hidden = false;
+    ['menu', 'job', 'result', 'payday', 'hq'].forEach(x => $(x).hidden = true); $('crew').hidden = false;
     const hired = new Set(ST.crew.map(w => w.id)), cands = Ekipa.CANDIDATES.filter(c => !hired.has(c.id));
     $('crew').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Ekipa</h2><div class="hint">Płacisz co ' + Ekipa.PAYDAY_EVERY + ' zlecenia. Zadowolona ekipa robi fuchy na boku i dobrze pomaga. Niedopłacona upomina się, nie przychodzi albo zostawia cię w połowie roboty.</div>' +
       (ST.crew.length ? ST.crew.map(w => crewCard(w, '<button data-fire="' + w.id + '" style="min-height:40px;background:transparent;color:var(--muted)">Zwolnij</button>')).join('') : '<div class="hint">Nikogo nie zatrudniasz. Robisz wszystko sam.</div>') +
@@ -230,10 +319,20 @@
   }
 
   // ---------- dzień wypłaty ----------
-  let PAY = {}, sidePay = null;
+  let PAY = {}, sidePay = null, billText = '';
+  function notice(title, text, after) {
+    modalOpen = true; $('mtitle').textContent = title; $('mtext').textContent = text; $('mchoices').innerHTML = '<button data-a="ok">OK</button>'; $('modal').hidden = false;
+    $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; if (after) after(); };
+  }
   function startPayday(forced) {
-    if (!ST.crew.length) { ST.nextPay = ST.done + Ekipa.PAYDAY_EVERY; save(); renderMenu(); return; }
-    ['menu', 'job', 'result', 'crew'].forEach(x => $(x).hidden = true); $('payday').hidden = false;
+    const up = Siedziba.effects(ST.hq).upkeep, tn = Siedziba.TIERS[ST.hq.tier].name;
+    if (!ST.crew.length) {
+      ST.nextPay = ST.done + Ekipa.PAYDAY_EVERY; const paid = Math.min(Math.floor(ST.money), up); ST.money -= paid; save(); renderTop();
+      if (paid > 0) notice('Rachunki za siedzibę', tn + ': ' + zl(paid) + ' za prąd, czynsz i ubezpieczenie busa.', renderMenu); else renderMenu();
+      return;
+    }
+    billText = up ? 'Utrzymanie siedziby (' + tn + '): −' + zl(Math.min(Math.floor(ST.money), up)) + '. ' : ''; ST.money = Math.max(0, ST.money - up);
+    ['menu', 'job', 'result', 'crew', 'hq'].forEach(x => $(x).hidden = true); $('payday').hidden = false;
     sidePay = Ekipa.sideGigs(ST.crew, rnd); ST.money += sidePay.total; save(); renderTop();
     PAY = Ekipa.defaultPay(ST.crew, Math.floor(ST.money));
     renderPayday();
@@ -241,7 +340,7 @@
   function renderPayday() {
     const spent = Object.values(PAY).reduce((a, b) => a + b, 0), left = Math.floor(ST.money) - spent;
     const sg = sidePay && sidePay.total ? 'Ekipa zrobiła fuchy na boku: +' + zl(sidePay.total) + ' (' + sidePay.parts.filter(p => p.gain).map(p => p.name + ' ' + zl(p.gain)).join(', ') + ').' : 'Ekipa nic nie przywiozła z fuch.';
-    $('payday').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Dzień wypłaty</h2><div class="hint">' + sg + ' Masz ' + zl(ST.money) + '. Rozpisz, kto ile dostaje.</div>' +
+    $('payday').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Dzień wypłaty</h2><div class="hint">' + sg + ' ' + billText + 'Masz ' + zl(ST.money) + '. Rozpisz, kto ile dostaje.</div>' +
       ST.crew.map(w => {
         const p = PAY[w.id] || 0, due = w.wage + w.owed;
         const envy = ST.crew.filter(o => o.id !== w.id && o.skill < w.skill && (PAY[o.id] || 0) > p).map(o => o.name);
@@ -265,7 +364,7 @@
   }
   const rl = a => a[Math.floor(rnd() * a.length)];
   function confirmPay() {
-    const res = Ekipa.applyPay(ST.crew, PAY); ST.money -= res.spent; ST.crew = res.workers;
+    const res = Ekipa.applyPay(ST.crew, PAY, { patienceBonus: Siedziba.effects(ST.hq).comfort * 0.5 }); ST.money -= res.spent; ST.crew = res.workers;
     const lines = res.details.map(d => {
       const w = ST.crew.find(x => x.id === d.id);
       const weaker = ST.crew.filter(o => o.id !== d.id && o.skill < w.skill && (PAY[o.id] || 0) > (PAY[d.id] || 0))[0];
@@ -301,7 +400,7 @@
   }
   function nextEvent() {
     if (modalOpen) return;
-    if (ST.crew.length && ST.done >= ST.nextPay) { startPayday(true); return; }
+    if (ST.done >= ST.nextPay) { startPayday(true); return; }
     if (checkClaims()) return;
     checkDemands();
   }
@@ -332,6 +431,6 @@
 
   $('reset').onclick = () => { if ($('reset').dataset.s) { ST = fresh(); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; }, 3000); } };
 
-  window.__z = { get ST() { return ST; }, get cur() { return cur; }, startJob, renderMenu, renderCrew, startPayday };
+  window.__z = { get ST() { return ST; }, get cur() { return cur; }, renderHq, co, startJob, renderMenu, renderCrew, startPayday };
   renderMenu();
 })();

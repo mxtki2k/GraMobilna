@@ -59,7 +59,8 @@
     return defects;
   }
 
-  /* adj (opcjonalne): { time: korekta czasu w minutach, defects: dodatkowe wady } np. od pomocnika lub bałaganu. */
+  /* adj (opcjonalne): { time: korekta czasu w minutach, defects: dodatkowe wady, satBonus: punkty zadowolenia, payMult: mnożnik wypłaty }
+   np. od pomocnika, bałaganu albo oceny firmy i siedziby. */
   function evaluate(job, picks, client, adj) {
     if (picks.length !== job.steps.length) throw new Error('Brak wyborów dla wszystkich kroków');
     adj = adj || {};
@@ -84,11 +85,11 @@
     const perceived = V * att + (client.expert ? 0.5 * H * att : 0);
     const late = time > job.deadline;
     const latePenalty = late ? Math.min(20, time - job.deadline) : 0;
-    const satisfaction = clamp(Math.round(100 * Math.exp(-perceived / K_SAT) - latePenalty), 0, 100);
+    const satisfaction = clamp(Math.round(100 * Math.exp(-perceived / K_SAT) - latePenalty + (adj.satBonus || 0)), 0, 100);
     const stars = clamp(Math.ceil(satisfaction / 20), 1, 5);
 
     const fast = time <= job.deadline * 0.6;
-    const payout = Math.round(job.base * (0.4 + 0.6 * satisfaction / 100) * (fast ? 1.1 : 1));
+    const payout = Math.round(job.base * (0.4 + 0.6 * satisfaction / 100) * (fast ? 1.1 : 1) * (adj.payMult || 1));
     const profit = payout - cost;
 
     const hiddenLoad = H + 1.5 * Z;
