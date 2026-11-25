@@ -45,6 +45,8 @@
   // ---------- ikony 16x16 ----------
   const ICONS = {
     coin: () => mk(16, 16, [R('Y', 4, 2, 8, 12), R('Y', 3, 3, 10, 10), R('Y', 2, 5, 12, 6), R('y', 4, 3, 8, 10), R('y', 3, 5, 10, 6), R('e', 5, 4, 2, 2), R('Y', 7, 4, 2, 8), R('Y', 6, 5, 4, 1), R('Y', 6, 7, 4, 1), R('Y', 6, 10, 4, 1)]),
+    sun: () => mk(16, 16, [R('y', 5, 5, 6, 6), R('y', 4, 6, 8, 4), R('e', 6, 6, 2, 2), R('Y', 5, 10, 6, 1), R('y', 7, 1, 2, 3), R('y', 7, 12, 2, 3), R('y', 1, 7, 3, 2), R('y', 12, 7, 3, 2), R('y', 3, 3, 2, 2), R('y', 11, 3, 2, 2), R('y', 3, 11, 2, 2), R('y', 11, 11, 2, 2)]),
+    moon: () => mk(16, 16, [R('c', 6, 2, 6, 12), R('c', 4, 4, 8, 8), R('c', 3, 6, 4, 4), R('w', 5, 4, 3, 2), R('w', 4, 6, 2, 3), R('B', 9, 5, 4, 8), R('B', 8, 7, 5, 4), R('B', 11, 3, 2, 3)]),
     star: () => mk(16, 16, [R('y', 7, 1, 2, 4), R('y', 6, 4, 4, 3), R('y', 1, 5, 14, 3), R('y', 3, 7, 10, 3), R('y', 4, 9, 8, 3), R('y', 3, 11, 4, 3), R('y', 9, 11, 4, 3), R('Y', 2, 6, 12, 1), R('e', 7, 2, 1, 3), R('e', 5, 6, 2, 1)]),
     crew: () => mk(16, 16, [R('y', 4, 2, 8, 2), R('y', 3, 4, 10, 4), R('y', 2, 7, 12, 1), R('Y', 2, 8, 12, 2), R('w', 5, 3, 2, 1), R('Y', 7, 2, 2, 6), R('s', 4, 10, 8, 4), R('k', 6, 11, 1, 1), R('k', 9, 11, 1, 1), R('S', 7, 13, 2, 1)]),
     hq: () => mk(16, 16, [R('R', 7, 1, 2, 2), R('r', 5, 3, 6, 2), R('r', 3, 5, 10, 2), R('R', 1, 7, 14, 2), R('w', 3, 9, 10, 5), R('c', 4, 10, 3, 3), R('c', 9, 10, 3, 3), R('O', 7, 11, 2, 3), R('y', 8, 12, 1, 1)]),
@@ -152,7 +154,7 @@
 
   /* Emoji → ikony pikselowe. Nieznane emoji zostają bez zmian. */
   const EMOJI = { '🪙': 'coin', '💰': 'coin', '⭐': 'star', '★': 'star', '👷': 'crew', '🏢': 'hq', '💼': 'fin', '🏘️': 'os', '📖': 'story', '🛒': 'shop', '📄': 'claim', '🧾': 'claim', '💥': 'boom',
-    '🚗': 'car', '🚚': 'van', '🚔': 'police', '📦': 'pkg', '🕵️': 'spy', '⚠': 'bolt', '⚠️': 'warn', '✓': 'check', '🔧': 'klucze', '🧰': 'zestaw', '🚑': 'police', '🔒': 'lock', '🎯': 'target', '⏱': 'clock', '⏱️': 'clock', '😄': 'mood4', '🙂': 'mood3', '😐': 'mood2', '😠': 'mood1', '🤬': 'mood0', '🗂️': 'claim', '👮': 'police', '🦈': 'bogdan' };
+    '🚗': 'car', '🚚': 'van', '🚔': 'police', '📦': 'pkg', '🕵️': 'spy', '⚠': 'bolt', '⚠️': 'warn', '✓': 'check', '🔧': 'klucze', '🧰': 'zestaw', '🚑': 'police', '🔒': 'lock', '🎯': 'target', '⏱': 'clock', '⏱️': 'clock', '😄': 'mood4', '🙂': 'mood3', '😐': 'mood2', '😠': 'mood1', '🤬': 'mood0', '🗂️': 'claim', '👮': 'police', '🦈': 'bogdan', '☀️': 'sun', '☀': 'sun', '🌙': 'moon' };
   /* Podmienia emoji w węzłach tekstowych elementu na obrazki. Szuka tylko w tekstach, nie rusza atrybutów. */
   function pixelize(rootEl) {
     if (!rootEl || typeof document === 'undefined') return;

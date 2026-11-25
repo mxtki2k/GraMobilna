@@ -85,16 +85,16 @@
   }
 
   /* Prawdopodobieństwa: nie przyjdzie / wystawi na robotę w trakcie. */
-  function risk(w) {
+  function risk(w, opts) {
     const grudge = w.grudge || 0, grat = w.gratitude || 0;
-    const absent = clamp((1 - w.reliab) * 0.45 + Math.max(0, 50 - w.mood) / 100 * 0.7 + grudge / 250 - grat / 400, 0, 0.85);
+    const absent = clamp((1 - w.reliab) * 0.45 + Math.max(0, 50 - w.mood) / 100 * 0.7 + grudge / 250 - grat / 400 + (opts && opts.night ? 0.1 : 0), 0, 0.85);
     let walkout = w.mood < 35 ? (35 - w.mood) / 35 * 0.6 : 0;
     if (w.owed > w.wage * 2) walkout += 0.1;
     walkout += grudge / 300 - grat / 400;
     return { absent, walkout: clamp(walkout, 0, 0.9) };
   }
   /* 'absent' | 'present'; wystawienie w trakcie losuje osobno walkoutRoll. */
-  function attendance(w, rng) { return rng() < risk(w).absent ? 'absent' : 'present'; }
+  function attendance(w, rng, opts) { return rng() < risk(w, opts).absent ? 'absent' : 'present'; }
   function walksOut(w, rng) { return rng() < risk(w).walkout; }
 
   /* Wpływ pomocnika na robotę: bonus celności w krokach „na wyczucie” i mnożnik czasu. */

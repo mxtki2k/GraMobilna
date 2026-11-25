@@ -32,7 +32,7 @@ t('każdy token z opcji napraw ma grafikę (albo jest jawnie na liście „bez g
     const tokens = new Set(); job.steps.forEach(s => s.options.forEach(o => o.fx.split(' ').forEach(x => tokens.add(x))));
     for (const tk of tokens) {
       if (NO_VISUAL.has(tk)) continue;
-      const ctxs = [[tk], ['broken', tk], ['shelf-on', tk], ['plaster-good', tk], ['outlet-new', tk]];
+      const ctxs = [[tk], ['broken', tk], ['shelf-on', tk], ['plaster-good', tk], ['outlet-new', tk], ['broken', 'level-good', tk]];
       if (!ctxs.some(c => sig(S.job(job.id, c)) !== sig(S.job(job.id, c.filter(x => x !== tk))))) missing.push(job.id + ':' + tk);
     }
   }

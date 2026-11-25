@@ -59,7 +59,7 @@
     return defects;
   }
 
-  /* adj (opcjonalne): { time: korekta czasu w minutach, defects: dodatkowe wady, satBonus: punkty zadowolenia, payMult: mnożnik wypłaty, hazardMult: mnożnik zagrożenia wad }
+  /* adj (opcjonalne): { time: korekta czasu w minutach, defects: dodatkowe wady, satBonus: punkty zadowolenia, payMult: mnożnik wypłaty, hazardMult: mnożnik zagrożenia wad, attentionMult: mnożnik uwagi klienta }
    np. od pomocnika, bałaganu albo oceny firmy i siedziby. */
   function evaluate(job, picks, client, adj) {
     if (picks.length !== job.steps.length) throw new Error('Brak wyborów dla wszystkich kroków');
@@ -82,7 +82,7 @@
     const index = Math.round(100 * (1 - Math.exp(-raw / K_INDEX)));
     const level = levelFor(index);
 
-    const att = client.attention * client.strict;
+    const att = client.attention * client.strict * (adj.attentionMult || 1); // noc: klient zaspany
     const perceived = V * att + (client.expert ? 0.5 * H * att : 0);
     const late = time > job.deadline;
     const latePenalty = late ? Math.min(20, time - job.deadline) : 0;

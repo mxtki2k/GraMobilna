@@ -6,9 +6,9 @@
   const rnd = Math.random;
 
   // ---------- stan ----------
-  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
+  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
   let ST = fresh();
-  try { const r = localStorage.getItem('zlecenia_v1'); if (r) { const saved = JSON.parse(r); ST = Object.assign(fresh(), saved); if (saved.starterGiven === undefined) ST.starterGiven = false; } } catch (e) {}
+  try { const r = localStorage.getItem('zlecenia_v1'); if (r) { const saved = JSON.parse(r); ST = Object.assign(fresh(), saved); if (saved.starterGiven === undefined) ST.starterGiven = false; if (saved.clock === undefined) { ST.clock = Czas.startClock() + (saved.done || 0) * 2 * 1440; ST.ledgerMoney = ST.money; } } } catch (e) {}
   (() => {
     const old = ((ST.hq || {}).assets || {}).narzedzia; // stary system: poziom narzędzi w siedzibie
     if (old > 0) { ST.inv = (ST.inv || []).concat([Alledrogo.makeItem({ tier: Math.min(3, old), brand: 'Zestaw z siedziby', cond: (ST.hq.cond == null ? 100 : ST.hq.cond), life: 30, source: 'start', sellerName: 'własne' })]); delete ST.hq.assets.narzedzia; }
@@ -17,19 +17,34 @@
       ST.inv = ST.inv || []; if (!ST.inv.some(i => i.type === 'zestaw')) ST.inv.push(Alledrogo.starterKit()); ST.starterGiven = true;
     }
     const f = Siedziba.fresh(); ST.hq = Object.assign(f, ST.hq || {}, { up: Object.assign(f.up, (ST.hq || {}).up), assets: Object.assign(f.assets, (ST.hq || {}).assets) }); if (!ST.hist) ST.hist = []; })();
-  const save = () => { try { localStorage.setItem('zlecenia_v1', JSON.stringify(ST)); } catch (e) {} };
+  const bookKey = () => Czas.dateOf(ST.clock).monthKey;
+  if (!ST.monthStart[bookKey()]) ST.monthStart[bookKey()] = ST.money;
+  /* Księguje ruch na kasie w kategorii (z uwzględnieniem tego, że kasa nie spada poniżej zera). */
+  function cash(cat, amt) {
+    const before = ST.money; ST.money = Math.max(0, ST.money + amt); const real = ST.money - before;
+    ST.ledger = Ksiega.book(ST.ledger, bookKey(), cat, real); ST.ledgerMoney = ST.money; return real;
+  }
+  /* Ruchy kasy, które nie przeszły przez cash(), trafiają do „inne”. */
+  function syncLedger() { const d = ST.money - (ST.ledgerMoney || 0); if (Math.abs(d) > 0.004) ST.ledger = Ksiega.book(ST.ledger, bookKey(), 'inne', d); ST.ledgerMoney = ST.money; }
+  const monthSummary = key => Ksiega.summary(ST.ledger, key || bookKey(), 0);
+  /* Zegar widoczny dla gracza: w trakcie zlecenia startowy + postęp pracy. */
+  const viewClock = () => cur && !$('job').hidden ? cur.startClock + Czas.minutes(Math.max(0, cur.time + cur.timeAdj), cur.night) : ST.clock;
+  let anim = null;
+  const save = () => { syncLedger(); try { localStorage.setItem('zlecenia_v1', JSON.stringify(ST)); } catch (e) {} };
   const reputation = () => { const r = ST.ratings.slice(-10); return r.length ? r.reduce((a, b) => a + b, 0) / r.length : null; };
 
   // ---------- scenka: tokeny stanu ----------
   /* Rysuje sceny pixel art w kontenerze. Tokeny stanu przekazuje się do sceny zlecenia, siedziba bierze stan z gry. */
   let sceneFrame = 0, sceneTokens = new Set(['broken']);
-  function hqOpts() { return { tier: ST.hq.tier, up: ST.hq.up, assets: ST.hq.assets, season: Kalendarz.seasonOf(ST.day).name, tools: ST.inv.length }; }
+  function hqOpts() { return { tier: ST.hq.tier, up: ST.hq.up, assets: ST.hq.assets, season: Czas.season(ST.clock), tools: ST.inv.length, night: Czas.isNight(ST.clock) }; }
   function paintScene(cv) {
-    const grid = cv.dataset.scene === 'hq' ? Scenes.hq(hqOpts(), sceneFrame) : Scenes.job(cv.dataset.job, sceneTokens, sceneFrame);
-    Scenes.draw(cv, grid);
+    const night = cv.dataset.scene === 'hq' ? Czas.isNight(ST.clock) : !!(cur && cur.night);
+    let grid = cv.dataset.scene === 'hq' ? Scenes.hq(hqOpts(), sceneFrame) : Scenes.job(cv.dataset.job, sceneTokens, sceneFrame, { night });
+    if (anim && cv.dataset.scene !== 'hq') grid = Scenes.action(grid, anim.kind, Math.min(1, (performance.now() - anim.t0) / anim.dur), anim.at);
+    Scenes.draw(cv, grid, { night });
   }
   function applyScene(root, tokens) { sceneTokens = tokens; root.querySelectorAll('canvas.pxscene').forEach(paintScene); }
-  setInterval(() => { sceneFrame = (sceneFrame + 1) % 4; document.querySelectorAll('canvas.pxscene').forEach(cv => { if (cv.offsetParent !== null) paintScene(cv); }); }, 380);
+  setInterval(() => { sceneFrame = (sceneFrame + 1) % 8; document.querySelectorAll('canvas.pxscene').forEach(cv => { if (cv.offsetParent !== null) paintScene(cv); }); }, 250);
   const sceneHTML = job => '<div class="scene"><canvas class="pxscene" width="128" height="80" data-scene="job" data-job="' + job.id + '" role="img" aria-label="' + job.title + '"></canvas></div>';
 
   // ---------- poziomy ----------
@@ -39,19 +54,23 @@
   function renderTop() {
     $('money').textContent = zl(ST.money);
     $('rep').textContent = co().stars.toFixed(1).replace('.', ',') + ' ★';
-    $('claims').textContent = ST.claims.length;
+    const ms = monthSummary(), pl = $('plus'); pl.textContent = signed(ms.plus); pl.className = ms.plus >= 0 ? 'pos' : 'neg';
+    $('plusl').textContent = 'Plus: ' + Czas.monthName(bookKey());
+    const vc = viewClock(), n = Czas.isNight(vc);
+    $('clock').innerHTML = (n ? '🌙' : '☀️') + ' ' + Czas.label(vc) + ' · ' + (n ? 'noc' : 'dzień');
+    $('clockbar').className = 'clockbar' + (n ? ' night' : '');
   }
   function stars(n) { return '★'.repeat(n) + '☆'.repeat(5 - n); }
   function renderMenu() {
     renderTop(); ALL.forEach(x => $(x).hidden = true); $('menu').hidden = false;
     const toPay = Math.max(0, ST.nextPay - ST.done);
-    const sea = Kalendarz.seasonOf(ST.day);
+    const sea = { name: Czas.season(ST.clock) };
     const flash = ST.flash.length ? '<div class="banner">' + ST.flash.join('<br>') + '</div>' : ''; ST.flash = [];
     $('menu').innerHTML = flash + '<div class="grid3"><button class="tabbtn' + (ST.crew.some(w => Ekipa.demand(w)) ? ' alert' : '') + '" id="goCrew">👷 Ekipa (' + ST.crew.length + ')</button><button class="tabbtn" id="goHq">🏢 Siedziba</button><button class="tabbtn' + (Finanse.debt(ST.fin) > 0 ? ' alert' : '') + '" id="goFin">💼 Finanse</button><button class="tabbtn" id="goOs">🏘️ Osiedle</button><button class="tabbtn" id="goStory">📖 Fabuła</button><button class="tabbtn' + (ST.orders.length ? ' alert' : '') + '" id="goAlle">🛒 Alledrogo</button></div>' +
-      '<div class="hint" style="text-align:center">Dzień ' + ST.day + ' · ' + sea.name + ' · dzień wypłaty za ' + toPay + ' zlec. · utrzymanie ' + zl(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)) + ' · ' + Siedziba.TIERS[ST.hq.tier].name + '</div>' +
+      '<div class="hint" style="text-align:center">Reklamacje: ' + ST.claims.length + ' · ' + sea.name + ' · dzień wypłaty za ' + toPay + ' zlec. · utrzymanie ' + zl(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)) + ' · ' + Siedziba.TIERS[ST.hq.tier].name + '</div>' +
       '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Zlecenia</h3>' + LEVELS.map((l, i) => {
-      const job = JOBS[l.job], cl = CLIENTS[l.client], locked = i + 1 > ST.unlocked, b = ST.best[i];
-      return '<button class="lvl" data-i="' + i + '" ' + (locked ? 'disabled' : '') + '><span class="av">' + (locked ? '🔒' : cl.em) + '</span><span><b>' + (i + 1) + '. ' + job.title + '</b><small>' + job.place + ' · ' + cl.name + ' · ok. ' + zl(job.base * l.mult) + '</small></span><span class="res">' +
+      const job = JOBS[l.job], cl = CLIENTS[l.client], locked = i + 1 > ST.unlocked, b = ST.best[i], est = estimateFor(l), st = Czas.jobStart(ST.clock, l.time, 1);
+      return '<button class="lvl' + (l.slot === 'noc' ? ' nightlvl' : '') + '" data-i="' + i + '" ' + (locked ? 'disabled' : '') + '><span class="av">' + (locked ? '🔒' : cl.em) + '</span><span><b>' + (i + 1) + '. ' + job.title + '</b><small>' + (l.slot === 'noc' ? '🌙 ' : '☀️ ') + Czas.label(st) + '</small><small>' + job.place + ' · ' + cl.name + ' · ok. ' + zl(job.base * l.mult * (l.slot === 'noc' ? Czas.NIGHT.payMult : 1)) + ' · ' + perHourTxt(est) + '</small></span><span class="res">' +
         (b ? '<span class="stars">' + stars(b.stars) + '</span><br>fuszerka ' + b.index + '%' : (locked ? '' : 'nowe')) + '</span></button>';
     }).join('');
     $('goCrew').onclick = renderCrew; $('goHq').onclick = renderHq; $('goFin').onclick = renderFin; $('goOs').onclick = renderOs; $('goStory').onclick = renderStory; $('goAlle').onclick = renderAlle;
@@ -60,12 +79,28 @@
   $('menu').addEventListener('click', e => { const b = e.target.closest('.lvl'); if (b && !b.disabled) startJob(+b.dataset.i); });
 
   // ---------- zlecenie ----------
+  const signed = n => (n >= 0 ? '+' : '−') + zl(Math.abs(n));
+  /* Szacunek stawki godzinowej po kosztach dla poziomu: opts { terms, helper, states }. */
+  function estimateFor(l, opts) {
+    opts = opts || {};
+    const job = JOBS[l.job], client = CLIENTS[l.client], night = l.slot === 'noc', mods = Czas.mods(night);
+    const start = Czas.jobStart(ST.clock, l.time, 1), season = Czas.season(start), rt = co();
+    const um = Umowa.evaluate(opts.terms || Umowa.DEFAULT, client, () => 1);
+    const sea = Kalendarz.demandMult(season, job.id), gos = Osiedle.gossipMult(ST.os), cut = 1 - Osiedle.undercut(ST.os, { rating: rt.stars, tier: ST.hq.tier });
+    let units = job.deadline * um.deadlineFactor, helperCost = 0;
+    if (opts.helper) { const he = Ekipa.helperEffect(opts.helper, (opts.states || {})[opts.helper.id]); units *= he.timeFactor; helperCost = Stawka.helperShare(opts.helper, night); }
+    return Stawka.estimate({ base: Math.round(job.base * l.mult), payMult: rt.payMult * um.payMult * sea * gos * cut * mods.payMult, deadlineUnits: units, night, helper: helperCost,
+      invoice: (opts.terms || Umowa.DEFAULT).invoice, overhead: Stawka.overheadShare(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)), extraMinutes: 15 });
+  }
+  const perHourTxt = e => 'ok. ' + signed(e.perHour) + '/h';
   function startJob(i) {
-    const l = LEVELS[i];
-    cur = { i, job: JOBS[l.job], client: CLIENTS[l.client], mult: l.mult, step: 0, picks: [], tokens: new Set(['broken']), time: 0, cost: 0,
-      helper: null, helperOn: false, timeAdj: 0, extraDefects: [], notes: [], states: {} };
-    ST.crew.forEach(w => { cur.states[w.id] = Swiat.rollState(w, { paydayEve: ST.lastPayDone === ST.done }, rnd); });
-    cur.season = Kalendarz.seasonOf(ST.day).name; cur.deadline = cur.job.deadline; cur.umowa = null; cur.terms = Object.assign({}, Umowa.DEFAULT);
+    const l = LEVELS[i], night = l.slot === 'noc';
+    cur = { i, level: l, job: JOBS[l.job], client: CLIENTS[l.client], mult: l.mult, step: 0, picks: [], tokens: new Set(['broken']), time: 0, cost: 0,
+      helper: null, helperOn: false, helperPaid: 0, timeAdj: 0, extraDefects: [], notes: [], states: {}, night, intro: l.intro || JOBS[l.job].intro, transportCost: 0, scandal: false };
+    cur.startClock = Czas.jobStart(ST.clock, l.time, 1);
+    ST.world.night = night;
+    ST.crew.forEach(w => { cur.states[w.id] = Swiat.rollState(w, { paydayEve: ST.lastPayDone === ST.done, night }, rnd); });
+    cur.season = Czas.season(cur.startClock); cur.deadline = cur.job.deadline; cur.umowa = null; cur.terms = Object.assign({}, Umowa.DEFAULT);
     cur.mystery = Fabula.rollMystery({ done: ST.done }, rnd);
     cur.tools = Alledrogo.forJob(ST.inv, cur.job.id); cur.failAt = {}; cur.brokenTools = {};
     cur.tools.forEach(tl => { cur.failAt[tl.id] = rnd() < Alledrogo.failChance(tl) ? Math.floor(rnd() * cur.job.steps.length) : -1; });
@@ -74,65 +109,73 @@
     ALL.forEach(x => $(x).hidden = true); $('job').hidden = false;
     umowa();
   }
-  function afterUmowa() { if (ST.crew.length) pickHelper(); else renderJob(); }
+  function afterUmowa() { if (ST.crew.length) pickHelper(); else transport(); }
+  const nightNote = () => cur.night ? '<div class="banner">🌙 Zlecenie nocne: dopłata ×' + String(Czas.NIGHT.payMult).replace('.', ',') + ', ale ciemno (celność −' + Math.round(Czas.NIGHT.accPenalty * 100) + ' pkt), robota trwa o 10% dłużej, więcej wypadków i kontroli policji, ekipa częściej nie przychodzi. Klient jest zaspany, więc mniej zauważa.</div>' : '';
 
   // ---------- umowa: faktura, kosztorys, termin ----------
   function umowa() {
     const t = cur.terms, c = cur.client, ni = Umowa.needsInvoice(c);
     const seg = (key, opts) => '<div class="seg" data-key="' + key + '">' + opts.map(o => '<button data-v="' + o[0] + '" class="' + (String(t[key]) === String(o[0]) ? 'on' : '') + '">' + o[1] + '</button>').join('') + '</div>';
-    const sea = cur.season, dm = Kalendarz.demandMult(sea, cur.job.id);
-    $('job').innerHTML = '<div class="bubble"><span class="av">' + c.em + '</span><div><b>' + c.name + '</b>: „' + cur.job.intro + '”<br><small style="color:var(--muted)">' + c.note + '</small></div></div>' +
+    const sea = cur.season, dm = Kalendarz.demandMult(sea, cur.job.id), est = estimateFor(cur.level, { terms: t });
+    const uPre = Umowa.evaluate(t, c, () => 1);
+    $('job').innerHTML = '<div class="bubble"><span class="av">' + c.em + '</span><div><b>' + c.name + '</b>: „' + cur.intro + '”<br><small style="color:var(--muted)">' + c.note + '</small></div></div>' +
+      sceneHTML(cur.job) +
+      '<div class="hint">' + (cur.night ? '🌙' : '☀️') + ' Start: <b>' + Czas.label(cur.startClock) + '</b> (' + (cur.night ? 'noc' : 'dzień') + '). Sezon: ' + sea + (dm !== 1 ? ' (popyt na takie roboty ×' + String(dm).replace('.', ',') + ')' : '') + '.</div>' + nightNote() +
       '<h2 style="font-size:1.4rem;text-transform:uppercase">Umowa</h2>' +
-      '<div class="hint">Sezon: ' + sea + (dm !== 1 ? ' (popyt na takie roboty ×' + String(dm).replace('.', ',') + ')' : '') + '. ' + (ni ? c.name + ' wymaga faktury.' : c.name + ' pyta, czy „może być bez papierów”.') + '</div>' +
+      '<div class="hint">' + (ni ? c.name + ' wymaga faktury.' : c.name + ' pyta, czy „może być bez papierów”.') + '</div>' +
       '<div class="step"><h3 style="color:var(--muted);text-transform:uppercase">Faktura</h3>' + seg('invoice', [[true, 'Z fakturą (podatek 10%)'], [false, 'Bez faktury (−4% ceny)']]) + '</div>' +
       '<div class="step"><h3 style="color:var(--muted);text-transform:uppercase">Kosztorys</h3>' + seg('quote', [['fair', 'Uczciwy'], ['inflated', 'Zawyżony (+20%)'], ['low', 'Zaniżony (−15%)']]) + '<div class="hint">Zawyżenie zauważy: ' + Math.round(Umowa.detectChance(c) * 100) + '% (uważny klient lub fachowiec zauważy częściej).</div></div>' +
-      '<div class="step"><h3 style="color:var(--muted);text-transform:uppercase">Termin</h3>' + seg('rush', [[false, 'Realny (' + cur.job.deadline + ' min)'], [true, 'Na wczoraj (' + Math.round(cur.job.deadline * 0.75) + ' min, +10%)']]) + '</div>' +
+      '<div class="step"><h3 style="color:var(--muted);text-transform:uppercase">Termin</h3>' + seg('rush', [[false, 'Realny (' + Czas.fmtUnits(cur.job.deadline, cur.night) + ')'], [true, 'Na wczoraj (' + Czas.fmtUnits(cur.job.deadline * 0.75, cur.night) + ', +10%)']]) + '</div>' +
+      '<div class="econ"><div class="erow"><span>Szacowana wypłata</span><b>~' + zl(est.lines[0].value) + '</b></div><div class="erow"><span>Szacowany czas</span><b>~' + Czas.fmtMin(est.hours * 60) + '</b></div><div class="erow big"><span>Zostaje po kosztach (bez pomocnika)</span><b>' + perHourTxt(est) + '</b></div></div>' +
       '<button class="primary" id="umOk">Ustalone, jedziemy</button><button id="back" style="background:transparent;min-height:40px;color:var(--muted)">Wróć do listy</button>';
+    void uPre;
     $('back').onclick = renderMenu;
     $('job').onclick = e => { const b = e.target.closest('.seg button'); if (!b) return; const k = b.parentNode.dataset.key; t[k] = b.dataset.v === 'true' ? true : b.dataset.v === 'false' ? false : b.dataset.v; umowa(); };
     $('umOk').onclick = () => {
       cur.umowa = Umowa.evaluate(t, c, rnd); cur.notes.push(...cur.umowa.notes);
       cur.deadline = Math.round(cur.job.deadline * cur.umowa.deadlineFactor);
-      if (cur.mystery) { /* tajemniczy klient nic nie zdradza */ }
       afterUmowa();
     };
   }
   function pickHelper() {
-    $('job').innerHTML = '<div class="bubble"><span class="av">' + cur.client.em + '</span><div><b>' + cur.job.title + '</b> · ' + cur.client.name + '<br><small style="color:var(--muted)">' + cur.job.intro + '</small></div></div>' +
+    const solo = estimateFor(cur.level, { terms: cur.terms });
+    $('job').innerHTML = '<div class="bubble"><span class="av">' + cur.client.em + '</span><div><b>' + cur.job.title + '</b> · ' + cur.client.name + '<br><small style="color:var(--muted)">' + cur.intro + '</small></div></div>' +
+      '<div class="hint">' + (cur.night ? '🌙 Noc' : '☀️ Dzień') + ', start ' + Czas.hm(cur.startClock) + '. Pomocnik kosztuje udział w pensji za to zlecenie' + (cur.night ? ' (w nocy z dopłatą 50%)' : '') + '.</div>' +
       '<h2 style="font-size:1.4rem;text-transform:uppercase">Kogo bierzesz do pomocy?</h2><div class="hint">Dobry pomocnik poprawia celność i skraca robotę. Wkurzony może nie przyjść albo zostawić cię w połowie zlecenia.</div>' +
-      '<div class="opts">' + ST.crew.map(w => { const r = Ekipa.risk(w), stt = cur.states[w.id], out = w.outJobs > 0;
-        return '<button class="opt" data-w="' + w.id + '" ' + (out ? 'disabled' : '') + '><b>' + w.em + ' ' + w.name + ' · ' + Ekipa.moodEmoji(w.mood) + ' ' + Ekipa.moodLabel(w.mood) + (out ? ' · na zwolnieniu (' + w.outJobs + ' zlec.)' : '') + '</b><span>dziś: ' + Swiat.LABEL[stt] + (stt !== 'trzezwy' ? ' ⚠' : '') + ' · pracowitość ' + Math.round((w.diligence == null ? 0.5 : w.diligence) * 100) + '%</span><span>' + w.role + ' · umiejętności ' + Math.round(w.skill * 100) + '%</span><span class="chips"><span class="chip">nie przyjdzie: ' + Math.round(r.absent * 100) + '%</span><span class="chip">zostawi w połowie: ' + Math.round(r.walkout * 100) + '%</span></span></button>'; }).join('') +
-      '<button class="opt" data-w=""><b>Sam, bez pomocnika</b><span>Spokojniej. Wolniej.</span></button></div>' +
+      '<div class="opts">' + ST.crew.map(w => { const r = Ekipa.risk(w, { night: cur.night }), stt = cur.states[w.id], out = w.outJobs > 0, cost = Stawka.helperShare(w, cur.night), est = estimateFor(cur.level, { terms: cur.terms, helper: w, states: cur.states });
+        return '<button class="opt" data-w="' + w.id + '" ' + (out ? 'disabled' : '') + '><b>' + w.em + ' ' + w.name + ' · ' + Ekipa.moodEmoji(w.mood) + ' ' + Ekipa.moodLabel(w.mood) + (out ? ' · na zwolnieniu (' + w.outJobs + ' zlec.)' : '') + '</b><span>dziś: ' + Swiat.LABEL[stt] + (stt !== 'trzezwy' ? ' ⚠' : '') + ' · pracowitość ' + Math.round((w.diligence == null ? 0.5 : w.diligence) * 100) + '%</span><span>' + w.role + ' · umiejętności ' + Math.round(w.skill * 100) + '%</span><span class="chips"><span class="chip cost">💰 koszt wzięcia: ' + zl(cost) + '</span><span class="chip">stawka z nim ' + perHourTxt(est) + '</span></span><span class="chips"><span class="chip">nie przyjdzie: ' + Math.round(r.absent * 100) + '%</span><span class="chip">zostawi w połowie: ' + Math.round(r.walkout * 100) + '%</span></span></button>'; }).join('') +
+      '<button class="opt" data-w=""><b>Sam, bez pomocnika</b><span>Spokojniej. Wolniej.</span><span class="chips"><span class="chip cost">💰 koszt wzięcia: 0 zł</span><span class="chip">stawka sam ' + perHourTxt(solo) + '</span></span></button></div>' +
       '<button id="back" style="background:transparent;min-height:40px;color:var(--muted)">Wróć do listy</button>';
     $('back').onclick = renderMenu;
     $('job').querySelector('.opts').onclick = e => { const b = e.target.closest('.opt'); if (!b) return;
       const w = ST.crew.find(x => x.id === b.dataset.w) || null; cur.helper = w;
-      if (w) { if (Ekipa.attendance(w, rnd) === 'absent') { cur.helperOn = false; cur.timeAdj += 4; cur.notes.push(w.em + ' ' + w.name + ' nie przyszedł do roboty. Poczekałeś na niego 4 minuty i robisz sam.'); }
-        else { cur.helperOn = true; const stt = cur.states[w.id]; cur.notes.push(w.em + ' ' + w.name + ' jest na miejscu' + (stt !== 'trzezwy' ? ', ale jest ' + Swiat.LABEL[stt] + '.' : '.')); } }
+      if (w) { if (Ekipa.attendance(w, rnd, { night: cur.night }) === 'absent') { cur.helperOn = false; cur.timeAdj += 4; cur.notes.push(w.em + ' ' + w.name + ' nie przyszedł do roboty. Poczekałeś na niego 20 minut i robisz sam.'); }
+        else { cur.helperOn = true; cur.helperPaid = Stawka.helperShare(w, cur.night); const stt = cur.states[w.id]; cur.notes.push(w.em + ' ' + w.name + ' jest na miejscu' + (stt !== 'trzezwy' ? ', ale jest ' + Swiat.LABEL[stt] + '.' : '.')); } }
       transport(); };
   }
 
-  // ---------- dylemat: kto zawozi materiały ----------
+  // ---------- dylemat: kto zawozi materiały (tylko ci, którzy jadą na zlecenie) ----------
   function transport() {
-    const drivers = ST.crew.filter(w => !(w.outJobs > 0) && !(cur.helper && w.id === cur.helper.id && !cur.helperOn));
+    const drivers = cur.helper && cur.helperOn && !(cur.helper.outJobs > 0) ? [cur.helper] : [];
     const riskTxt = (w, mode) => { const stt = cur.states[w.id] || 'trzezwy', r = Swiat.driveRisk(w, stt, ST.world, mode); return '<span class="chip">wypadek: ' + Swiat.band(r.accident) + '</span><span class="chip">policja: ' + Swiat.band(r.police) + '</span>'; };
+    const oR = Swiat.driveRisk(null, 'trzezwy', ST.world, 'owner');
     $('job').innerHTML = '<div class="bubble"><span class="av">' + cur.client.em + '</span><div><b>' + cur.job.title + '</b> · ' + cur.client.name + '<br><small style="color:var(--muted)">Materiały i narzędzia trzeba dowieźć na miejsce.</small></div></div>' +
-      '<h2 style="font-size:1.4rem;text-transform:uppercase">Kto zawozi?</h2><div class="hint">Ryzyko jest przybliżone. Policja częściej zatrzymuje, kiedy w okolicy były już kontrole.</div>' +
+      '<h2 style="font-size:1.4rem;text-transform:uppercase">Kto zawozi?</h2><div class="hint">Do wyboru są tylko ci, którzy jadą na zlecenie. ' + (cur.night ? '🌙 W nocy częstsze są wypadki i kontrole policji. ' : '') + 'Ryzyko jest przybliżone.</div>' +
       '<div class="opts">' +
-      '<button class="opt" data-d="owner"><b>🚗 Ty, sam</b><span>Masz prawo jazdy i trzeźwą głowę. Tracisz trochę czasu.</span><span class="chips"><span class="chip">⏱ +3 min</span><span class="chip">wypadek: niskie</span></span></button>' +
-      '<button class="opt" data-d="courier"><b>🚚 Kurier</b><span>Płacisz, nie myślisz.</span><span class="chips"><span class="chip">💰 70 zł</span><span class="chip">⏱ +2 min</span><span class="chip">bez ryzyka</span></span></button>' +
+      '<button class="opt" data-d="owner"><b>🚗 Ty, sam</b><span>Masz prawo jazdy i trzeźwą głowę. Tracisz trochę czasu.</span><span class="chips"><span class="chip">⏱ +' + Czas.fmtMin(3 * Czas.TIME_SCALE) + '</span><span class="chip cost">💰 0 zł</span><span class="chip">wypadek: ' + Swiat.band(oR.accident) + '</span></span></button>' +
+      '<button class="opt" data-d="courier"><b>🚚 Kurier</b><span>Płacisz, nie myślisz.</span><span class="chips"><span class="chip cost">💰 70 zł</span><span class="chip">⏱ +' + Czas.fmtMin(2 * Czas.TIME_SCALE) + '</span><span class="chip">bez ryzyka</span></span></button>' +
       drivers.map(w => { const stt = cur.states[w.id] || 'trzezwy';
-        return '<button class="opt" data-d="' + w.id + '"><b>' + w.em + ' ' + w.name + ' · ' + Swiat.LABEL[stt] + (stt !== 'trzezwy' ? ' ⚠' : '') + '</b><span>prawo jazdy: ' + (w.license ? 'ma' : 'nie ma') + ' · jazda ' + Math.round((w.driving == null ? 0.5 : w.driving) * 100) + '%' + (ST.world.heat > 0.4 ? ' · uwaga: dużo patroli' : '') + '</span><span class="chips"><span class="chip">💰 za darmo</span>' + riskTxt(w, 'worker') + '</span></button>'; }).join('') + '</div>';
+        return '<button class="opt" data-d="' + w.id + '"><b>' + w.em + ' ' + w.name + ' · ' + Swiat.LABEL[stt] + (stt !== 'trzezwy' ? ' ⚠' : '') + '</b><span>jedzie na zlecenie · prawo jazdy: ' + (w.license ? 'ma' : 'nie ma') + ' · jazda ' + Math.round((w.driving == null ? 0.5 : w.driving) * 100) + '%' + (ST.world.heat > 0.4 ? ' · uwaga: dużo patroli' : '') + '</span><span class="chips"><span class="chip cost">💰 0 zł</span>' + riskTxt(w, 'worker') + '</span></button>'; }).join('') + '</div>';
     $('job').querySelector('.opts').onclick = e => { const b = e.target.closest('.opt'); if (!b) return; doDrive(b.dataset.d); };
   }
   function doDrive(id) {
     const mode = id === 'owner' || id === 'courier' ? id : 'worker', w = mode === 'worker' ? ST.crew.find(x => x.id === id) : null;
-    ST.world.accMult = Siedziba.effects(ST.hq).accMult;
+    ST.world.accMult = Siedziba.effects(ST.hq).accMult; ST.world.night = cur.night;
     const res = Swiat.resolveDrive(w, w ? (cur.states[w.id] || 'trzezwy') : 'trzezwy', ST.world, mode, rnd);
     if (res.police && res.police.fine && ST.fav.fine) { res.cost -= res.police.fine; ST.fav.fine = false; res.notes.push('👮 Dzielnicowy Marek „zapomniał” o mandacie.'); }
     if (res.incident) cur.scandal = true;
-    ST.money = Math.max(0, ST.money - res.cost); cur.timeAdj += res.timeAdj; cur.notes.push(...res.notes);
-    if (res.cost) cur.costExtra = (cur.costExtra || 0) + res.cost;
+    cash(mode === 'courier' ? 'transport' : 'wypadki', -res.cost); cur.timeAdj += res.timeAdj; cur.notes.push(...res.notes);
+    cur.transportCost += Math.max(0, res.cost);
     if (res.claim) ST.claims.push(Object.assign({ client: cur.client.name, due: ST.done + 1 }, res.claim));
     Swiat.tickWorld(ST.world, res.heatDelta);
     if (w && Object.keys(res.driverPatch).length) ST.crew = ST.crew.map(x => x.id === w.id ? Object.assign({}, x, res.driverPatch) : x);
@@ -146,29 +189,42 @@
     $('modal').hidden = false;
     $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return;
       const out = Swiat.applyAftermath(ST.crew.find(x => x.id === w.id), b.dataset.a, res);
-      ST.money += out.money; cur.notes.push(out.note);
+      cash('wypadki', out.money); cur.notes.push(out.note);
       if (out.fired) { ST.crew = ST.crew.filter(x => x.id !== w.id); if (out.rep) ST.ratings.push(out.rep); if (cur.helper && cur.helper.id === w.id) cur.helperOn = false; }
       else ST.crew = ST.crew.map(x => x.id === w.id ? out.worker : x);
       save(); renderTop(); $('modal').hidden = true; modalOpen = false; renderJob(); };
   }
   function renderJob() {
-    const { job, client, step } = cur, s = job.steps[step];
+    const { job, client, step } = cur, s = job.steps[step], night = cur.night;
+    const stages = '<div class="stages">' + job.steps.map((st, k) => {
+      const pk = cur.picks[k], o = pk ? st.options.find(x => x.id === pk.optionId) : null, cls = k < step ? 'done' : k === step ? 'cur' : '';
+      return '<div class="stage ' + cls + '"><span class="num">' + (k < step ? '✓' : (k + 1)) + '</span><span class="stn">' + st.name + (o ? '<small>' + o.label + '</small>' : (k === step ? '<small>teraz</small>' : '')) + '</span></div>'; }).join('') + '</div>';
     $('job').innerHTML =
-      '<div class="bubble"><span class="av">' + client.em + '</span><div><b>' + client.name + '</b>: „' + job.intro + '”<br><small style="color:var(--muted)">' + client.note + '</small></div></div>' +
+      '<div class="bubble"><span class="av">' + client.em + '</span><div><b>' + client.name + '</b>: „' + cur.intro + '”<br><small style="color:var(--muted)">' + client.note + '</small></div></div>' +
       sceneHTML(job) +
-      (cur.notes.length ? '<div class="banner">' + cur.notes.slice(-2).join('<br>') + '</div>' : '') +
-      '<div class="steps">' + job.steps.map((_, k) => '<i class="' + (k < step ? 'done' : k === step ? 'cur' : '') + '"></i>').join('') + '</div>' +
+      (cur.notes.length ? '<div class="banner">' + cur.notes.slice(-2).join('<br>') + '</div>' : '') + stages +
       '<div class="step"><h2>' + (step + 1) + '/' + job.steps.length + ' · ' + s.name + '</h2><div class="hint">' + s.hint + '</div></div>' +
       '<div class="opts" id="opts">' + s.options.map(o =>
-        '<button class="opt" data-o="' + o.id + '"><b>' + o.label + '</b><span>' + o.desc + '</span><span class="chips"><span class="chip">⏱ ' + o.time + ' min</span><span class="chip">💰 ' + zl(o.cost) + '</span>' + (o.skill ? '<span class="chip skill">🎯 na wyczucie</span>' : '') + '</span></button>').join('') + '</div>' +
-      '<div class="tally"><span>Czas: ' + cur.time + ' / ' + cur.deadline + ' min</span><span>Materiały: ' + zl(cur.cost) + '</span></div>' +
+        '<button class="opt" data-o="' + o.id + '"><b>' + o.label + '</b><span>' + o.desc + '</span><span class="chips"><span class="chip">⏱ ' + Czas.fmtUnits(o.time, night) + '</span><span class="chip">💰 ' + zl(o.cost) + '</span>' + (o.skill ? '<span class="chip skill">🎯 na wyczucie</span>' : '') + '</span></button>').join('') + '</div>' +
+      '<div class="tally"><span>🕒 ' + Czas.hm(viewClock()) + ' · praca: ' + Czas.fmtUnits(Math.max(0, cur.time + cur.timeAdj), night) + ' / ' + Czas.fmtUnits(cur.deadline, night) + '</span><span>Materiały: ' + zl(cur.cost) + '</span></div>' +
       '<button id="back" style="background:transparent;min-height:40px;color:var(--muted)">Wróć do listy (bez zapisu)</button>';
-    applyScene($('job'), cur.tokens);
+    applyScene($('job'), cur.tokens); renderTop();
     $('back').onclick = renderMenu;
     $('opts').onclick = e => { const b = e.target.closest('.opt'); if (b) choose(s.options.find(o => o.id === b.dataset.o)); };
   }
-  function choose(opt) { if (opt.skill) timing(opt); else apply(opt, 0.6); }
+  function choose(opt) { if (opt.skill) timing(opt); else perform(opt, 0.6); }
+  /* Animacja czynności na scenie (narzędzie w akcji), potem zmiana stanu naprawy. Fuszerka jest szybka, solidna robota trwa dłużej. */
+  const ACTION_TXT = { wrench: 'Kręcisz kluczem…', hammer: 'Młotek w ruch…', drill: 'Wiercisz…', roller: 'Malujesz wałkiem…', trowel: 'Szpachlujesz…', sander: 'Szlifujesz…', tester: 'Mierzysz i sprawdzasz…', pliers: 'Pracujesz cęgami…', screwdriver: 'Wkręcasz…', pencil: 'Zaznaczasz…' };
+  function perform(opt, accuracy) {
+    const a = Scenes.actionFor(cur.job.id, cur.step), dur = opt.id === 'dobrze' ? 1500 : opt.id === 'skrot' ? 950 : 520;
+    anim = { kind: a.kind, at: a.at, t0: performance.now(), dur };
+    const box = $('opts'); if (box) box.innerHTML = '<div class="hint" style="text-align:center">' + (ACTION_TXT[a.kind] || 'Pracujesz…') + ' <b>' + opt.label + '</b></div><div class="actbar"><i id="actbar" style="width:0"></i></div>';
+    const tick = () => { if (!anim) return; const t = Math.min(1, (performance.now() - anim.t0) / anim.dur), bar = $('actbar'); if (bar) bar.style.width = t * 100 + '%'; document.querySelectorAll('canvas.pxscene[data-job]').forEach(paintScene); if (t < 1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    setTimeout(() => { anim = null; apply(opt, accuracy); }, dur);
+  }
   function apply(opt, accuracy) {
+    const mods = Czas.mods(cur.night);
     if (cur.helperOn && cur.helper) {
       const he = Ekipa.helperEffect(cur.helper, cur.states[cur.helper.id]);
       const sl = Ekipa.sloppy(cur.helper, cur.states[cur.helper.id], rnd);
@@ -182,11 +238,11 @@
       if (cur.failAt[tl.id] === cur.step && !cur.brokenTools[tl.id]) {
         cur.brokenTools[tl.id] = true; ST.inv = ST.inv.map(x => x.id === tl.id ? Alledrogo.breakItem(x) : x); cur.timeAdj += 4;
         cur.extraDefects.push({ label: 'narzędzie „' + tl.brand + '” padło w trakcie roboty', sev: 1.5, vis: 0.5 });
-        cur.notes.push('🔧💥 „' + tl.brand + '” padło w trakcie roboty (kupione ' + (tl.source === 'sklep' ? 'w sklepie' : 'od: ' + tl.sellerName) + '). Cztery minuty w plecy.');
+        cur.notes.push('🔧💥 „' + tl.brand + '” padło w trakcie roboty (kupione ' + (tl.source === 'sklep' ? 'w sklepie' : 'od: ' + tl.sellerName) + '). Dwadzieścia minut w plecy.');
       }
     });
     const tb = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id]));
-    if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + tb.acc));
+    if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + tb.acc - mods.accPenalty));
     cur.timeAdj -= Math.round(opt.time * tb.time * 10) / 10;
     cur.picks.push({ stepId: cur.job.steps[cur.step].id, optionId: opt.id, accuracy });
     cur.time += opt.time; cur.cost += opt.cost;
@@ -194,7 +250,7 @@
     if (cur.helperOn && cur.helper && cur.step + 1 === Math.floor(cur.job.steps.length / 2) && Ekipa.walksOut(cur.helper, rnd)) {
       cur.helperOn = false; cur.timeAdj += 6;
       cur.extraDefects.push({ label: 'bałagan po ekipie, która zniknęła w trakcie', sev: 1.5, vis: 0.6 });
-      cur.notes.push('🚪 ' + cur.helper.name + ' rzucił robotę w połowie: „Za takie pieniądze to ja nie będę.” Kończysz sam i tracisz 6 minut.');
+      cur.notes.push('🚪 ' + cur.helper.name + ' rzucił robotę w połowie: „Za takie pieniądze to ja nie będę.” Kończysz sam i tracisz pół godziny.');
       cur.helper = Object.assign({}, cur.helper, { mood: Math.max(0, cur.helper.mood - 10) });
       ST.crew = ST.crew.map(w => w.id === cur.helper.id ? cur.helper : w);
     }
@@ -221,7 +277,7 @@
       mark.style.left = x * 100 + '%';
       $('verdict').textContent = a >= 0.9 ? 'Idealnie!' : a >= 0.7 ? 'Dobrze' : a >= 0.4 ? 'Krzywo' : 'Fatalnie';
       $('stop').disabled = true;
-      setTimeout(() => apply(opt, a), 650);
+      setTimeout(() => perform(opt, a), 450);
     };
     $('stop').onclick = stop;
     window.__z.stopNow = stop;
@@ -229,34 +285,44 @@
 
   // ---------- odbiór ----------
   function finish() {
+    const night = cur.night, mods = Czas.mods(night);
+    const units = Math.max(1, cur.time + cur.timeAdj), minutes = Czas.minutes(units, night), endClock = cur.startClock + minutes;
+    // zegar: koniec zlecenia i ewentualna zmiana miesiąca
+    const oldKey = bookKey(); ST.clock = endClock; const newKey = bookKey();
+    if (newKey !== oldKey) { ST.monthEnd[oldKey] = ST.money; ST.monthStart[newKey] = ST.money; ST.pendingMonths.push(oldKey); }
+    ST.day = Czas.dateOf(ST.clock).dayIndex;
     const job = Object.assign({}, cur.job, { base: Math.round(cur.job.base * cur.mult), deadline: cur.deadline });
-    const rt = co(), um = cur.umowa || { payMult: 1, satDelta: 0 };
+    const rt = co(), um = cur.umowa || { payMult: 1, satDelta: 0, taxRiskDelta: 0 };
     const sea = Kalendarz.demandMult(cur.season, cur.job.id), gos = Osiedle.gossipMult(ST.os), cut = 1 - Osiedle.undercut(ST.os, { rating: rt.stars, tier: ST.hq.tier });
-    const payMult = Math.round(rt.payMult * um.payMult * sea * gos * cut * 1000) / 1000;
-    const r = Fuszerka.evaluate(job, cur.picks, cur.client, { time: Math.round(cur.timeAdj), defects: cur.extraDefects, satBonus: rt.satBonus + um.satDelta, payMult, hazardMult: Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id])).hazardMult });
+    const payMult = Math.round(rt.payMult * um.payMult * sea * gos * cut * mods.payMult * 1000) / 1000;
+    const hz = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id])).hazardMult * mods.hazard;
+    const r = Fuszerka.evaluate(job, cur.picks, cur.client, { time: Math.round(cur.timeAdj), defects: cur.extraDefects, satBonus: rt.satBonus + um.satDelta, payMult, hazardMult: hz, attentionMult: mods.attention });
     const comment = Fuszerka.clientComment(cur.client, r, rnd);
     const claim = Fuszerka.rollClaim(r, rnd);
-    ST.money += r.profit; ST.ratings.push(r.stars); ST.done++; ST.day++;
-    if (ST.fav.materials) { const back = Math.round(r.cost * 0.1); ST.money += back; if (back) cur.notes.push('📦 Waldek dał zniżkę na materiały: +' + zl(back) + '.'); ST.fav.materials = false; }
+    cash('zlecenia', r.payout); cash('materialy', -r.cost); ST.ratings.push(r.stars); ST.done++;
+    if (ST.fav.materials) { const back = Math.round(r.cost * 0.1); cash('materialy', back); if (back) cur.notes.push('📦 Waldek dał zniżkę na materiały: +' + zl(back) + '.'); ST.fav.materials = false; }
     ST.fin = Finanse.addIncome(ST.fin, r.payout, cur.terms.invoice); ST.fin.tax.risk = Math.min(100, ST.fin.tax.risk + (cur.umowa ? cur.umowa.taxRiskDelta : 0));
     ST.os = Osiedle.updateGossip(ST.os, { stars: r.stars, gossipy: Osiedle.GOSSIP[cur.client.id], scandal: !!cur.scandal });
-    if (cur.mystery) { const my = Fabula.resolveMystery(r); ST.money = Math.max(0, ST.money + my.money); ST.os.gossip = Math.max(0, Math.min(100, ST.os.gossip + my.gossip)); cur.notes.push(my.text); }
+    if (cur.mystery) { const my = Fabula.resolveMystery(r); cash('zdarzenia', my.money); ST.os.gossip = Math.max(0, Math.min(100, ST.os.gossip + my.gossip)); cur.notes.push(my.text); }
     ST.hist.push({ index: r.index }); ST.hist = ST.hist.slice(-12);
+    let toolWearCost = 0;
     if (cur.tools.length) {
-      const ids = cur.tools.map(tl => tl.id), before = ST.inv.filter(x => x.status === 'sprawny').length;
+      const ids = cur.tools.map(tl => tl.id), beforeT = ST.inv.filter(it => ids.indexOf(it.id) >= 0);
       ST.inv = ST.inv.map(it => ids.indexOf(it.id) >= 0 ? Alledrogo.wear(it) : it);
+      toolWearCost = Stawka.toolWear(beforeT, ST.inv.filter(it => ids.indexOf(it.id) >= 0), Alledrogo.value);
       ST.inv.filter(it => ids.indexOf(it.id) >= 0 && it.status === 'zepsute' && !cur.brokenTools[it.id]).forEach(it => cur.notes.push('🔧 „' + it.brand + '” po tej robocie przestało działać. Tak to bywa z używanym sprzętem.'));
     }
+    if (night && cur.helper && cur.helperPaid) { ST.crew = ST.crew.map(w => w.id === cur.helper.id ? Object.assign({}, w, { mood: Math.max(0, w.mood - mods.moodHit) }) : w); cur.notes.push('😴 Praca w nocy zmęczyła ekipę (nastrój −' + mods.moodHit + ').'); }
     const dl = Alledrogo.tickOrders(ST.orders, rnd); ST.orders = dl.orders;
     dl.arrived.forEach(a => {
-      if (a.lost) { const rf = Alledrogo.refundLost(a.order); ST.money += rf.refund; ST.flash.push('📦 Paczka z „' + a.order.brand + '” zaginęła. Sprzedawca oddał ' + zl(rf.refund) + '.'); }
+      if (a.lost) { const rf = Alledrogo.refundLost(a.order); cash('zakupy', rf.refund); ST.flash.push('📦 Paczka z „' + a.order.brand + '” zaginęła. Sprzedawca oddał ' + zl(rf.refund) + '.'); }
       else { ST.inv.push(a.item); ST.flash.push('📦 Dotarła paczka: „' + a.item.brand + '”. Rozpakuj w Alledrogo.'); }
     });
     dl.events.filter(e => e.type === 'damaged').forEach(e => ST.flash.push(e.text));
     ST.market = Alledrogo.refresh(ST.market, ST.day);
     const th = Siedziba.resolveTheft(ST.hq, rnd, Alledrogo.inventoryValue(ST.inv));
     if (th) {
-      ST.hq = th.hq; ST.money = Math.max(0, ST.money - th.net);
+      ST.hq = th.hq; cash('kradziez', -th.net);
       if (th.itemStolen && ST.inv.length) { const top = ST.inv.slice().sort((a, b) => Alledrogo.value(b) - Alledrogo.value(a))[0]; ST.inv = ST.inv.filter(x => x.id !== top.id); cur.notes.push('🕵️ Złodziej zabrał też „' + top.brand + '”.'); }
       cur.notes.push('🕵️ W nocy ktoś włamał się do siedziby: strata ' + zl(th.loss) + (th.recovered ? ', ale kamery pomogły odzyskać ' + zl(th.recovered) : '') + '.' + (th.cameras ? '' : ' Kamery i mocniejsze drzwi by pomogły.'));
     }
@@ -265,11 +331,20 @@
     if (!prev || r.stars > prev.stars || (r.stars === prev.stars && r.index < prev.index)) ST.best[cur.i] = { stars: r.stars, index: r.index };
     ST.unlocked = Math.max(ST.unlocked, cur.i + 2);
     if (claim) ST.claims.push(Object.assign({ client: cur.client.name, due: ST.done + 1 }, claim));
+    // ile zostaje po wszystkich kosztach i stawka godzinowa
+    const eco = Stawka.jobEconomics({ payout: r.payout, materials: r.cost, transport: cur.transportCost, helper: cur.helperPaid, tools: toolWearCost, tax: cur.terms.invoice ? r.payout * Umowa.TAX_RATE : 0,
+      overhead: Stawka.overheadShare(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)), minutes });
+    ST.ledger = Ksiega.noteJob(ST.ledger, bookKey(), eco.net, eco.hours);
     save(); renderTop();
     const bar = (v, max) => '<span class="b"><i style="width:' + Math.min(100, v / max * 100) + '%"></i></span>';
     const defs = r.defects.length ? r.defects.slice().sort((a, b) => b.sev - a.sev).map(d => {
       const tags = (d.hazard > 0 ? '<span class="tag haz">zagrożenie</span> ' : '') + (d.vis >= 0.5 ? '<span class="tag vis">widoczna</span>' : '<span class="tag hid">ukryta</span>');
       return '<div class="def"><span>' + d.label + '</span><span>' + tags + '</span></div>'; }).join('') : '<div class="def"><span>Brak wad. Naprawdę dobra robota.</span></div>';
+    const econHtml = '<div class="econ"><div class="erow"><span>🕒 ' + Czas.hm(cur.startClock) + ' → ' + Czas.hm(endClock) + ' (' + (night ? 'noc' : 'dzień') + ')</span><b>' + Czas.fmtMin(minutes) + '</b></div>' +
+      eco.lines.map(l => '<div class="erow"><span>' + l.label + '</span><b class="' + (l.value >= 0 ? 'pos' : 'neg') + '">' + (l.value === 0 ? '0 zł' : signed(l.value)) + '</b></div>').join('') +
+      '<div class="erow tot"><span>Zostaje po wszystkich kosztach</span><b class="' + (eco.net >= 0 ? 'pos' : 'neg') + '">' + signed(eco.net) + '</b></div>' +
+      '<div class="erow big"><span>Stawka po kosztach</span><b class="' + (eco.perHour >= 0 ? 'pos' : 'neg') + '">' + signed(eco.perHour) + '/h</b></div>' +
+      '<div class="hint">Brutto ' + signed(eco.grossPerHour) + '/h. Pomocnik, podatek i utrzymanie to udziały: realnie płacisz je w dniu wypłaty.</div></div>';
     $('job').hidden = true; $('result').hidden = false;
     $('result').innerHTML =
       sceneHTML(cur.job) +
@@ -280,11 +355,11 @@
       '<div class="break"><div class="brow"><span>Wady widoczne</span>' + bar(r.V, 12) + '<b>' + r.V.toFixed(1) + '</b></div><div class="brow"><span>Wady ukryte</span>' + bar(r.H, 12) + '<b>' + r.H.toFixed(1) + '</b></div><div class="brow"><span>Zagrożenie</span>' + bar(r.Z, 12) + '<b>' + r.Z.toFixed(1) + '</b></div></div>' +
       '<div class="defs">' + defs + '</div>' +
       (cur.notes.length ? '<div class="banner">' + cur.notes.join('<br>') + '</div>' : '') +
-      '<div class="hint">Zadowolenie klienta: ' + r.satisfaction + '%' + (r.late ? ' (spóźnienie: ' + r.time + ' z ' + job.deadline + ' min)' : '') + '. Szansa reklamacji: ' + Math.round(r.claim.chance * 100) + '%. Ocena firmy ' + rt.stars.toFixed(1).replace('.', ',') + ' ★ · razem mnożnik wypłaty ×' + payMult.toFixed(2).replace('.', ',') + ' (firma ×' + rt.payMult.toFixed(2).replace('.', ',') + ', umowa ×' + um.payMult.toFixed(2).replace('.', ',') + ', sezon ×' + sea.toFixed(2).replace('.', ',') + ', plotki ×' + gos.toFixed(2).replace('.', ',') + (cut < 1 ? ', rywal ×' + cut.toFixed(2).replace('.', ',') : '') + ').</div>' +
-      '<div class="money"><span>Wypłata</span><span>' + zl(r.payout) + '</span><span>Materiały</span><span>−' + zl(r.cost) + '</span><span class="tot">Zysk</span><span class="tot">' + zl(r.profit) + '</span></div>' +
+      '<div class="hint">Zadowolenie klienta: ' + r.satisfaction + '%' + (r.late ? ' (spóźnienie)' : '') + '. Szansa reklamacji: ' + Math.round(r.claim.chance * 100) + '%. Ocena firmy ' + rt.stars.toFixed(1).replace('.', ',') + ' ★ · mnożnik wypłaty ×' + payMult.toFixed(2).replace('.', ',') + ' (firma ×' + rt.payMult.toFixed(2).replace('.', ',') + ', umowa ×' + um.payMult.toFixed(2).replace('.', ',') + ', sezon ×' + sea.toFixed(2).replace('.', ',') + ', plotki ×' + gos.toFixed(2).replace('.', ',') + (cut < 1 ? ', rywal ×' + cut.toFixed(2).replace('.', ',') : '') + (night ? ', noc ×' + String(mods.payMult).replace('.', ',') : '') + ').</div>' +
+      econHtml +
       '<button class="primary" id="next">Dalej</button><button id="again" style="background:transparent">Spróbuj to zlecenie jeszcze raz</button>';
     $('next').onclick = () => renderMenu(); $('again').onclick = () => startJob(cur.i);
-    window.__z.last = r;
+    window.__z.last = r; window.__z.eco = eco;
   }
 
   let modalOpen = false;
@@ -297,7 +372,7 @@
     const tabs = [['oferty', 'Oferty'], ['zam', 'Zamówienia (' + ST.orders.length + ')'], ['moje', 'Moje narzędzia (' + ST.inv.length + ')']];
     let body = '';
     if (alleTab === 'oferty') {
-      body = '<div class="hint">Oferty odświeżają się co kilka dni (dziś: dzień ' + ST.day + '). Ocena sprzedawcy to nie wszystko, a „jak nowe” za pół ceny rzadko bywa prawdą.</div>' + ST.market.listings.map(l => {
+      body = '<div class="hint">Oferty odświeżają się co kilka dni (dziś: ' + Czas.dayLabel(ST.clock) + '). Ocena sprzedawcy to nie wszystko, a „jak nowe” za pół ceny rzadko bywa prawdą.</div>' + ST.market.listings.map(l => {
         const ref = Alledrogo.newPrice(l.type, l.tier), cls = Alledrogo.CLASSES.find(c => c.id === l.claimed), T = Alledrogo.TYPES[l.type];
         const cmp = Math.round((l.price / ref - 1) * 100), sus = l.price < ref * cls.price * 0.88;
         const buy = l.mode === 'buynow' ? '<button data-buy="' + l.id + '" class="primary" style="min-height:46px;font-size:1rem" ' + (ST.money >= l.price + l.shipping ? '' : 'disabled') + '>Kup teraz · ' + zl(l.price + l.shipping) + '</button>'
@@ -332,15 +407,15 @@
       if (tab) { alleTab = tab.dataset.tab; alleMsg = ''; renderAlle(); return; }
       const find = id => ST.market.listings.find(l => l.id === +id);
       if (ask) { const l = find(ask.dataset.ask), r = Alledrogo.ask(l, rnd); alleAsk[l.id] = r.text; ST.market.listings = ST.market.listings.map(x => x.id === l.id ? r.listing : x); renderAlle(); return; }
-      if (buy) { const l = find(buy.dataset.buy), r = Alledrogo.buyNow(l, ST.money); if (r.ok) { ST.money -= r.cost; ST.orders.push(r.order); ST.market = Alledrogo.removeListing(ST.market, l.id); alleMsg = 'Zamówiono „' + l.brand + '” za ' + zl(r.cost) + '. Dotrze za ok. ' + l.eta + ' zlec.'; save(); renderTop(); renderAlle(); } return; }
+      if (buy) { const l = find(buy.dataset.buy), r = Alledrogo.buyNow(l, ST.money); if (r.ok) { cash('zakupy', -r.cost); ST.orders.push(r.order); ST.market = Alledrogo.removeListing(ST.market, l.id); alleMsg = 'Zamówiono „' + l.brand + '” za ' + zl(r.cost) + '. Dotrze za ok. ' + l.eta + ' zlec.'; save(); renderTop(); renderAlle(); } return; }
       if (bid) { const [id, mx] = bid.dataset.bid.split(':'), l = find(id), r = Alledrogo.bid(l, +mx, ST.money, rnd);
-        if (r.ok && r.won) { ST.money -= r.cost; ST.orders.push(r.order); ST.market = Alledrogo.removeListing(ST.market, l.id); alleMsg = 'Wygrałeś licytację „' + l.brand + '” za ' + zl(r.price) + ' (+ wysyłka). Dotrze za ok. ' + l.eta + ' zlec.'; }
+        if (r.ok && r.won) { cash('zakupy', -r.cost); ST.orders.push(r.order); ST.market = Alledrogo.removeListing(ST.market, l.id); alleMsg = 'Wygrałeś licytację „' + l.brand + '” za ' + zl(r.price) + ' (+ wysyłka). Dotrze za ok. ' + l.eta + ' zlec.'; }
         else if (r.ok) { ST.market = Alledrogo.removeListing(ST.market, l.id); alleMsg = r.text + ' Aukcja „' + l.brand + '” przepadła.'; } else alleMsg = r.reason;
         save(); renderTop(); renderAlle(); return; }
       if (ub) { const it = ST.inv.find(x => x.id === +ub.dataset.unbox), r = Alledrogo.unbox(it); ST.inv = ST.inv.map(x => x.id === it.id ? r.item : x); alleMsg = '📦 ' + itemName(it) + ': ' + r.text; save(); renderAlle(); return; }
-      if (sell) { const [id, mode] = sell.dataset.sell.split(':'), it = ST.inv.find(x => x.id === +id), r = Alledrogo.sell(it, mode, rnd); ST.inv = ST.inv.filter(x => x.id !== it.id); ST.money += r.price; ST.os.gossip = Math.max(0, Math.min(100, ST.os.gossip + r.gossip)); alleMsg = r.text + ' (' + zl(r.price) + (r.gossip ? ', plotki ' + r.gossip : '') + ')'; save(); renderTop(); renderAlle(); return; }
-      if (rp) { const it = ST.inv.find(x => x.id === +rp.dataset.repair), r = Alledrogo.repair(it, ST.money, rnd); if (!r.ok) alleMsg = r.reason; else { ST.money -= r.cost; ST.inv = ST.inv.map(x => x.id === it.id ? r.item : x); alleMsg = r.text + ' (−' + zl(r.cost) + ')'; } save(); renderTop(); renderAlle(); return; }
-      if (dp) { const it = ST.inv.find(x => x.id === +dp.dataset.dispute), r = Alledrogo.dispute(it, rnd); if (!r.ok) alleMsg = r.reason; else { alleMsg = r.text; if (r.success) { ST.money += r.refund; ST.inv = ST.inv.filter(x => x.id !== it.id); } else ST.inv = ST.inv.map(x => x.id === it.id ? Object.assign({}, x, { uses: x.protectUses + 1 }) : x); } save(); renderTop(); renderAlle(); }
+      if (sell) { const [id, mode] = sell.dataset.sell.split(':'), it = ST.inv.find(x => x.id === +id), r = Alledrogo.sell(it, mode, rnd); ST.inv = ST.inv.filter(x => x.id !== it.id); cash('zakupy', r.price); ST.os.gossip = Math.max(0, Math.min(100, ST.os.gossip + r.gossip)); alleMsg = r.text + ' (' + zl(r.price) + (r.gossip ? ', plotki ' + r.gossip : '') + ')'; save(); renderTop(); renderAlle(); return; }
+      if (rp) { const it = ST.inv.find(x => x.id === +rp.dataset.repair), r = Alledrogo.repair(it, ST.money, rnd); if (!r.ok) alleMsg = r.reason; else { cash('serwis', -r.cost); ST.inv = ST.inv.map(x => x.id === it.id ? r.item : x); alleMsg = r.text + ' (−' + zl(r.cost) + ')'; } save(); renderTop(); renderAlle(); return; }
+      if (dp) { const it = ST.inv.find(x => x.id === +dp.dataset.dispute), r = Alledrogo.dispute(it, rnd); if (!r.ok) alleMsg = r.reason; else { alleMsg = r.text; if (r.success) { cash('zakupy', r.refund); ST.inv = ST.inv.filter(x => x.id !== it.id); } else ST.inv = ST.inv.map(x => x.id === it.id ? Object.assign({}, x, { uses: x.protectUses + 1 }) : x); } save(); renderTop(); renderAlle(); }
     };
   }
 
@@ -363,7 +438,7 @@
     return true;
   }
   function applyEffects(e, ctx) {
-    if (e.money) ST.money = Math.max(0, ST.money + e.money);
+    if (e.money) cash('zdarzenia', e.money);
     if (e.gossip) ST.os.gossip = Math.max(0, Math.min(100, ST.os.gossip + e.gossip));
     if (e.rivalGrudge) ST.os.rival.grudge += e.rivalGrudge;
     if (e.rivalPower) ST.os.rival.power += e.rivalPower;
@@ -409,6 +484,8 @@
     const loans = f.loans.length ? f.loans.map(l => '<div class="prow"><div class="hd"><span class="nm">' + Finanse.LENDERS[l.lender].name + '</span><span>' + zl(l.principal) + '</span></div><div class="hint">odsetki ' + Math.round(l.rate * 100) + '% · minimalna rata ' + zl(Finanse.minPay(l)) + (l.missed ? ' · <span class="warn">zaległości: ' + l.missed + '</span>' : '') + '</div>' +
       '<div class="row2"><button data-repay="' + l.id + ':100" ' + (ST.money >= 100 ? '' : 'disabled') + '>Spłać 100</button><button data-repay="' + l.id + ':all" ' + (ST.money > 0 ? '' : 'disabled') + '>Spłać ile możesz</button></div></div>').join('') : '<div class="hint">Nie masz długów. Gratulacje.</div>';
     $('fin').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Finanse</h2><div class="stats"><div class="stat"><small>Kasa</small><b>' + zl(ST.money) + '</b></div><div class="stat"><small>Długi</small><b>' + zl(Finanse.debt(f)) + '</b></div><div class="stat"><small>Kontrola</small><b>' + Math.round(ac * 100) + '%</b></div></div>' +
+      '<h3 style="color:var(--muted);text-transform:uppercase">Księga: ' + Czas.monthName(bookKey()) + '</h3>' + monthReportHTML(bookKey()) +
+      (Ksiega.keys(ST.ledger).filter(k => k !== bookKey()).slice(-6).reverse().map(k => { const m = monthSummary(k); return '<div class="erow"><span>' + Czas.monthName(k) + ' · ' + m.jobs + ' zlec.</span><b class="' + (m.plus >= 0 ? 'pos' : 'neg') + '">' + signed(m.plus) + ' · ' + signed(m.perHour) + '/h</b></div>'; }).join('')) +
       '<h3 style="color:var(--muted);text-transform:uppercase">Twoje długi</h3>' + loans + '<h3 style="color:var(--muted);text-transform:uppercase">Pożyczki</h3>' + lenders +
       '<h3 style="color:var(--muted);text-transform:uppercase">Skarbówka</h3><div class="prow"><div class="hd"><span class="nm">Ryzyko kontroli</span><span>' + Math.round(tax.risk) + '%</span></div><div class="mbar ' + moodCls(100 - tax.risk) + '"><i style="width:' + Math.min(100, tax.risk) + '%"></i></div>' +
       '<div class="hint">Ukryte przychody (bez faktur): ' + zl(tax.unreported) + ' · podatek do zapłaty: ' + zl(tax.due) + (tax.accountant ? ' · księgowa pracuje' : '') + (ST.fav.audit ? ' · szwagier trzyma rękę na pulsie' : '') + '</div>' +
@@ -417,30 +494,30 @@
     $('finBack').onclick = renderMenu;
     $('fin').onclick = e => {
       const ln = e.target.closest('[data-loan]'), rp = e.target.closest('[data-repay]'), ac2 = e.target.closest('[data-acc]');
-      if (ln) { const L = Finanse.LENDERS[ln.dataset.loan], ex = f.loans.filter(l => l.lender === L.id).reduce((s, l) => s + l.principal, 0), r = Finanse.takeLoan(ST.fin, L.id, Math.min(500, L.max - ex), co().stars); if (r.ok) { ST.fin = r.fin; ST.money += r.cash; save(); renderTop(); renderFin(); } }
-      if (rp) { const [id, amt] = rp.dataset.repay.split(':'), r = Finanse.repay(ST.fin, +id, amt === 'all' ? 1e9 : +amt, Math.floor(ST.money)); if (r.ok) { ST.fin = r.fin; ST.money -= r.paid; save(); renderTop(); renderFin(); } }
-      if (ac2) { const r = Finanse.hireAccountant(ST.fin, ST.money); if (r.ok) { ST.fin = r.fin; ST.money -= r.cost; save(); renderTop(); renderFin(); } }
+      if (ln) { const L = Finanse.LENDERS[ln.dataset.loan], ex = f.loans.filter(l => l.lender === L.id).reduce((s, l) => s + l.principal, 0), r = Finanse.takeLoan(ST.fin, L.id, Math.min(500, L.max - ex), co().stars); if (r.ok) { ST.fin = r.fin; cash('dlug', r.cash); save(); renderTop(); renderFin(); } }
+      if (rp) { const [id, amt] = rp.dataset.repay.split(':'), r = Finanse.repay(ST.fin, +id, amt === 'all' ? 1e9 : +amt, Math.floor(ST.money)); if (r.ok) { ST.fin = r.fin; cash('dlug', -r.paid); save(); renderTop(); renderFin(); } }
+      if (ac2) { const r = Finanse.hireAccountant(ST.fin, ST.money); if (r.ok) { ST.fin = r.fin; cash('utrzymanie', -r.cost); save(); renderTop(); renderFin(); } }
     };
   }
 
   // ---------- osiedle ----------
   function renderOs() {
     ALL.forEach(x => $(x).hidden = true); $('os').hidden = false;
-    const os = ST.os, rating = co().stars, str = Osiedle.strength({ rating, tier: ST.hq.tier }), rv = os.rival, cut = Osiedle.undercut(os, { rating, tier: ST.hq.tier }), sea = Kalendarz.seasonOf(ST.day);
+    const os = ST.os, rating = co().stars, str = Osiedle.strength({ rating, tier: ST.hq.tier }), rv = os.rival, cut = Osiedle.undercut(os, { rating, tier: ST.hq.tier }), sea = { name: Czas.season(ST.clock), dayInSeason: Czas.dateOf(ST.clock).day };
     const contacts = Object.values(Osiedle.CONTACTS).map(c => { const k = os.contacts[c.id];
       return '<div class="prow"><div class="hd"><span class="nm">' + c.em + ' ' + c.name + '</span><span>' + (k ? 'zaufanie ' + k.trust + '%' : 'nieznajomy') + '</span></div><div class="hint">' + c.fav + (k && k.owes ? ' <span class="warn">Twój dług wdzięczności: ' + k.owes + '</span>' : '') + '</div>' +
         (k ? '<div class="row2"><button data-fav="' + c.id + '">Poproś o przysługę</button><button data-pay="' + c.id + '" ' + (k.owes > 0 && ST.money >= 100 ? '' : 'disabled') + '>Odwdzięcz się · 100 zł</button></div>' : '<button data-meet="' + c.id + '" ' + (ST.money >= c.meetCost ? '' : 'disabled') + ' style="min-height:44px">Poznaj za ' + zl(c.meetCost) + ' (kawa i ciasto)</button>') + '</div>'; }).join('');
     $('os').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Osiedle</h2>' +
-      '<div class="prow"><div class="hd"><span class="nm">Kalendarz</span><span>dzień ' + ST.day + '</span></div><div class="hint">Sezon: <b>' + sea.name + '</b> (dzień ' + sea.dayInSeason + ' z ' + Kalendarz.DAYS_PER_SEASON + '). Zima podnosi popyt na kran i gniazdko, wiosna na ściany, jesień na instalacje. Zimą zimny lokal obniża nastrój ekipy.</div></div>' +
+      '<div class="prow"><div class="hd"><span class="nm">Kalendarz</span><span>' + Czas.dayLabel(ST.clock) + '</span></div><div class="hint">Sezon: <b>' + sea.name + '</b> (' + Czas.dayLabel(ST.clock) + '). Zima podnosi popyt na kran i gniazdko, wiosna na ściany, jesień na instalacje. Zimą zimny lokal obniża nastrój ekipy.</div></div>' +
       '<div class="prow"><div class="hd"><span class="nm">Plotki na osiedlu</span><span>' + Math.round(os.gossip) + '%</span></div><div class="mbar ' + moodCls(os.gossip) + '"><i style="width:' + os.gossip + '%"></i></div><div class="hint">Mnożnik wypłat od renomy: ×' + Osiedle.gossipMult(os).toFixed(2).replace('.', ',') + '. Karyna i Pani Grażyna gadają najwięcej, Pan Mirek prawie wcale. Wypadki i skandale z ekipą szkodzą.</div></div>' +
       '<div class="prow"><div class="hd"><span class="nm">🦈 ' + rv.name + '</span><span>siła ' + Math.round(rv.power) + ' (ty: ' + Math.round(str) + ')</span></div><div class="mbar ' + moodCls(100 - Math.min(100, rv.power)) + '"><i style="width:' + Math.min(100, rv.power) + '%"></i></div><div class="hint">' + (cut > 0 ? 'Rywal zbija ci ceny: ×' + (1 - cut).toFixed(2).replace('.', ',') + '. ' : 'Rywal jeszcze ci nie szkodzi. ') + 'Rośnie z czasem, podkupuje niezadowolonych pracowników i mści się, gdy go rozdrażnisz (żal: ' + Math.round(rv.grudge) + ').</div></div>' +
       '<h3 style="color:var(--muted);text-transform:uppercase">Znajomości</h3>' + contacts + '<button class="primary" id="osBack">Wróć</button>';
     $('osBack').onclick = renderMenu;
     $('os').onclick = e => {
       const m = e.target.closest('[data-meet]'), fv = e.target.closest('[data-fav]'), py = e.target.closest('[data-pay]');
-      if (m) { const r = Osiedle.meet(ST.os, m.dataset.meet, ST.money); if (r.ok) { ST.os = r.os; ST.money -= r.cost; save(); renderTop(); renderOs(); } }
+      if (m) { const r = Osiedle.meet(ST.os, m.dataset.meet, ST.money); if (r.ok) { ST.os = r.os; cash('inne', -r.cost); save(); renderTop(); renderOs(); } }
       if (fv) { const r = Osiedle.useFavor(ST.os, fv.dataset.fav); if (r.ok) { ST.os = r.os; if (r.effect.type !== 'gossip') ST.fav[r.effect.type] = true; ST.flash.push('Przysługa załatwiona: ' + Osiedle.CONTACTS[fv.dataset.fav].fav); save(); renderOs(); } else { ST.flash.push(r.reason); } }
-      if (py) { const r = Osiedle.repayFavor(ST.os, py.dataset.pay, ST.money); if (r.ok) { ST.os = r.os; ST.money -= r.cost; save(); renderTop(); renderOs(); } }
+      if (py) { const r = Osiedle.repayFavor(ST.os, py.dataset.pay, ST.money); if (r.ok) { ST.os = r.os; cash('inne', -r.cost); save(); renderTop(); renderOs(); } }
     };
   }
 
@@ -485,7 +562,7 @@
     $('hq').onclick = ev => {
       const bt = ev.target.closest('[data-buy]'); if (!bt) return;
       const [g, k] = bt.dataset.buy.split(':'); const r = g === 'tier' ? Siedziba.buyTier(ST.hq, ST.money) : Siedziba.buy(ST.hq, g, k, ST.money);
-      if (r.ok) { ST.hq = r.hq; ST.money -= r.cost; save(); renderTop(); renderHq(); }
+      if (r.ok) { ST.hq = r.hq; cash('zakupy', -r.cost); save(); renderTop(); renderHq(); }
     };
   }
 
@@ -508,7 +585,7 @@
     $('crew').onclick = e => {
       const f = e.target.closest('[data-fire]'), h = e.target.closest('[data-hire]');
       if (f) { ST.crew = ST.crew.filter(w => w.id !== f.dataset.fire); save(); renderTop(); renderCrew(); }
-      if (h) { const c = Ekipa.CANDIDATES.find(x => x.id === h.dataset.hire); if (ST.money >= c.wage) { ST.money -= c.wage; ST.crew.push(Ekipa.newWorker(c)); save(); renderTop(); renderCrew(); } }
+      if (h) { const c = Ekipa.CANDIDATES.find(x => x.id === h.dataset.hire); if (ST.money >= c.wage) { cash('zakupy', -c.wage); ST.crew.push(Ekipa.newWorker(c)); save(); renderTop(); renderCrew(); } }
     };
   }
 
@@ -520,17 +597,17 @@
   }
   function weekly() {
     const notes = [];
-    const s = Finanse.settle(ST.fin, Math.floor(ST.money)); ST.fin = s.fin; ST.money -= s.paid; if (s.paid) notes.push('💳 Raty pożyczek: −' + zl(s.paid) + '.');
-    ST.fin.loans.forEach(l => { const c = Finanse.collection(l); if (c) { const loss = Math.round(ST.money * c.moneyPct); ST.money -= loss; notes.push(c.text + (loss ? ' −' + zl(loss) + '.' : '')); l.missed = 1; if (l.lender === 'gienek') ST.os.gossip = Math.max(0, ST.os.gossip - 4); } });
-    const tp = Finanse.payTax(ST.fin, ST.money); ST.fin = tp.fin; ST.money -= tp.paid; if (tp.paid) notes.push('🧾 Podatek od faktur: −' + zl(tp.paid) + '.');
+    const s = Finanse.settle(ST.fin, Math.floor(ST.money)); ST.fin = s.fin; cash('odsetki', -s.paid); if (s.paid) notes.push('💳 Raty pożyczek: −' + zl(s.paid) + '.');
+    ST.fin.loans.forEach(l => { const c = Finanse.collection(l); if (c) { const loss = Math.round(ST.money * c.moneyPct); cash('kary', -loss); notes.push(c.text + (loss ? ' −' + zl(loss) + '.' : '')); l.missed = 1; if (l.lender === 'gienek') ST.os.gossip = Math.max(0, ST.os.gossip - 4); } });
+    const tp = Finanse.payTax(ST.fin, ST.money); ST.fin = tp.fin; cash('podatki', -tp.paid); if (tp.paid) notes.push('🧾 Podatek od faktur: −' + zl(tp.paid) + '.');
     const au = Finanse.rollAudit(ST.fin, { cover: !!ST.fav.audit, force: ST.forceAudit }, rnd); ST.fin = au.fin; ST.forceAudit = false;
-    if (au.audit) { ST.money = Math.max(0, ST.money - au.audit.penalty); notes.push(au.audit.text); ST.os.gossip = Math.max(0, ST.os.gossip - 5); ST.fav.audit = false; }
+    if (au.audit) { cash('kary', -au.audit.penalty); notes.push(au.audit.text); ST.os.gossip = Math.max(0, ST.os.gossip - 5); ST.fav.audit = false; }
     ST.fin = Finanse.decayRisk(ST.fin);
-    const ac = Finanse.upkeep(ST.fin); if (ac) { ST.money = Math.max(0, ST.money - ac); notes.push('Księgowa: −' + zl(ac) + '.'); }
+    const ac = Finanse.upkeep(ST.fin); if (ac) { cash('utrzymanie', -ac); notes.push('Księgowa: −' + zl(ac) + '.'); }
     const rv = Osiedle.tickRival(ST.os, { rating: co().stars, tier: ST.hq.tier, crew: ST.crew }, rnd); ST.os = rv.os;
     rv.events.forEach(ev => {
       if (ev.type === 'poach') { const w = ST.crew.find(x => x.id === ev.id); if (w) { ST.crew = ST.crew.filter(x => x.id !== ev.id); notes.push('🦈 ' + ST.os.rival.name + ' podkupił ' + w.name + '. Niezadowoleni odchodzą tam, gdzie płacą lepiej.'); } }
-      if (ev.type === 'sabotage') { ST.money = Math.max(0, ST.money - ev.cost); notes.push('💥 Ktoś pociął opony w busie i pomazał szyld. Rachunek: ' + zl(ev.cost) + '. Wszyscy wiedzą, kto.'); }
+      if (ev.type === 'sabotage') { cash('kary', -ev.cost); notes.push('💥 Ktoś pociął opony w busie i pomazał szyld. Rachunek: ' + zl(ev.cost) + '. Wszyscy wiedzą, kto.'); }
     });
     return notes;
   }
@@ -539,13 +616,13 @@
     weeklyNotes = weekly();
     const up = Siedziba.effects(ST.hq).upkeep, tn = Siedziba.TIERS[ST.hq.tier].name;
     if (!ST.crew.length) {
-      ST.nextPay = ST.done + Ekipa.PAYDAY_EVERY; const paid = Math.min(Math.floor(ST.money), up); ST.money -= paid; save(); renderTop();
+      ST.nextPay = ST.done + Ekipa.PAYDAY_EVERY; const paid = Math.min(Math.floor(ST.money), up); cash('utrzymanie', -paid); save(); renderTop();
       if (paid > 0 || weeklyNotes.length) notice('Rozliczenie tygodnia', (paid > 0 ? tn + ': ' + zl(paid) + ' za utrzymanie siedziby. ' : '') + weeklyNotes.join(' '), renderMenu); else renderMenu();
       return;
     }
-    billText = (up ? 'Utrzymanie siedziby (' + tn + '): −' + zl(Math.min(Math.floor(ST.money), up)) + '. ' : '') + weeklyNotes.join(' ') + ' '; ST.money = Math.max(0, ST.money - up);
+    billText = (up ? 'Utrzymanie siedziby (' + tn + '): −' + zl(Math.min(Math.floor(ST.money), up)) + '. ' : '') + weeklyNotes.join(' ') + ' '; cash('utrzymanie', -up);
     ALL.forEach(x => $(x).hidden = true); $('payday').hidden = false;
-    sidePay = Ekipa.sideGigs(ST.crew, rnd); ST.money += sidePay.total; save(); renderTop();
+    sidePay = Ekipa.sideGigs(ST.crew, rnd); cash('fuchy', sidePay.total); save(); renderTop();
     PAY = Ekipa.defaultPay(ST.crew, Math.floor(ST.money));
     renderPayday();
   }
@@ -576,7 +653,7 @@
   }
   const rl = a => a[Math.floor(rnd() * a.length)];
   function confirmPay() {
-    const res = Ekipa.applyPay(ST.crew, PAY, { patienceBonus: Siedziba.effects(ST.hq).comfort * 0.5 - Kalendarz.moodPenalty(Kalendarz.seasonOf(ST.day).name, Siedziba.effects(ST.hq).comfort) }); ST.money -= res.spent; ST.crew = res.workers;
+    const res = Ekipa.applyPay(ST.crew, PAY, { patienceBonus: Siedziba.effects(ST.hq).comfort * 0.5 - Kalendarz.moodPenalty(Czas.season(ST.clock), Siedziba.effects(ST.hq).comfort) }); cash('pensje', -res.spent); ST.crew = res.workers;
     const lines = res.details.map(d => {
       const w = ST.crew.find(x => x.id === d.id);
       const weaker = ST.crew.filter(o => o.id !== d.id && o.skill < w.skill && (PAY[o.id] || 0) > (PAY[d.id] || 0))[0];
@@ -600,7 +677,7 @@
     $('mchoices').innerHTML = '<button data-a="y">Daj ' + zl(pay) + (d.kind === 'zaleglosc' ? ' na poczet zaległości' : ' zaliczki') + '<small>nastrój +12' + (pay < d.amount ? ' (to wszystko, co masz)' : '') + '</small></button><button data-a="n">Odmów<small>nastrój −' + Math.round(12 * w.greed) + ', ryzyko, że nie przyjdzie</small></button>';
     $('modal').hidden = false;
     $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return;
-      const yes = b.dataset.a === 'y'; if (yes) ST.money -= pay;
+      const yes = b.dataset.a === 'y'; if (yes) cash('pensje', -pay);
       ST.crew = ST.crew.map(x => x.id === w.id ? Ekipa.answerDemand(x, yes, pay) : x);
       ST.demandAt[w.id] = ST.done; save(); $('modal').hidden = true; modalOpen = false; renderMenu(); };
   }
@@ -610,8 +687,25 @@
       if (d && ST.done - (ST.demandAt[w.id] == null ? -9 : ST.demandAt[w.id]) >= 2) { askDemand(w, d); return true; } }
     return false;
   }
+  /* Raport za zakończony miesiąc: plus, koszty po kategoriach, stawka godzinowa. */
+  function monthReportHTML(key) {
+    const m = monthSummary(key), rows = Object.entries(m.cats).filter(([, v]) => v).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+      .map(([c, v]) => '<div class="erow"><span>' + Ksiega.CATS[c].label + '</span><b class="' + (v >= 0 ? 'pos' : 'neg') + '">' + signed(v) + '</b></div>').join('');
+    return '<div class="econ"><div class="erow big"><span>Plus w miesiącu</span><b class="' + (m.plus >= 0 ? 'pos' : 'neg') + '">' + signed(m.plus) + '</b></div>' +
+      '<div class="erow"><span>Przychody</span><b class="pos">' + signed(m.income) + '</b></div><div class="erow"><span>Koszty</span><b class="neg">' + signed(m.costs) + '</b></div>' + rows +
+      '<div class="erow"><span>Zlecenia: ' + m.jobs + ' · przepracowane ' + Czas.fmtMin(m.hours * 60) + '</span><b class="' + (m.perHour >= 0 ? 'pos' : 'neg') + '">' + signed(m.perHour) + '/h</b></div>' +
+      (m.invest || m.debt ? '<div class="hint">Poza plusem: inwestycje ' + signed(m.invest) + ', dług ' + signed(m.debt) + '.</div>' : '') + '</div>';
+  }
+  function showMonthReport(key) {
+    modalOpen = true; const m = monthSummary(key);
+    $('mtitle').textContent = 'Podsumowanie: ' + Czas.monthName(key);
+    $('mtext').innerHTML = (m.plus >= 0 ? 'Miesiąc na plusie. ' : 'Miesiąc na minusie. ') + 'Stawka po wszystkich kosztach: <b>' + signed(m.perHour) + '/h</b> (' + m.jobs + ' zlec.).' + monthReportHTML(key);
+    $('mchoices').innerHTML = '<button data-a="ok">Dalej</button>'; $('modal').hidden = false;
+    $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; save(); renderMenu(); };
+  }
   function nextEvent() {
     if (modalOpen) return;
+    if (ST.pendingMonths.length) { showMonthReport(ST.pendingMonths.shift()); return; }
     if (ST.done >= ST.nextPay) { startPayday(true); return; }
     if (checkClaims()) return;
     if (checkDemands()) return;
@@ -636,8 +730,8 @@
     $('modal').hidden = false;
     $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return;
       ST.claims.splice(k, 1);
-      if (b.dataset.a === 'pay') ST.money -= pay;
-      else { ST.ratings.push(1); if (acc) { ST.ratings.push(1); ST.money -= ST.money * 0.3; } }
+      if (b.dataset.a === 'pay') cash('reklamacje', -pay);
+      else { ST.ratings.push(1); if (acc) { ST.ratings.push(1); cash('reklamacje', -ST.money * 0.3); } }
       save(); $('modal').hidden = true; modalOpen = false; renderMenu(); };
     return true;
   }

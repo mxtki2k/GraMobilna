@@ -61,7 +61,7 @@
       steps: [
         { id: 'woda', name: 'Odetnij wodę', hint: 'Najpierw trzeba przerwać dopływ.', options: [
           { id: 'dobrze', label: 'Zakręć zawór główny', desc: 'Pewnie, ale trzeba zejść do piwnicy.', time: 6, cost: 0, defects: [], fx: 'woda-off' },
-          { id: 'skrot', label: 'Zakręć zawór pod zlewem', desc: 'Szybciej. Jeśli się domyka.', time: 3, cost: 0, defects: [{ label: 'zawór pod zlewem się nie domyka', sev: 1, vis: 0.3 }], fx: 'woda-off' },
+          { id: 'skrot', label: 'Zakręć zawór pod zlewem', desc: 'Szybciej. Jeśli się domyka.', time: 3, cost: 0, defects: [{ label: 'zawór pod zlewem się nie domyka', sev: 1, vis: 0.3 }], fx: 'woda-sink' },
           { id: 'fusz', label: 'Nie zakręcaj. Szybciej.', desc: 'Przecież to tylko kapie.', time: 1, cost: 0, defects: [{ label: 'woda w całej łazience', sev: 3, vis: 1 }], fx: 'flood' } ] },
         { id: 'uszczelka', name: 'Wymień uszczelkę', hint: 'Źródło problemu siedzi w środku.', options: [
           { id: 'dobrze', label: 'Nowa uszczelka z hurtowni', desc: 'Pasuje idealnie. Kosztuje 12 zł.', time: 8, cost: 12, skill: true, defects: [], fx: 'seal-new' },
@@ -73,7 +73,7 @@
           { id: 'fusz', label: 'Podeprzyj cegłą i wsad kleju', desc: 'Kran trzyma się na słowo honoru.', time: 2, cost: 8, defects: [{ label: 'kran trzyma się na kleju', sev: 5, vis: 0.6 }], fx: 'glue' } ] },
         { id: 'test', name: 'Sprawdź szczelność', hint: 'Zobacz, czy naprawdę nie cieknie.', options: [
           { id: 'dobrze', label: 'Odkręć wodę i poczekaj pięć minut', desc: 'Nudne, ale pewne.', time: 5, cost: 0, defects: [], fx: 'tested' },
-          { id: 'skrot', label: 'Odkręć na chwilę i zerknij', desc: 'Jak nie kapie od razu, to dobrze.', time: 2, cost: 0, defects: [{ label: 'brak długiej próby szczelności', sev: 1.5, vis: 0.1 }], fx: 'tested' },
+          { id: 'skrot', label: 'Odkręć na chwilę i zerknij', desc: 'Jak nie kapie od razu, to dobrze.', time: 2, cost: 0, defects: [{ label: 'brak długiej próby szczelności', sev: 1.5, vis: 0.1 }], fx: 'tested-quick' },
           { id: 'fusz', label: 'Pewnie trzyma', desc: 'Nikt nie sprawdza.', time: 0, cost: 0, defects: [{ label: 'brak próby szczelności', sev: 3, vis: 0.15 }], fx: 'untested' } ] },
       ],
     },
@@ -82,9 +82,9 @@
       intro: 'Po przesunięciu szafy została dziura wielkości pięści. Klient chce, żeby było „jak nowe”.',
       steps: [
         { id: 'przygotuj', name: 'Przygotuj dziurę', hint: 'Dobra szpachla zaczyna się od czystej krawędzi.', options: [
-          { id: 'dobrze', label: 'Oczyść krawędzie i zagruntuj', desc: 'Szpachla będzie trzymać.', time: 7, cost: 10, skill: true, defects: [], fx: 'primer' },
-          { id: 'skrot', label: 'Przetrzyj ręką', desc: 'Pył to też materiał.', time: 3, cost: 0, defects: [{ label: 'pył pod szpachlą', sev: 2, vis: 0.1 }], fx: 'primer' },
-          { id: 'fusz', label: 'Nic. Szpachla się przyklei.', desc: 'Szpachla wszystko wybacza.', time: 0, cost: 0, defects: [{ label: 'szpachla odchodzi od ściany', sev: 3, vis: 0.2 }], fx: 'primer' } ] },
+          { id: 'dobrze', label: 'Oczyść krawędzie i zagruntuj', desc: 'Szpachla będzie trzymać.', time: 7, cost: 10, skill: true, defects: [], fx: 'prep-good' },
+          { id: 'skrot', label: 'Przetrzyj ręką', desc: 'Pył to też materiał.', time: 3, cost: 0, defects: [{ label: 'pył pod szpachlą', sev: 2, vis: 0.1 }], fx: 'prep-dust' },
+          { id: 'fusz', label: 'Nic. Szpachla się przyklei.', desc: 'Szpachla wszystko wybacza.', time: 0, cost: 0, defects: [{ label: 'szpachla odchodzi od ściany', sev: 3, vis: 0.2 }], fx: 'prep-none' } ] },
         { id: 'wypelnij', name: 'Wypełnij ubytek', hint: 'Duży ubytek lubi cierpliwość.', options: [
           { id: 'dobrze', label: 'Gips szpachlowy warstwami', desc: 'Cienkie warstwy, dobre schnięcie.', time: 10, cost: 18, skill: true, defects: [], fx: 'plaster-good' },
           { id: 'skrot', label: 'Jedna gruba warstwa', desc: 'Szybko, ale pęknie.', time: 4, cost: 8, defects: [{ label: 'rysy po wyschnięciu', sev: 3, vis: 0.5 }], fx: 'plaster-thick' },
@@ -105,19 +105,19 @@
       steps: [
         { id: 'prad', name: 'Odetnij prąd', hint: 'Zanim cokolwiek dotkniesz.', options: [
           { id: 'dobrze', label: 'Wyłącz bezpiecznik i sprawdź próbnikiem', desc: 'Dwa razy sprawdź.', time: 5, cost: 0, defects: [], fx: 'prad-off' },
-          { id: 'skrot', label: 'Wyłącz bezpiecznik (chyba ten)', desc: 'Podpisany „kuchnia?”.', time: 2, cost: 0, defects: [{ label: 'przewód mógł być pod napięciem', sev: 3, vis: 0, hazard: 0.8 }], fx: 'prad-off' },
+          { id: 'skrot', label: 'Wyłącz bezpiecznik (chyba ten)', desc: 'Podpisany „kuchnia?”.', time: 2, cost: 0, defects: [{ label: 'przewód mógł być pod napięciem', sev: 3, vis: 0, hazard: 0.8 }], fx: 'prad-doubt' },
           { id: 'fusz', label: 'Pracuj na żywca w gumowych kapciach', desc: 'Co może pójść nie tak?', time: 0, cost: 0, defects: [{ label: 'praca pod napięciem', sev: 5, vis: 0, hazard: 1 }], fx: 'prad-live' } ] },
         { id: 'przewody', name: 'Przygotuj przewody', hint: 'Połączenia muszą być pewne.', options: [
           { id: 'dobrze', label: 'Zdejmij izolację i załóż końcówki', desc: 'Równo, czysto.', time: 9, cost: 8, skill: true, defects: [], fx: 'wires-ok' },
-          { id: 'skrot', label: 'Skręć i zaizoluj taśmą', desc: 'Klasyka gatunku.', time: 4, cost: 2, defects: [{ label: 'skrętka z taśmą w puszce', sev: 4, vis: 0.1, hazard: 0.6 }], fx: 'cable-twist' },
-          { id: 'fusz', label: 'Zatrzaśnij to, co jest', desc: 'Iskrzy trochę, ale się trzyma.', time: 1, cost: 0, defects: [{ label: 'gołe żyły w puszce', sev: 6, vis: 0.1, hazard: 1 }], fx: 'cable-twist' } ] },
+          { id: 'skrot', label: 'Skręć i zaizoluj taśmą', desc: 'Klasyka gatunku.', time: 4, cost: 2, defects: [{ label: 'skrętka z taśmą w puszce', sev: 4, vis: 0.1, hazard: 0.6 }], fx: 'wires-twist' },
+          { id: 'fusz', label: 'Zatrzaśnij to, co jest', desc: 'Iskrzy trochę, ale się trzyma.', time: 1, cost: 0, defects: [{ label: 'gołe żyły w puszce', sev: 6, vis: 0.1, hazard: 1 }], fx: 'wires-bare' } ] },
         { id: 'gniazdko', name: 'Zamontuj gniazdko', hint: 'Estetyka i bezpieczeństwo.', options: [
           { id: 'dobrze', label: 'Nowe gniazdko, równo w puszce', desc: 'Kosztuje 20 zł, wygląda jak z katalogu.', time: 8, cost: 20, skill: true, defects: [], fx: 'outlet-new' },
           { id: 'skrot', label: 'Stare, wyczyszczone', desc: 'Oszczędność, ale nadpalone styki.', time: 4, cost: 0, defects: [{ label: 'nadpalone styki w starym gniazdku', sev: 3, vis: 0.35, hazard: 0.5 }], fx: 'outlet-old' },
           { id: 'fusz', label: 'Wciśnij na siłę i oblep klejem', desc: 'Siedzi. Mniej więcej.', time: 2, cost: 5, defects: [{ label: 'gniazdko się kiwa', sev: 3, vis: 0.8 }, { label: 'luz w puszce', sev: 3, vis: 0.1, hazard: 0.7 }], fx: 'outlet-glue' } ] },
         { id: 'test', name: 'Odbiór', hint: 'Sprawdź, czy działa.', options: [
           { id: 'dobrze', label: 'Włącz i zmierz próbnikiem', desc: 'Pomiary, protokół, spokój.', time: 5, cost: 0, defects: [], fx: 'tested' },
-          { id: 'skrot', label: 'Włącz czajnik i zobacz', desc: 'Jak się zagotuje, to jest dobrze.', time: 2, cost: 0, defects: [{ label: 'brak pomiaru instalacji', sev: 1.5, vis: 0.1, hazard: 0.3 }], fx: 'tested' },
+          { id: 'skrot', label: 'Włącz czajnik i zobacz', desc: 'Jak się zagotuje, to jest dobrze.', time: 2, cost: 0, defects: [{ label: 'brak pomiaru instalacji', sev: 1.5, vis: 0.1, hazard: 0.3 }], fx: 'tested-kettle' },
           { id: 'fusz', label: 'Podłącz wtyczkę i uciekaj', desc: 'Niech klient sam sprawdzi.', time: 0, cost: 0, defects: [{ label: 'brak odbioru instalacji', sev: 3, vis: 0.1, hazard: 0.6 }], fx: 'untested' } ] },
       ],
     },
@@ -132,29 +132,30 @@
         { id: 'otwory', name: 'Wywierć otwory', hint: 'To, co siedzi w ścianie, nie będzie widać.', options: [
           { id: 'dobrze', label: 'Wiertło do muru i kołki 8', desc: 'Kołki trzymają ciężar.', time: 7, cost: 6, skill: true, defects: [], fx: 'holes-ok' },
           { id: 'skrot', label: 'Wkręty w tynk, bez kołków', desc: 'Tynk trzyma. Do czasu.', time: 3, cost: 0, defects: [{ label: 'wkręty luźne w tynku', sev: 4, vis: 0.1 }], fx: 'holes-bad' },
-          { id: 'fusz', label: 'Gwoździe i klej', desc: 'Klej trzyma wszystko.', time: 1, cost: 4, defects: [{ label: 'półka trzyma na kleju', sev: 5, vis: 0.2 }], fx: 'holes-bad' } ] },
+          { id: 'fusz', label: 'Gwoździe i klej', desc: 'Klej trzyma wszystko.', time: 1, cost: 4, defects: [{ label: 'półka trzyma na kleju', sev: 5, vis: 0.2 }], fx: 'holes-glue' } ] },
         { id: 'montaz', name: 'Przykręć półkę', hint: 'Teraz wiszą na niej wszystkie decyzje.', options: [
           { id: 'dobrze', label: 'Równo, krzyżowo', desc: 'Najpierw lekko, potem mocno.', time: 6, cost: 0, skill: true, defects: [], fx: 'shelf-on' },
-          { id: 'skrot', label: 'Dwa wkręty i jakoś', desc: 'Trzyma się. Chybocze.', time: 3, cost: 0, defects: [{ label: 'półka się chybocze', sev: 3, vis: 0.5 }], fx: 'shelf-on' },
+          { id: 'skrot', label: 'Dwa wkręty i jakoś', desc: 'Trzyma się. Chybocze.', time: 3, cost: 0, defects: [{ label: 'półka się chybocze', sev: 3, vis: 0.5 }], fx: 'shelf-on shelf-wobble' },
           { id: 'fusz', label: 'Wsuń książkę pod spód', desc: 'Książka jako poziomica.', time: 1, cost: 0, mask: 0.3, defects: [{ label: 'półka podparta książką', sev: 3, vis: 0.85 }], fx: 'shelf-on book' } ] },
         { id: 'obciaz', name: 'Ustaw rzeczy', hint: 'Półka musi wytrzymać prawdziwe życie.', options: [
           { id: 'dobrze', label: 'Obciążaj stopniowo', desc: 'Sprawdź, czy się nie ugina.', time: 4, cost: 0, defects: [], fx: 'load-ok' },
-          { id: 'skrot', label: 'Ustaw lekkie rzeczy', desc: 'Bezpiecznie, dopóki nie wrócą książki.', time: 2, cost: 0, defects: [], fx: 'load-ok' },
+          { id: 'skrot', label: 'Ustaw lekkie rzeczy', desc: 'Bezpiecznie, dopóki nie wrócą książki.', time: 2, cost: 0, defects: [], fx: 'load-light' },
           { id: 'fusz', label: 'Ustaw ciężkie, pewnie wytrzyma', desc: 'Wszystkie encyklopedie.', time: 0, cost: 0, defects: [{ label: 'przeciążona półka', sev: 4, vis: 0, hazard: 0.4 }], fx: 'load-heavy' } ] },
       ],
     },
   };
 
-  // kolejność poziomów: zlecenie + klient + mnożnik wypłaty
+  // kolejność poziomów: zlecenie + klient + mnożnik wypłaty + pora (dzień lub noc) i godzina rozpoczęcia.
+  // Zlecenia nocne (22:00–06:00) płacą więcej (dopłata), ale są ryzykowniejsze: ciemno, zaspany klient, więcej wypadków i kontroli.
   const LEVELS = [
-    { job: 'kran', client: 'mirek', mult: 1 },
-    { job: 'polka', client: 'karyna', mult: 1.1 },
-    { job: 'sciana', client: 'sebix', mult: 1.2 },
-    { job: 'kran', client: 'grazyna', mult: 1.4 },
-    { job: 'gniazdko', client: 'mirek', mult: 1.5 },
-    { job: 'sciana', client: 'tesciowa', mult: 1.7 },
-    { job: 'gniazdko', client: 'grazyna', mult: 2 },
-    { job: 'polka', client: 'heniek', mult: 2.2 },
+    { job: 'kran', client: 'mirek', mult: 1, slot: 'dzien', time: '09:00' },
+    { job: 'polka', client: 'karyna', mult: 1.1, slot: 'dzien', time: '13:00' },
+    { job: 'sciana', client: 'sebix', mult: 1.2, slot: 'dzien', time: '08:30' },
+    { job: 'kran', client: 'grazyna', mult: 1.4, slot: 'noc', time: '23:00', intro: 'Pani Grażyna dzwoni o 23:00: kran w łazience się rozerwał i woda leje się na sąsiada z dołu. „Niech pan przyjedzie natychmiast!”' },
+    { job: 'gniazdko', client: 'mirek', mult: 1.5, slot: 'noc', time: '01:30', intro: 'Pan Mirek budzi cię po pierwszej w nocy: gniazdko w kuchni iskrzy i pachnie spalenizną. „Ale tylko szybko, bo jutro do pracy.”' },
+    { job: 'sciana', client: 'tesciowa', mult: 1.7, slot: 'dzien', time: '10:00' },
+    { job: 'gniazdko', client: 'grazyna', mult: 2, slot: 'noc', time: '22:30', intro: 'Pani Grażyna po zmroku: „Wyłączyło prąd w całym mieszkaniu, a w kuchni coś bzyczy. Czy może pan przyjechać dziś?”' },
+    { job: 'polka', client: 'heniek', mult: 2.2, slot: 'dzien', time: '14:00' },
   ];
 
   return { CLIENTS, JOBS, LEVELS };

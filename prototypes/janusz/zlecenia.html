@@ -155,6 +155,21 @@
   .note { font-size: 17px; }
   .brow { font-size: 18px; }
   .def { font-size: 19px; }
+  .stat b.pos, .pos { color: var(--ok); } .stat b.neg, .neg { color: #ff7b72; }
+  .actbar { height: 14px; background: #000; padding: 2px; } .actbar i { display: block; height: 100%; background: #ffc300; }
+  .clockbar { background: #26303a; color: #ffe27a; padding: 6px 10px; text-align: center; font-family: var(--vt); font-size: 22px; box-shadow: 0 0 0 3px #000; }
+  .clockbar.night { background: #0e1630; color: #9fc2ff; }
+  .lvl.nightlvl { background: #141b33; }
+  .chip.cost { color: #ffb74d; }
+  .stages { display: grid; gap: 4px; }
+  .stage { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; padding: 4px 8px; background: var(--panel2); box-shadow: 0 0 0 2px #000; opacity: .55; font-family: var(--vt); font-size: 20px; }
+  .stage .num { text-align: center; background: #000; color: #fff; } .stage small { display: block; color: var(--muted); font-size: 16px; }
+  .stage.done { opacity: 1; } .stage.done .num { background: var(--ok); color: #000; }
+  .stage.cur { opacity: 1; box-shadow: 0 0 0 3px #ffc300; } .stage.cur .num { background: #ffc300; color: #000; }
+  .econ { display: grid; gap: 2px; background: var(--panel2); padding: 8px 10px; box-shadow: 0 0 0 3px #000; font-family: var(--vt); font-size: 20px; }
+  .erow { display: flex; justify-content: space-between; gap: 8px; } .erow.tot { border-top: 2px solid #000; margin-top: 4px; padding-top: 4px; }
+  .erow.big { font-size: 26px; color: #ffc300; } .erow.big b.pos { color: var(--ok); }
+  #mtext .econ { margin-top: 8px; text-align: left; max-height: 50vh; overflow: auto; }
 </style>
 
 <main>
@@ -162,8 +177,9 @@
   <div class="stats">
     <div class="stat"><small>💰 Kasa</small><b id="money">0 zł</b></div>
     <div class="stat"><small>⭐ Ocena firmy</small><b id="rep">–</b></div>
-    <div class="stat"><small>📄 Reklamacje</small><b id="claims">0</b></div>
+    <div class="stat"><small id="plusl">Plus w miesiącu</small><b id="plus">0 zł</b></div>
   </div>
+  <div class="clockbar" id="clockbar"><span id="clock"></span></div>
   <section id="menu" class="list"></section>
   <section id="job" hidden class="card"></section>
   <section id="result" hidden class="card"></section>
@@ -178,6 +194,9 @@
 </main>
 <div class="modal" id="modal" hidden><div class="card" role="dialog" aria-modal="true" aria-labelledby="mtitle"><h2 id="mtitle"></h2><p id="mtext"></p><div class="choices" id="mchoices"></div></div></div>
 
+<script src="czas.js"></script>
+<script src="ksiega.js"></script>
+<script src="stawka.js"></script>
 <script src="pixel.js"></script>
 <script src="scenes.js"></script>
 <script src="fuszerka.js"></script>

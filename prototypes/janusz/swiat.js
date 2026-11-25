@@ -22,7 +22,7 @@
   function rollState(w, ctx, rng) {
     ctx = ctx || {};
     const al = w.alcohol == null ? 0.2 : w.alcohol;
-    const p = clamp(al * 0.5 + (w.mood < 40 ? (40 - w.mood) / 100 * 0.8 : 0) + (ctx.paydayEve ? 0.25 * al + 0.1 : 0), 0, 0.95);
+    const p = clamp(al * 0.5 + (w.mood < 40 ? (40 - w.mood) / 100 * 0.8 : 0) + (ctx.paydayEve ? 0.25 * al + 0.1 : 0) + (ctx.night ? 0.15 * (0.4 + al) : 0), 0, 0.95);
     if (rng() > p) return 'trzezwy';
     const sr = rng() + al * 0.25;
     return sr < 0.55 ? 'kac' : sr < 0.9 ? 'po-piwie' : 'pijany';
@@ -31,10 +31,10 @@
   /* Ryzyko jazdy dla trybu: 'worker' (pracownik), 'owner' (ty), 'courier' (wynajęty). */
   function driveRisk(w, state, world, mode) {
     if (mode === 'courier') return { accident: 0, police: 0 };
-    if (mode === 'owner') return { accident: 0.03, police: 0 };
+    if (mode === 'owner') return { accident: 0.03 * (world.night ? 1.5 : 1), police: 0 };
     const alc = ALC[state] || 0, skill = w.driving == null ? 0.5 : w.driving;
-    const accident = clamp((0.03 + alc * 0.40 * (1 - 0.5 * skill) + (1 - skill) * 0.05) * (world.accMult == null ? 1 : world.accMult), 0, 0.8);
-    const police = clamp(world.heat * (0.35 + alc * 0.35), 0, 0.8);
+    const accident = clamp((0.03 + alc * 0.40 * (1 - 0.5 * skill) + (1 - skill) * 0.05) * (world.accMult == null ? 1 : world.accMult) * (world.night ? 1.5 : 1), 0, 0.8);
+    const police = clamp(world.heat * (0.35 + alc * 0.35) * (world.night ? 1.25 : 1), 0, 0.8);
     return { accident, police };
   }
   const band = p => p < 0.08 ? 'niskie' : p < 0.2 ? 'średnie' : 'wysokie';
