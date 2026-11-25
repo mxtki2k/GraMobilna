@@ -192,4 +192,16 @@ t('serwis: sprawne wraca do 100%, zepsute naprawia się z 60% szansą i traci uk
   assert(A.repairCost(dead) > A.repairCost(A.makeItem({ cond: 90 })));
 });
 
+t('zestaw startowy: tani, pasuje do wszystkich zleceń, daje małą premię i szybko się zużywa; walizka dziadka jest lepsza', () => {
+  const kit = A.starterKit(), suitcase = A.makeItem({ tier: 2, cond: 65, brand: 'Walizka dziadka', life: 25 });
+  for (const j of ['kran', 'sciana', 'gniazdko', 'polka']) assert.strictEqual(A.forJob([kit], j).length, 1, j);
+  assert(kit.status === 'sprawny' && kit.unboxed && kit.tier === 1);
+  assert(A.toolScore([kit]) > 0 && A.toolScore([kit]) < A.toolScore([suitcase]));
+  assert(A.value(kit) < 100, 'wartość ' + A.value(kit));
+  let w = kit, uses = 0; while (w.status === 'sprawny' && uses < 30) { w = A.wear(w); uses++; }
+  assert(uses >= 5 && uses <= 12, 'wytrzymuje ' + uses + ' zleceń');
+  assert(A.toolScore([kit, suitcase]) >= A.toolScore([suitcase])); // zapasowy nie przeszkadza
+  assert(A.starterKit().id !== A.starterKit().id);
+});
+
 console.log('\n' + n + ' testów przeszło');

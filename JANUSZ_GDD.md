@@ -170,5 +170,6 @@ Narzędzia istnieją wyłącznie jako **przedmioty w ekwipunku** (`alledrogo.js`
 - Zestaw ręczny pasuje do wszystkich zleceń, narzędzia specjalistyczne do wybranych. Premia zależy od poziomu i stanu, zepsute nie liczą się wcale.
 - **Pokrycie zleceń** (premia do celności i skrócenie czasu dla każdego rodzaju zlecenia) oraz **jakość ekwipunku** (0–100%) są widoczne w Alledrogo, a jakość wchodzi do oceny firmy (połowa składnika „sprzęt”, druga połowa to bus).
 - **Serwis** w Alledrogo: sprawne narzędzie wraca do 100% stanu, zepsute naprawia się z 60% szansą (usuwa też ukrytą wadę), a nieudana naprawa kosztuje.
-- **Walizka dziadka** ze sceny „Spadek” trafia do ekwipunku jako zestaw ręczny.
+- **Zestaw startowy:** każdy dostaje „Zestaw z supermarketu” (poziom 1, stan 55%, wystarcza na ok. 6–7 zleceń). Pasuje do wszystkich zleceń i daje małą premię, więc od początku widać, po co są narzędzia, a szybkie zużycie zachęca do zakupów w Alledrogo.
+- **Walizka dziadka** ze sceny „Spadek” trafia do ekwipunku jako lepszy zestaw ręczny (poziom 2), a startowy zostaje zapasowy.
 - Stare zapisy z poziomem narzędzi w siedzibie zamieniają się w przedmiot „Zestaw z siedziby”.

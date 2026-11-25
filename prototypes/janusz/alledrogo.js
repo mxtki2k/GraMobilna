@@ -221,6 +221,10 @@
       sellerName: 'własne', sellerHonesty: 1, uses: 0, status: 'sprawny', unboxed: true, protectUses: 0 };
     return Object.assign(base, o);
   }
+  /* Tani zestaw startowy dla każdego: słaby i zużyty, ale pasuje do wszystkich zleceń. Szybko się zużywa, więc zachęca do zakupów. */
+  function starterKit() {
+    return makeItem({ type: 'zestaw', tier: 1, brand: 'Zestaw z supermarketu', claimed: 'uzywane', cond: 55, life: 12, source: 'start', sellerName: 'supermarket' });
+  }
   /* Pokrycie zleceń: łączna premia narzędzi dla każdego rodzaju zlecenia. */
   function coverage(inv) {
     const out = {}; ALL_JOBS.forEach(j => { out[j] = totalBonus(forJob(inv, j)); }); return out;
@@ -246,5 +250,5 @@
     return { ok: true, success: false, cost, item, text: 'Serwisant rozłożył ręce: „' + item.brand + '” nie nadaje się do naprawy. Pieniądze przepadły.' };
   }
 
-  return { ALL_JOBS, makeItem, coverage, toolScore, repairCost, repair, TYPES, CLASSES, TIER_NAME, TIER_PRICE, SELLERS, newPrice, classForCond, genListings, refresh, removeListing, ask, buyNow, bid, tickOrders, unbox, bonus, forJob, totalBonus, failChance, breakItem, wear, dispute, refundLost, value, inventoryValue, sell };
+  return { ALL_JOBS, makeItem, starterKit, coverage, toolScore, repairCost, repair, TYPES, CLASSES, TIER_NAME, TIER_PRICE, SELLERS, newPrice, classForCond, genListings, refresh, removeListing, ask, buyNow, bid, tickOrders, unbox, bonus, forJob, totalBonus, failChance, breakItem, wear, dispute, refundLost, value, inventoryValue, sell };
 });
