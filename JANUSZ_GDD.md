@@ -206,3 +206,8 @@ Bot gra 60 dni gry, 150 przebiegów na scenariusz. Po strojeniu: sen przy 60–8
 - Niespodzianki: po wskazanym kroku z szansą 30–40% wychodzi problem (przerdzewiały zawór, kabel w ścianie, pleśń pod płytkami, zabrakło płytek z jednej serii...). Gracz wybiera: rozwiązać solidnie (czas i koszt), na skróty albo zignorować. Każda robota ma co najmniej jedną.
 - Szkolenia: nowe kursy (stolarski, glazurniczy), hydrauliczny obejmuje też syfon. Kalendarz popytu: zima kraniki i syfony, jesień drzwi, wiosna i lato płytki.
 - Testy: `node tests/roboty.test.js`.
+
+## Kolejne roboty i łańcuchy niespodzianek
+- Trzy nowe roboty ze scenami: **Zimny grzejnik** (5 kroków: diagnoza, spuszczenie wody, zawór termostatyczny, napełnienie, próba), **Nieszczelne okno** (5: znalezienie nieszczelności, okucia, uszczelki, parapet, próba przeciągu), **Malowanie pokoju** (6: zabezpieczenie, ściana, grunt, dwie warstwy, sprzątanie). Razem 10 rodzajów robót i 32 poziomy.
+- Łańcuchy: wybór „skrót” albo „fusz” w niespodziance potrafi wywołać następstwo (75%) po kolejnym kroku: np. zawór pęka i woda tryska, kabel iskrzy, pleśń przebija przez hydroizolację. Solidne rozwiązanie nigdy nie ma skutków ubocznych.
+- Symulacje (`tools/balans.js`, `tools/balans2.js`) uwzględniają niespodzianki (`--bez-niespodzianek` je wyłącza, `--style-table` pokazuje stawki wg stylu). Z niespodziankami solidna praca przewyższa mieszaną w większości robót, a zarobek dnia spada ok. 40%.

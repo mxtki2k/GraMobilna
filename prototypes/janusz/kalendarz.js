@@ -13,6 +13,9 @@
     polka: { wiosna: 1.05, lato: 0.95, 'jesień': 1.1, zima: 1.0 },
     syfon: { wiosna: 1.0, lato: 0.95, 'jesień': 1.05, zima: 1.2 },
     drzwi: { wiosna: 1.0, lato: 0.95, 'jesień': 1.2, zima: 1.1 },
+    grzejnik: { wiosna: 0.9, lato: 0.75, 'jesień': 1.2, zima: 1.4 },
+    okno: { wiosna: 1.0, lato: 0.9, 'jesień': 1.2, zima: 1.2 },
+    malowanie: { wiosna: 1.2, lato: 1.15, 'jesień': 1.0, zima: 0.85 },
     plytki: { wiosna: 1.15, lato: 1.1, 'jesień': 0.95, zima: 0.85 },
   };
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));

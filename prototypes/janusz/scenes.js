@@ -528,9 +528,131 @@
     return g;
   }
 
+
+  // ---------------------------------------------------------------- SALON: zimny grzejnik
+  function grzejnik(T, f, o) {
+    o = o || {}; const g = G();
+    wallpaper(g, 64, ['2', '3', '1']); skirting(g, 64, '3'); woodFloor(g, 68);
+    // okno z zimą
+    rc(g, '&', 8, 6, 34, 40); rc(g, '+', 9, 7, 32, 38); rc(g, '^', 11, 9, 28, 34); dith(g, '~', 11, 9, 28, 14); rc(g, '+', 24, 9, 2, 34); rc(g, '+', 11, 24, 28, 2); rc(g, '#', 7, 46, 36, 3);
+    for (const [x, y] of [[14, 12], [30, 16], [18, 30], [33, 34], [13, 38]]) { px(g, 'w', x, y); px(g, 'w', x + 1, y); px(g, 'w', x, y + 1); }
+    if (o.night) { nightGlass(g, 11, 9, 28, 34, f); rc(g, '+', 24, 9, 2, 34); rc(g, '+', 11, 24, 28, 2); }
+    const warm = has(T, 'heat-ok', 'heat-quick');
+    // grzejnik: 12 żeber
+    rc(g, 'G', 22, 52, 62, 2); rc(g, 'G', 22, 70, 62, 1);
+    for (let i = 0; i < 12; i++) { const x = 24 + i * 5; rc(g, 'k', x, 30, 5, 36); rc(g, warm ? 'o' : '+', x + 1, 31, 3, 34); rc(g, warm ? 'O' : '=', x + 3, 31, 1, 34); rc(g, '#', x + 1, 31, 1, 34); }
+    rc(g, 'k', 22, 29, 62, 2); rc(g, '=', 22, 30, 62, 1); rc(g, 'k', 22, 65, 62, 2);
+    if (warm) for (let i = 0; i < 6; i++) { const x = 28 + i * 9; for (let y = 0; y < 8; y++) px(g, y % 2 ? 'o' : 'e', x + ((y + f + i) % 3), 22 - y * 3 + 8); }
+    else { for (let i = 0; i < 12; i++) { px(g, 'c', 25 + i * 5, 32); px(g, 'c', 27 + i * 5, 34); } rc(g, 'c', 24, 30, 60, 1); for (const [x, y] of [[40, 22], [60, 20], [74, 24]]) { px(g, 'c', x, y); px(g, 'c', x - 1, y + 1); px(g, 'c', x + 1, y + 1); px(g, 'c', x, y + 2); if (f % 2) px(g, 'w', x, y + 1); } }
+    // zawór i rura
+    rc(g, 'G', 86, 56, 10, 10); rc(g, 'g', 87, 57, 8, 8); rc(g, 'G', 90, 66, 4, 8); rc(g, 'r', 89, 44, 8, 12); rc(g, 'R', 89, 54, 8, 2); rc(g, 'w', 90, 46, 1, 6);
+    // termometr
+    rc(g, 'k', 104, 12, 8, 22); rc(g, '+', 105, 13, 6, 20); rc(g, warm ? 'r' : 'b', 107, warm ? 16 : 26, 2, warm ? 16 : 6); disc(g, warm ? 'r' : 'b', 108, 32, 2);
+    // narzędzia: wiadro
+    rc(g, 'b', 98, 70, 14, 8); rc(g, 'B', 98, 76, 14, 2); rc(g, 'c', 99, 70, 12, 1);
+    // diagnoza
+    if (T.has('heat-diag')) { disc(g, 'k', 100, 50, 7); disc(g, '+', 100, 50, 6); line(g, 'r', 100, 50, 104, 46); rc(g, 'n', 95, 52, 3, 1); rc(g, 'n', 103, 52, 3, 1); rc(g, 'k', 99, 57, 3, 4); }
+    if (T.has('heat-touch')) { rc(g, 's', 50, 48, 7, 5); rc(g, 'S', 50, 52, 7, 1); for (let i = 0; i < 4; i++) rc(g, 's', 50 + i * 2, 45, 1, 3); px(g, 'w', 60, 44); px(g, 'c', 62, 46); }
+    if (T.has('heat-max')) { rc(g, 'R', 86, 36, 20, 6); rc(g, 'r', 87, 37, 18, 4); for (let i = 0; i < 5; i++) rc(g, 'y', 89 + i * 3, 38, 2, 2); rc(g, 'k', 89, 44, 8, 1); }
+    // woda
+    if (T.has('valves-off')) { disc(g, 'N', 91, 61, 4); disc(g, 'n', 91, 61, 3); rc(g, 'n', 89, 61, 1, 1); disc(g, 'N', 22, 62, 4); disc(g, 'n', 22, 62, 3); spr(g, 19, 59, CHECK); }
+    if (T.has('valve-one')) { disc(g, 'N', 91, 61, 4); disc(g, 'n', 91, 61, 3); disc(g, 'Y', 22, 62, 4); disc(g, 'e', 22, 62, 3); rc(g, 'a', 21, 66 + (f % 3) * 3, 2, 3); }
+    if (T.has('valve-none')) { rc(g, 'a', 8, 72, 100, 6); dith(g, 'A', 10, 74, 96, 3, f); for (let x = (f * 5) % 12; x < 100; x += 12) rc(g, '#', 10 + x, 73, 4, 1); rc(g, 'a', 90, 66, 2, 6); }
+    // zawór termostatyczny
+    if (T.has('valve-new')) { rc(g, 'o', 86, 56, 10, 10); rc(g, 'e', 87, 57, 8, 3); rc(g, 'O', 87, 64, 8, 1); rc(g, 'n', 96, 58, 2, 2); }
+    if (T.has('valve-clean')) { rc(g, 'G', 85, 55, 12, 3); rc(g, 'd', 85, 56, 12, 1); for (let i = 0; i < 12; i++) px(g, '=', 85 + i, 55 + ((i * 2) % 3)); }
+    if (T.has('valve-hit')) { rc(g, 'k', 98, 52, 4, 10); rc(g, 'G', 94, 50, 10, 4); line(g, 'k', 88, 57, 92, 64); line(g, 'k', 92, 58, 94, 62); px(g, 'y', 97, 56); px(g, 'y', 99, 64 + (f % 2)); }
+    // napełnianie
+    if (T.has('fill-slow')) { disc(g, 'k', 76, 18, 8); disc(g, '+', 76, 18, 7); line(g, 'n', 76, 18, 80, 14); rc(g, 'n', 70, 22, 12, 1); }
+    if (T.has('fill-fast')) { disc(g, 'k', 76, 18, 8); disc(g, '+', 76, 18, 7); line(g, 'y', 76, 18, 82, 18); rc(g, 'y', 70, 22, 12, 1); for (let i = 0; i < 3; i++) px(g, 'w', 92 + i * 2, 54 - ((f * 2 + i) % 5)); }
+    if (T.has('fill-wild')) { disc(g, 'k', 76, 18, 8); disc(g, 'w', 76, 18, 7); line(g, 'r', 76, 18, 82, 12); rc(g, 'r', 70, 22, 12, 1); for (let i = 0; i < 5; i++) rc(g, 'a', 96 + i, 62 - i * 2, 1, 2 + (f % 2)); rc(g, 'a', 96, 70, 6, 8); }
+    // próba
+    if (T.has('heat-ok')) { disc(g, 'N', 108, 52, 6); disc(g, 'n', 108, 52, 5); spr(g, 105, 50, CHECK); }
+    if (T.has('heat-quick')) { disc(g, 'Y', 108, 52, 6); disc(g, 'e', 108, 52, 5); spr(g, 105, 50, CHECK_Y); }
+    if (T.has('heat-none')) { disc(g, 'R', 108, 52, 6); disc(g, 'r', 108, 52, 5); spr(g, 106, 49, QMARK.map(r => r.replace(/r/g, 'w'))); }
+    return g;
+  }
+
+  // ---------------------------------------------------------------- SYPIALNIA: nieszczelne okno
+  function okno(T, f, o) {
+    o = o || {}; const g = G();
+    wallpaper(g, 66, ['1', '2', '3']); skirting(g, 66, '3'); woodFloor(g, 70);
+    const drafty = T.has('broken') && !has(T, 'wseal-new', 'wseal-patch', 'wseal-foam', 'adjust-good');
+    // okno: dwa skrzydła
+    rc(g, '&', 34, 4, 60, 54); rc(g, '+', 35, 5, 58, 52); rc(g, '^', 38, 8, 25, 46); rc(g, '^', 66, 8, 25, 46); dith(g, '~', 38, 8, 25, 18); dith(g, '~', 66, 8, 25, 18);
+    for (const [x, y] of [[42, 14], [54, 30], [72, 20], [84, 38], [46, 46]]) { px(g, 'w', x, y); px(g, 'w', x + 1, y); px(g, 'w', x, y + 1); }
+    if (o.night) { nightGlass(g, 38, 8, 25, 46, f); nightGlass(g, 66, 8, 25, 46, f); }
+    rc(g, '+', 63, 5, 3, 52); rc(g, 'G', 61, 28, 2, 6); rc(g, 'g', 66, 28, 2, 6);
+    rc(g, '#', 30, 58, 68, 4); rc(g, '=', 30, 61, 68, 1); rc(g, '%', 32, 62, 64, 1);
+    // firanki i przeciąg
+    const sway = drafty ? [0, 1, 2, 1][f % 4] : 0;
+    for (const [x0, dir] of [[26, -1], [92, 1]]) { for (let y = 2; y < 64; y++) { const w = 7 + (y % 4 === 0 ? 1 : 0), off = Math.round(Math.sin(y / 9 + (drafty ? f * 0.9 : 0)) * (drafty ? 1.5 : 0.4)) + sway * (y > 30 ? dir * -1 : 0); rc(g, y % 3 ? 'p' : 'm', x0 + off, y, w, 1); } rc(g, 'P', x0, 2, 8, 1); }
+    rc(g, 'P', 20, 0, 90, 2);
+    if (drafty) for (let i = 0; i < 4; i++) { const x = 40 + i * 14 + ((f * 3) % 8), y = 50 - ((f * 5 + i * 6) % 24); rc(g, 'c', x, y, 3, 1); rc(g, 'w', x + 3, y, 1, 1); }
+    // diagnoza
+    if (T.has('wdiag-good')) { rc(g, 'w', 40, 54, 3, 6); rc(g, 'y', 41, 51 + (f % 2), 1, 3); px(g, 'e', 42, 51); rc(g, 'o', 42, 52, 1 + (f % 2), 1); rc(g, 'k', 38, 60, 8, 2); }
+    if (T.has('wdiag-hand')) { rc(g, 's', 80, 44, 7, 5); rc(g, 'S', 80, 48, 7, 1); for (let i = 0; i < 4; i++) rc(g, 's', 80 + i * 2, 41, 1, 3); spr(g, 90, 38, QMARK.map(r => r.replace(/r/g, 'y'))); }
+    if (T.has('wdiag-tape')) { for (const [x, y, w, h] of [[34, 28, 60, 2], [63, 4, 3, 54], [34, 54, 60, 2]]) { rc(g, 'g', x, y, w, h); dith(g, '=', x, y, w, h); } }
+    // okucia
+    if (T.has('adjust-good')) { for (const y of [14, 44]) { disc(g, 'N', 34, y, 3); disc(g, 'n', 34, y, 2); } disc(g, 'N', 64, 31, 3); disc(g, 'n', 64, 31, 2); spr(g, 100, 8, CHECK); }
+    if (T.has('adjust-quick')) { for (const y of [14, 44]) { disc(g, 'Y', 34, y, 3); disc(g, 'e', 34, y, 2); } spr(g, 100, 8, CHECK_Y); }
+    if (T.has('adjust-none')) { for (const y of [14, 44]) { disc(g, 'R', 34, y, 3); disc(g, 'r', 34, y, 2); } spr(g, 99, 6, QMARK.map(r => r.replace(/r/g, 'w'))); }
+    // uszczelki
+    if (T.has('wseal-new')) { for (const [x, y, w, h] of [[37, 7, 27, 1], [37, 54, 27, 1], [37, 7, 1, 47], [65, 7, 27, 1], [65, 54, 27, 1], [91, 7, 1, 47]]) rc(g, 'k', x, y, w, h); rc(g, 'G', 38, 55, 25, 1); }
+    if (T.has('wseal-patch')) { for (const [x, y, w, h] of [[37, 7, 12, 1], [58, 54, 6, 1], [37, 30, 1, 12], [91, 12, 1, 16], [70, 7, 10, 1]]) rc(g, 'k', x, y, w, h); for (const [x, y] of [[50, 8], [60, 30], [88, 54]]) rc(g, 'G', x, y, 4, 2); rc(g, 'g', 52, 7, 5, 1); }
+    if (T.has('wseal-foam')) for (const [x, y, w, h] of [[36, 6, 22, 3], [60, 52, 18, 4], [90, 10, 3, 24], [37, 30, 3, 16], [74, 6, 14, 3]]) { rc(g, 'e', x, y, w, h); dith(g, 'y', x, y, w, h); px(g, 'w', x, y); }
+    // parapet
+    if (T.has('sill-good')) { rc(g, 'w', 30, 57, 68, 2); rc(g, '#', 30, 56, 68, 1); rc(g, '=', 30, 62, 68, 1); rc(g, 'N', 100, 54, 6, 6); rc(g, 'n', 101, 55, 4, 4); }
+    if (T.has('sill-silicone')) { rc(g, 'w', 32, 57, 64, 2); rc(g, 'a', 44, 58, 30, 3); dith(g, '#', 46 + (f % 2) * 2, 58, 12, 1); rc(g, 'A', 56, 61, 14, 1); }
+    if (T.has('sill-none')) { rc(g, 'k', 31, 59, 66, 2); dith(g, 'd', 31, 58, 66, 3); for (const x of [40, 62, 84]) px(g, 'c', x + (f % 2), 61); }
+    // próba
+    if (T.has('wtest-ok')) { rc(g, 'w', 100, 40, 3, 6); rc(g, 'y', 101, 36, 1, 4); px(g, 'e', 101, 35); rc(g, 'o', 101, 37, 1, 1); disc(g, 'N', 110, 20, 5); disc(g, 'n', 110, 20, 4); spr(g, 107, 18, CHECK); }
+    if (T.has('wtest-quick')) { disc(g, 'Y', 110, 20, 5); disc(g, 'e', 110, 20, 4); spr(g, 107, 18, CHECK_Y); }
+    if (T.has('wtest-none')) { disc(g, 'R', 110, 20, 5); disc(g, 'r', 110, 20, 4); spr(g, 108, 17, QMARK.map(r => r.replace(/r/g, 'w'))); }
+    return g;
+  }
+
+  // ---------------------------------------------------------------- POKÓJ: malowanie
+  function malowanie(T, f, o) {
+    o = o || {}; const g = G();
+    const c1 = has(T, 'coat1-even', 'coat1-streak', 'coat1-thin'), c2 = has(T, 'coat2-good', 'coat2-spots', 'coat2-skip'), paint = c1 || c2;
+    const base = has(T, 'primer-good') ? '+' : '2';
+    rc(g, base, 0, 0, W, 64);
+    if (T.has('primer-quick')) { rc(g, '2', 0, 0, W, 64); for (let i = 0; i < 18; i++) rc(g, '+', (i * 29) % 110, 4 + (i * 17) % 50, 12 + (i % 4) * 3, 6 + (i % 3) * 3); }
+    if (T.has('primer-none')) { rc(g, '2', 0, 0, W, 64); for (const [x, y] of [[14, 10], [40, 30], [76, 14], [96, 44], [58, 48]]) { rc(g, '3', x, y, 9, 6); line(g, 'k', x, y + 6, x + 9, y + 6); px(g, '1', x + 2, y + 6 + (f % 2)); } }
+    if (paint) {
+      const col = c2 && !has(T, 'coat2-skip') ? 'b' : 'c';
+      rc(g, col, 0, 0, W, 64);
+      if (T.has('coat1-even') || T.has('coat2-good')) { dith(g, '~', 0, 0, W, 64); rc(g, 'c', 0, 0, W, 3); }
+      if (T.has('coat1-streak')) for (let x = 6; x < W; x += 11) { rc(g, 'b', x, 0, 2, 64); rc(g, '2', x + 5, 6 + (x % 20), 1, 12); px(g, 'a', x + 5, 20 + (x % 20) + f % 2); }
+      if (T.has('coat1-thin')) { dith(g, '2', 0, 0, W, 64); dith(g, '3', 0, 0, W, 64, 1); }
+      if (T.has('coat2-spots')) for (const [x, y, w, h] of [[10, 8, 18, 10], [50, 26, 16, 12], [88, 10, 20, 9], [30, 44, 14, 9]]) rc(g, 'B', x, y, w, h);
+      if (T.has('coat2-skip')) for (const [x, y, w, h] of [[10, 12, 18, 14], [64, 20, 22, 16], [96, 40, 18, 12]]) { rc(g, '2', x, y, w, h); dith(g, '3', x, y, w, h); }
+    }
+    if (!paint && !T.has('primer-good')) { for (let x = 3; x < W; x += 8) rc(g, '3', x, 0, 1, 64); line(g, 'k', 90, 6, 100, 22); line(g, 'k', 100, 22, 96, 34); line(g, 'k', 12, 40, 22, 50); }
+    if (T.has('wprep-good')) { for (const [x, y] of [[90, 8], [12, 40]]) { rc(g, 'w', x, y, 14, 16); dith(g, '1', x, y, 14, 16); } }
+    if (T.has('wprep-quick')) { for (const [x, y] of [[90, 8]]) rc(g, 'w', x, y, 12, 14); for (const [x1, y1, x2, y2] of [[14, 40, 24, 50], [70, 20, 76, 30]]) line(g, 'k', x1, y1, x2, y2); }
+    if (T.has('wprep-none')) { rc(g, '3', 60, 6, 40, 36); dith(g, 'T', 60, 6, 40, 36); line(g, 'k', 70, 8, 80, 30); line(g, 'k', 90, 12, 84, 36); for (const [x, y] of [[66, 14], [92, 30]]) rc(g, 'T', x, y, 6, 5); }
+    // okno, listwa, podłoga
+    rc(g, '&', 4, 8, 30, 36); rc(g, '+', 5, 9, 28, 34); rc(g, '^', 7, 11, 24, 30); dith(g, '~', 7, 11, 24, 12); rc(g, '+', 18, 11, 2, 30);
+    if (o.night) { nightGlass(g, 7, 11, 24, 30, f); rc(g, '+', 18, 11, 2, 30); }
+    rc(g, '#', 3, 44, 32, 3);
+    skirting(g, 64, '3'); woodFloor(g, 68);
+    // zabezpieczenie
+    if (T.has('mask-good')) { rc(g, 'o', 0, 63, W, 1); rc(g, 'o', 3, 8, 32, 1); rc(g, 'o', 3, 47, 32, 1); rc(g, 'o', 3, 8, 1, 39); rc(g, 'o', 35, 8, 1, 39); dith(g, 'w', 0, 68, W, 12, f % 2); rc(g, 'w', 0, 68, W, 1); }
+    if (T.has('mask-quick')) { for (const [x, y, w, h] of [[2, 70, 30, 8], [40, 72, 22, 6], [74, 71, 30, 7]]) { rc(g, '=', x, y, w, h); rc(g, 'g', x, y, w, 1); for (let i = 2; i < h; i += 3) dith(g, 'G', x + 2, y + i, w - 4, 1); } }
+    if (T.has('mask-none')) { for (const [x, y] of [[18, 70], [50, 74], [86, 72], [100, 66], [32, 76], [70, 70]]) { rc(g, 'c', x, y, 4 + (x % 4), 2); px(g, 'c', x + 2, y + 2); } rc(g, 'c', 3, 62, 30, 2); }
+    if (T.has('clean-good')) { rc(g, 'w', 0, 63, W, 1); disc(g, 'N', 108, 22, 5); disc(g, 'n', 108, 22, 4); spr(g, 105, 20, CHECK); }
+    if (T.has('clean-quick')) { for (const x of [6, 22, 40, 70, 96]) { rc(g, 'c', x, 63, 6, 1); px(g, 'c', x + 2, 62); px(g, 'b', x + 4, 61); } disc(g, 'Y', 108, 22, 5); disc(g, 'e', 108, 22, 4); spr(g, 105, 20, CHECK_Y); }
+    if (T.has('clean-none')) { rc(g, 'o', 0, 63, W, 1); for (let i = 0; i < 5; i++) { rc(g, 'o', 3 + i * 22, 62 - (i % 2) * 2, 10, 2); } rc(g, 'w', 0, 68, 40, 12); dith(g, '=', 0, 68, 40, 12); disc(g, 'R', 108, 22, 5); disc(g, 'r', 108, 22, 4); spr(g, 106, 19, QMARK.map(r => r.replace(/r/g, 'w'))); }
+    // wiadro z farbą i wałek
+    rc(g, 'k', 90, 68, 20, 12); rc(g, 'b', 91, 69, 18, 10); rc(g, 'B', 91, 77, 18, 2); rc(g, 'c', 92, 69, 16, 2); rc(g, 'G', 104, 56, 2, 14); rc(g, 'T', 100, 52, 12, 5); rc(g, 'c', 101, 53, 10, 3);
+    return g;
+  }
+
   // ---------------------------------------------------------------- ANIMACJE CZYNNOŚCI (narzędzie w akcji nad sceną)
-  const ACTIONS = { kran: ['wrench', 'wrench', 'wrench', 'tester'], sciana: ['trowel', 'trowel', 'sander', 'roller'], gniazdko: ['tester', 'pliers', 'screwdriver', 'tester'], polka: ['pencil', 'drill', 'screwdriver', 'hammer'], syfon: ['pliers', 'wrench', 'pliers', 'wrench', 'tester'], drzwi: ['tester', 'screwdriver', 'screwdriver', 'sander', 'tester'], plytki: ['trowel', 'roller', 'trowel', 'pencil', 'trowel', 'tester'] };
-  const TARGETS = { kran: [[11, 44], [65, 29], [65, 40], [86, 33]], sciana: [[66, 36], [66, 36], [66, 36], [66, 36]], gniazdko: [[12, 40], [100, 18], [64, 36], [64, 36]], polka: [[64, 32], [34, 34], [64, 32], [64, 30]], syfon: [[70, 58], [64, 44], [64, 46], [72, 44], [66, 28]], drzwi: [[56, 20], [31, 40], [74, 42], [80, 40], [60, 44]], plytki: [[58, 36], [58, 36], [58, 36], [58, 36], [58, 36], [58, 36]] };
+  const ACTIONS = { kran: ['wrench', 'wrench', 'wrench', 'tester'], sciana: ['trowel', 'trowel', 'sander', 'roller'], gniazdko: ['tester', 'pliers', 'screwdriver', 'tester'], polka: ['pencil', 'drill', 'screwdriver', 'hammer'], syfon: ['pliers', 'wrench', 'pliers', 'wrench', 'tester'], drzwi: ['tester', 'screwdriver', 'screwdriver', 'sander', 'tester'], plytki: ['trowel', 'roller', 'trowel', 'pencil', 'trowel', 'tester'], grzejnik: ['tester', 'wrench', 'wrench', 'wrench', 'tester'], okno: ['tester', 'screwdriver', 'pliers', 'trowel', 'tester'], malowanie: ['roller', 'trowel', 'roller', 'roller', 'roller', 'pliers'] };
+  const TARGETS = { kran: [[11, 44], [65, 29], [65, 40], [86, 33]], sciana: [[66, 36], [66, 36], [66, 36], [66, 36]], gniazdko: [[12, 40], [100, 18], [64, 36], [64, 36]], polka: [[64, 32], [34, 34], [64, 32], [64, 30]], syfon: [[70, 58], [64, 44], [64, 46], [72, 44], [66, 28]], drzwi: [[56, 20], [31, 40], [74, 42], [80, 40], [60, 44]], plytki: [[58, 36], [58, 36], [58, 36], [58, 36], [58, 36], [58, 36]], grzejnik: [[50, 40], [91, 61], [91, 60], [76, 20], [50, 40]], okno: [[40, 50], [34, 30], [64, 30], [60, 57], [48, 40]], malowanie: [[56, 30], [56, 30], [56, 30], [56, 30], [56, 30], [56, 62]] };
   const actionFor = (jobId, step) => ({ kind: ACTIONS[jobId][step], at: TARGETS[jobId][step] });
   const star = (g, x, y) => { for (const [dx, dy, c] of [[0, 0, 'w'], [-2, 0, 'y'], [2, 0, 'y'], [0, -2, 'y'], [0, 2, 'y'], [-1, -1, 'o'], [1, 1, 'o'], [-1, 1, 'o'], [1, -1, 'o']]) px(g, c, x + dx, y + dy); };
   const TOOLS = {
@@ -568,7 +690,7 @@
     return im;
   }
 
-  const JOB_SCENES = { kran, sciana, gniazdko, polka, syfon, drzwi, plytki };
+  const JOB_SCENES = { kran, sciana, gniazdko, polka, syfon, drzwi, plytki, grzejnik, okno, malowanie };
   /* Rysuje siatkę na canvasie 128x80 (przeglądarka). */
   function draw(canvas, grid, opts) {
     opts = opts || {}; const im = opts.night ? nightRGBA(grid, opts.light) : Pix.rgba(grid, 1), ctx = canvas.getContext('2d');
@@ -577,5 +699,5 @@
   /* Scena zlecenia dla zbioru tokenów stanu i klatki animacji. */
   const job = (id, tokens, frame, opts) => JOB_SCENES[id](tokens instanceof Set ? tokens : new Set(tokens || []), frame || 0, opts || {});
 
-  return { action, actionFor, ACTIONS, TARGETS, TOOLS, nightRGBA, job, draw, JOB_SCENES, hq, sciana, gniazdko, polka, syfon, drzwi, plytki, W, H, G, rc, px, dith, line, disc, spr, has, tiledWall, wallpaper, skirting, woodFloor, door, kran, CHECK };
+  return { action, actionFor, ACTIONS, TARGETS, TOOLS, nightRGBA, job, draw, JOB_SCENES, hq, sciana, gniazdko, polka, syfon, drzwi, plytki, grzejnik, okno, malowanie, W, H, G, rc, px, dith, line, disc, spr, has, tiledWall, wallpaper, skirting, woodFloor, door, kran, CHECK };
 });

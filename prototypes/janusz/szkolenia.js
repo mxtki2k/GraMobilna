@@ -5,9 +5,9 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   const CERTS = {
     sep: { name: 'Uprawnienia SEP (elektryka)', jobs: ['gniazdko'], cost: 900, hours: 16, hazard: 0.35, acc: 0.05, pay: 1.12, desc: 'Gniazdka bez ryzyka pożaru, klient płaci za papier z pieczątką.' },
-    hydr: { name: 'Kurs hydrauliczny', jobs: ['kran', 'syfon'], cost: 600, hours: 10, hazard: 0.7, acc: 0.05, pay: 1.08, desc: 'Kran robisz pewniej i szybciej.' },
-    wyk: { name: 'Kurs wykończeniówki', jobs: ['sciana'], cost: 550, hours: 10, hazard: 0.8, acc: 0.06, pay: 1.08, desc: 'Gładzie jak z katalogu.' },
-    stol: { name: 'Kurs stolarski', jobs: ['drzwi'], cost: 500, hours: 12, hazard: 0.8, acc: 0.05, pay: 1.08, desc: 'Drzwi domykają się jak w fabryce.' },
+    hydr: { name: 'Kurs hydrauliczny', jobs: ['kran', 'syfon', 'grzejnik'], cost: 600, hours: 10, hazard: 0.7, acc: 0.05, pay: 1.08, desc: 'Kran robisz pewniej i szybciej.' },
+    wyk: { name: 'Kurs wykończeniówki', jobs: ['sciana', 'malowanie'], cost: 550, hours: 10, hazard: 0.8, acc: 0.06, pay: 1.08, desc: 'Gładzie jak z katalogu.' },
+    stol: { name: 'Kurs stolarski', jobs: ['drzwi', 'okno'], cost: 500, hours: 12, hazard: 0.8, acc: 0.05, pay: 1.08, desc: 'Drzwi domykają się jak w fabryce.' },
     plyt: { name: 'Kurs glazurniczy', jobs: ['plytki'], cost: 800, hours: 16, hazard: 0.7, acc: 0.06, pay: 1.1, desc: 'Fugi proste, hydroizolacja szczelna.' },
     mont: { name: 'Szkolenie z montażu', jobs: ['polka'], cost: 250, hours: 5, hazard: 0.7, acc: 0.04, pay: 1.05, desc: 'Poziomica przestaje być tajemnicą.' },
   };

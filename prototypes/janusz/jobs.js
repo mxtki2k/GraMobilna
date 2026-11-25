@@ -225,6 +225,88 @@
           { id: 'fusz', label: 'Silikon „kiedyś”', desc: 'Narożniki same się zasklepią.', time: 0, cost: 0, defects: [{ label: 'brak silikonu w narożnikach', sev: 3, vis: 0.6 }], fx: 'sil-none' } ] },
       ],
     },
+    grzejnik: {
+      id: 'grzejnik', title: 'Zimny grzejnik', place: 'Salon', base: 230, deadline: 32,
+      intro: 'Grzejnik pod oknem jest zimny jak lód, a za oknem minus pięć. Pan Heniek chodzi w kurtce po własnym mieszkaniu.',
+      steps: [
+        { id: 'diagnoza', name: 'Sprawdź, czemu zimny', hint: 'Powietrze, zawór czy osad w środku?', options: [
+          { id: 'dobrze', label: 'Odpowietrz, sprawdź zawór i obieg', desc: 'Wiesz, od czego zacząć.', time: 6, cost: 0, defects: [], fx: 'heat-diag' },
+          { id: 'skrot', label: 'Dotknij i oceń', desc: 'Zimny u góry, ciepły u dołu. Chyba powietrze.', time: 2, cost: 0, defects: [{ label: 'nie sprawdzono prawdziwej przyczyny', sev: 1.5, vis: 0.1 }], fx: 'heat-touch' },
+          { id: 'fusz', label: 'Podkręć termostat na maksimum', desc: 'Na pewno zadziała.', time: 0, cost: 0, defects: [{ label: 'diagnoza przez termostat', sev: 2.5, vis: 0.3 }], fx: 'heat-max' } ] },
+        { id: 'woda', name: 'Zakręć obieg i spuść wodę', hint: 'Bez tego wody będzie pełna podłoga.', options: [
+          { id: 'dobrze', label: 'Zakręć oba zawory i spuść do wiadra', desc: 'Czysto i sucho.', time: 6, cost: 0, defects: [], fx: 'valves-off' },
+          { id: 'skrot', label: 'Zakręć jeden zawór', desc: 'Kapie z drugiego.', time: 3, cost: 0, defects: [{ label: 'woda spod drugiego zaworu', sev: 1.5, vis: 0.5 }], fx: 'valve-one' },
+          { id: 'fusz', label: 'Odkręć od razu', desc: 'Przecież to tylko woda.', time: 0, cost: 0, defects: [{ label: 'powódź w salonie', sev: 3.5, vis: 1 }], fx: 'valve-none' } ] },
+        { id: 'zawor', name: 'Wymień zawór termostatyczny', hint: 'Stary jest zapieczony.', options: [
+          { id: 'dobrze', label: 'Nowy zawór i odpowietrzenie', desc: 'Pasuje i trzyma.', time: 8, cost: 45, skill: true, defects: [], fx: 'valve-new' },
+          { id: 'skrot', label: 'Przeczyść stary zawór', desc: 'Rozgrzebał się trochę.', time: 4, cost: 0, skill: true, defects: [{ label: 'zawór znów się zatnie', sev: 3, vis: 0.1 }], fx: 'valve-clean' },
+          { id: 'fusz', label: 'Uderz młotkiem w zawór', desc: 'Odblokuje się.', time: 1, cost: 0, defects: [{ label: 'uszkodzony zawór grzejnika', sev: 4, vis: 0.3 }], fx: 'valve-hit' } ] },
+        { id: 'napelnij', name: 'Napełnij instalację', hint: 'Ciśnienie rośnie powoli, nie od razu.', options: [
+          { id: 'dobrze', label: 'Powoli, z manometrem', desc: 'Dwa bary, żadnego świstu.', time: 6, cost: 0, defects: [], fx: 'fill-slow' },
+          { id: 'skrot', label: 'Pełne ciśnienie od razu', desc: 'Syczy trochę.', time: 3, cost: 0, defects: [{ label: 'zbyt szybkie napełnienie, powietrze w obiegu', sev: 2, vis: 0.2 }], fx: 'fill-fast' },
+          { id: 'fusz', label: 'Odkręć wszystko do końca', desc: 'Woda wie, co robi.', time: 1, cost: 0, defects: [{ label: 'zawory odkręcone bez kontroli', sev: 4, vis: 0.3, hazard: 0.2 }], fx: 'fill-wild' } ] },
+        { id: 'test', name: 'Próba i regulacja', hint: 'Grzejnik ma się nagrzać równo od góry do dołu.', options: [
+          { id: 'dobrze', label: 'Włącz, po 20 min sprawdź nagrzanie i szczelność', desc: 'Nudne, ale pewne.', time: 5, cost: 0, defects: [], fx: 'heat-ok' },
+          { id: 'skrot', label: 'Sprawdź ręką po 5 minutach', desc: 'Ciepły na górze.', time: 2, cost: 0, defects: [{ label: 'brak pełnej próby nagrzewania', sev: 1.5, vis: 0.15 }], fx: 'heat-quick' },
+          { id: 'fusz', label: 'Pewnie grzeje', desc: 'Nikt nie sprawdza.', time: 0, cost: 0, defects: [{ label: 'brak próby grzejnika', sev: 3, vis: 0.15 }], fx: 'heat-none' } ] },
+      ],
+    },
+    okno: {
+      id: 'okno', title: 'Nieszczelne okno', place: 'Sypialnia', base: 300, deadline: 36,
+      intro: 'Z okna ciągnie tak, że firanka tańczy. Karyna wrzuciła już zdjęcie śniegu na parapecie, od środka.',
+      steps: [
+        { id: 'diagnoza', name: 'Znajdź nieszczelność', hint: 'Gdzie dokładnie wieje?', options: [
+          { id: 'dobrze', label: 'Test świecą i kartką wzdłuż uszczelki', desc: 'Widać, gdzie płomień się wygina.', time: 6, cost: 0, defects: [], fx: 'wdiag-good' },
+          { id: 'skrot', label: 'Na oko i ręką', desc: 'Wieje z dołu. Pewnie.', time: 2, cost: 0, defects: [{ label: 'nie znaleziono wszystkich nieszczelności', sev: 1.5, vis: 0.15 }], fx: 'wdiag-hand' },
+          { id: 'fusz', label: 'Zaklej całość taśmą', desc: 'Problem rozwiązany z zewnątrz.', time: 0, cost: 0, defects: [{ label: 'okno oklejone taśmą z zewnątrz', sev: 2.5, vis: 0.9 }], fx: 'wdiag-tape' } ] },
+        { id: 'regulacja', name: 'Wyreguluj okucia', hint: 'Skrzydło musi docisnąć się do uszczelki.', options: [
+          { id: 'dobrze', label: 'Regulacja wszystkich zawiasów i zaczepów', desc: 'Docisk równy dookoła.', time: 8, cost: 0, skill: true, defects: [], fx: 'adjust-good' },
+          { id: 'skrot', label: 'Dokręć klamkę i śruby', desc: 'Docisk tylko częściowy.', time: 3, cost: 0, skill: true, defects: [{ label: 'docisk okna nierówny', sev: 2.5, vis: 0.2 }], fx: 'adjust-quick' },
+          { id: 'fusz', label: 'Zapomnij o okuciach', desc: 'Uszczelka wszystko załatwi.', time: 0, cost: 0, defects: [{ label: 'okucia nietknięte', sev: 4.5, vis: 0.1 }], fx: 'adjust-none' } ] },
+        { id: 'uszczelki', name: 'Wymień uszczelki', hint: 'Stare są twarde jak plastik.', options: [
+          { id: 'dobrze', label: 'Nowe uszczelki w całym obwodzie', desc: 'Szczelnie na lata.', time: 8, cost: 35, skill: true, defects: [], fx: 'wseal-new' },
+          { id: 'skrot', label: 'Przeklej stare w najgorszych miejscach', desc: 'Połowa szczelna.', time: 4, cost: 5, skill: true, defects: [{ label: 'uszczelki łatane w kilku miejscach', sev: 3, vis: 0.15 }], fx: 'wseal-patch' },
+          { id: 'fusz', label: 'Zalej pianką montażową', desc: 'Pianka uszczelnia wszystko.', time: 2, cost: 12, defects: [{ label: 'pianka montażowa wystaje z okna', sev: 4.5, vis: 0.3 }], fx: 'wseal-foam' } ] },
+        { id: 'parapet', name: 'Parapet i silikon', hint: 'Woda ma spływać na zewnątrz.', options: [
+          { id: 'dobrze', label: 'Silikon i spadek parapetu', desc: 'Woda nie wraca do środka.', time: 6, cost: 12, defects: [], fx: 'sill-good' },
+          { id: 'skrot', label: 'Silikon bez wyrównania', desc: 'Woda stoi w kącie.', time: 3, cost: 8, defects: [{ label: 'woda stoi na parapecie', sev: 2, vis: 0.4 }], fx: 'sill-silicone' },
+          { id: 'fusz', label: 'Zostaw parapet', desc: 'Nie dotykał.', time: 0, cost: 0, defects: [{ label: 'parapet nieuszczelniony', sev: 4, vis: 0.2 }], fx: 'sill-none' } ] },
+        { id: 'test', name: 'Próba przeciągu', hint: 'Świeca nie powinna drgnąć.', options: [
+          { id: 'dobrze', label: 'Świeca i kartka w całym obwodzie', desc: 'Płomień stoi prosto.', time: 5, cost: 0, defects: [], fx: 'wtest-ok' },
+          { id: 'skrot', label: 'Sprawdź ręką', desc: 'Nie wieje. Chyba.', time: 2, cost: 0, defects: [{ label: 'brak pełnej próby przeciągu', sev: 1.5, vis: 0.1 }], fx: 'wtest-quick' },
+          { id: 'fusz', label: 'Pewnie szczelne', desc: 'Poczeka na zimę.', time: 0, cost: 0, defects: [{ label: 'brak próby okna', sev: 3, vis: 0.15 }], fx: 'wtest-none' } ] },
+      ],
+    },
+    malowanie: {
+      id: 'malowanie', title: 'Malowanie pokoju', place: 'Pokój', base: 420, deadline: 46,
+      intro: 'Pokój jest pomalowany na kolor „beż z lat dziewięćdziesiątych”. Tesciowa chce niebieski i żeby nie było smug.',
+      steps: [
+        { id: 'zabezpiecz', name: 'Zabezpiecz pokój', hint: 'Farba znajdzie każdy centymetr podłogi.', options: [
+          { id: 'dobrze', label: 'Folia, taśma malarska, zdjęte gniazdka', desc: 'Czyste krawędzie.', time: 6, cost: 15, defects: [], fx: 'mask-good' },
+          { id: 'skrot', label: 'Gazety i taśma tylko na listwach', desc: 'Gazeta nie klei się do niczego.', time: 3, cost: 5, defects: [{ label: 'plamy farby na podłodze', sev: 1.5, vis: 0.6 }], fx: 'mask-quick' },
+          { id: 'fusz', label: 'Nic nie zabezpieczaj', desc: 'Ostrożnie.', time: 1, cost: 0, defects: [{ label: 'farba na podłodze i meblach', sev: 3, vis: 1 }], fx: 'mask-none' } ] },
+        { id: 'sciana', name: 'Przygotuj ścianę', hint: 'Pęknięcia i dziury zostaną pod farbą.', options: [
+          { id: 'dobrze', label: 'Zaszpachluj, wyszlifuj, odkurz', desc: 'Gładko jak szyba.', time: 8, cost: 20, skill: true, defects: [], fx: 'wprep-good' },
+          { id: 'skrot', label: 'Zaszpachluj tylko duże ubytki', desc: 'Małe wyjdą w świetle.', time: 4, cost: 10, skill: true, defects: [{ label: 'pęknięcia widoczne po malowaniu', sev: 2.5, vis: 0.5 }], fx: 'wprep-quick' },
+          { id: 'fusz', label: 'Maluj prosto na starą farbę', desc: 'Farba kryje.', time: 2, cost: 0, defects: [{ label: 'farba na brudnej ścianie', sev: 5, vis: 0.2 }], fx: 'wprep-none' } ] },
+        { id: 'grunt', name: 'Zagruntuj', hint: 'Grunt wyrównuje chłonność.', options: [
+          { id: 'dobrze', label: 'Grunt głęboko penetrujący', desc: 'Farba położy się równo.', time: 5, cost: 18, defects: [], fx: 'primer-good' },
+          { id: 'skrot', label: 'Rozcieńczona farba zamiast gruntu', desc: 'Chłonie nierówno.', time: 2, cost: 0, defects: [{ label: 'plamy po nierównej chłonności', sev: 2.5, vis: 0.5 }], fx: 'primer-quick' },
+          { id: 'fusz', label: 'Pomiń grunt', desc: 'Farba sama się zagruntuje.', time: 1, cost: 0, defects: [{ label: 'brak gruntu, farba łuszczy się płatami', sev: 4.5, vis: 0.12 }], fx: 'primer-none' } ] },
+        { id: 'warstwa1', name: 'Pierwsza warstwa', hint: 'Maluj od góry do dołu, bez przerw.', options: [
+          { id: 'dobrze', label: 'Wałek, równo od sufitu do podłogi', desc: 'Jednolity kolor.', time: 8, cost: 45, skill: true, defects: [], fx: 'coat1-even' },
+          { id: 'skrot', label: 'Szybko, z przerwami', desc: 'Smugi w słońcu.', time: 4, cost: 30, skill: true, defects: [{ label: 'smugi i zacieki na ścianie', sev: 3, vis: 0.8 }], fx: 'coat1-streak' },
+          { id: 'fusz', label: 'Cienko, żeby starczyło', desc: 'Prześwieca beż.', time: 3, cost: 20, defects: [{ label: 'farba przeświecająca', sev: 4, vis: 0.9 }], fx: 'coat1-thin' } ] },
+        { id: 'warstwa2', name: 'Druga warstwa i poprawki', hint: 'Beż nie może przebijać.', options: [
+          { id: 'dobrze', label: 'Druga warstwa po wyschnięciu', desc: 'Kolor głęboki i równy.', time: 8, cost: 35, skill: true, defects: [], fx: 'coat2-good' },
+          { id: 'skrot', label: 'Poprawki tylko tam, gdzie widać', desc: 'Plamy w różnych miejscach.', time: 4, cost: 15, skill: true, defects: [{ label: 'plamy po poprawkach', sev: 2.5, vis: 0.8 }], fx: 'coat2-spots' },
+          { id: 'fusz', label: 'Jedna warstwa wystarczy', desc: 'Starczy.', time: 3, cost: 0, defects: [{ label: 'jedna warstwa farby, beż przebija', sev: 4.5, vis: 0.9 }], fx: 'coat2-skip' } ] },
+        { id: 'sprzatanie', name: 'Sprzątanie i odbiór', hint: 'Taśmę zdejmuje się, zanim farba zaschnie.', options: [
+          { id: 'dobrze', label: 'Zdejmij taśmę mokrą i posprzątaj', desc: 'Idealne krawędzie.', time: 5, cost: 0, defects: [], fx: 'clean-good' },
+          { id: 'skrot', label: 'Zdejmij taśmę po wyschnięciu', desc: 'Farba odchodzi z taśmą.', time: 2, cost: 0, defects: [{ label: 'postrzępione krawędzie farby', sev: 2, vis: 0.7 }], fx: 'clean-quick' },
+          { id: 'fusz', label: 'Zostaw taśmę i folię klientowi', desc: 'Posprząta.', time: 0, cost: 0, defects: [{ label: 'klient sprząta po malowaniu', sev: 2.5, vis: 1 }], fx: 'clean-none' } ] },
+      ],
+    },
   };
 
   /* Niespodzianki w trakcie roboty: po ukończeniu kroku `after` (od 0) z szansą `chance` wychodzi problem, który trzeba rozwiązać.
@@ -265,9 +347,64 @@
         { id: 'fusz', label: 'Połącz serie', desc: 'Odcień „ciepły i zimny”.', time: 1, cost: 0, defects: [{ label: 'dwa odcienie płytek na jednej ścianie', sev: 2.5, vis: 0.9 }] } ] },
     ],
   };
-  /* Losuje niespodziankę po ukończeniu kroku (indeks od 0). Zwraca obiekt albo null. */
+  /* Nowe roboty i łańcuchy: wybór „skrót” albo „fusz” w niespodziance może wywołać następstwo po kolejnym kroku (follow: true). */
+  SURPRISES.grzejnik = [{ id: 'szlam', after: 1, chance: 0.35, title: 'W grzejniku jest gruby szlam', text: 'Z grzejnika leci czarna breja. Instalacja nie była płukana od lat.', options: [
+      { id: 'dobrze', label: 'Przepłucz grzejnik wodą (10 zł)', desc: 'Czyste żebra.', time: 6, cost: 10, defects: [] },
+      { id: 'skrot', label: 'Przepłucz pobieżnie', desc: 'Jedna tura.', time: 2, cost: 0, defects: [{ label: 'szlam zostanie w grzejniku', sev: 3, vis: 0.1 }] },
+      { id: 'fusz', label: 'Zamknij i nie ruszaj', desc: 'Jak jest, tak jest.', time: 0, cost: 0, defects: [{ label: 'zablokowany grzejnik szlamem', sev: 4, vis: 0.2 }] } ] }];
+  SURPRISES.okno = [{ id: 'rama', after: 0, chance: 0.3, title: 'Rama okienna jest spróchniała', text: 'Wkręt wchodzi w drewno jak w masło. Okucia nie mają się czego trzymać.', options: [
+      { id: 'dobrze', label: 'Wzmocnij ramę żywicą (25 zł)', desc: 'Twarda jak nowa.', time: 7, cost: 25, defects: [] },
+      { id: 'skrot', label: 'Dłuższe wkręty', desc: 'Trzymają, ale w miękkim.', time: 3, cost: 3, defects: [{ label: 'okucia na spróchniałej ramie', sev: 3.5, vis: 0.15 }] },
+      { id: 'fusz', label: 'Zignoruj', desc: 'Okucia dokręcone mocno.', time: 0, cost: 0, defects: [{ label: 'okno w spróchniałej ramie', sev: 4.5, vis: 0.3 }] } ] }];
+  SURPRISES.malowanie = [{ id: 'wilgoc', after: 1, chance: 0.35, title: 'Za farbą wilgoć i grzyb', text: 'Po zeszlifowaniu starej farby ściana przy suficie jest czarna.', options: [
+      { id: 'dobrze', label: 'Środek grzybobójczy i osuszenie (30 zł)', desc: 'Czysta ściana.', time: 9, cost: 30, defects: [] },
+      { id: 'skrot', label: 'Domaluj farbą antygrzybiczą', desc: 'Zakrywa na kilka miesięcy.', time: 3, cost: 12, defects: [{ label: 'grzyb pod farbą wróci', sev: 3.5, vis: 0.2 }] },
+      { id: 'fusz', label: 'Zamaluj', desc: 'Farba kryje.', time: 0, cost: 0, defects: [{ label: 'grzyb zamalowany', sev: 5, vis: 0.1, hazard: 0.1 }] } ] }];
+  SURPRISES.kran.push({ id: 'zawor-pekl', after: -1, chance: 1, follow: true, title: 'Zawór pękł i woda tryska', text: 'Przy odkręcaniu wody zawór pękł w palcach. Woda leci po szafkach.', options: [
+      { id: 'dobrze', label: 'Zakręć główny i wymień zawór (45 zł)', desc: 'Dziesięć minut paniki.', time: 8, cost: 45, defects: [] },
+      { id: 'skrot', label: 'Zatkaj ręką i szukaj taśmy', desc: 'Ścieka na podłogę.', time: 4, cost: 3, defects: [{ label: 'zalana szafka pod zlewem', sev: 3, vis: 0.8 }] },
+      { id: 'fusz', label: 'Zbiegaj do piwnicy po zawór', desc: 'Zalane mieszkanie niżej.', time: 1, cost: 0, defects: [{ label: 'zalane mieszkanie sąsiada', sev: 5, vis: 1 }] } ] });
+  SURPRISES.sciana.push({ id: 'kabel-iskra', after: -1, chance: 1, follow: true, title: 'Z ściany słychać trzask', text: 'Szpachlujesz miejsce, w którym biegnie kabel, i nagle ściana zabrzęczała.', options: [
+      { id: 'dobrze', label: 'Wyłącz bezpiecznik i odsłoń kabel', desc: 'Dobrze, że to słychać.', time: 6, cost: 0, defects: [] },
+      { id: 'skrot', label: 'Wymień ten fragment (40 zł)', desc: 'Elektryk dojeżdża.', time: 5, cost: 40, defects: [] },
+      { id: 'fusz', label: 'Zalej szybko i uciekaj', desc: 'Ściana nie krzyczy.', time: 0, cost: 0, defects: [{ label: 'kabel pod napięciem zalany gipsem', sev: 5, vis: 0.05, hazard: 0.8 }] } ] });
+  SURPRISES.gniazdko.push({ id: 'alu-iskra', after: -1, chance: 1, follow: true, title: 'Przy włączeniu iskrzy', text: 'Aluminium i miedź w jednej puszce zaczynają grzać się po minucie.', options: [
+      { id: 'dobrze', label: 'Wyłącz, zamień na złączki Al-Cu (20 zł)', desc: 'Bezpiecznie.', time: 6, cost: 20, defects: [] },
+      { id: 'skrot', label: 'Owiń taśmą izolacyjną', desc: 'Gorąca taśma.', time: 2, cost: 2, defects: [{ label: 'grzejące połączenie Al-Cu', sev: 3.5, vis: 0.2, hazard: 0.4 }] },
+      { id: 'fusz', label: 'Pomiń, nic się nie dzieje', desc: 'Czuć zapach spalenizny.', time: 0, cost: 0, defects: [{ label: 'połączenie Al-Cu zagraża pożarem', sev: 5, vis: 0.1, hazard: 0.8 }] } ] });
+  SURPRISES.polka.push({ id: 'gk-pekniecie', after: -1, chance: 1, follow: true, title: 'Płyta g-k pęka wokół kołka', text: 'Przy dokręcaniu płyta rozeszła się jak pergamin.', options: [
+      { id: 'dobrze', label: 'Wymień kawałek płyty (20 zł)', desc: 'Szpachla i nowy kołek.', time: 6, cost: 20, defects: [] },
+      { id: 'skrot', label: 'Zaszpachluj i przenieś otwór', desc: 'Wyższy otwór.', time: 4, cost: 5, defects: [{ label: 'półka przesunięta, dziura zaszpachlowana', sev: 1.5, vis: 0.5 }] },
+      { id: 'fusz', label: 'Dokręć mocniej', desc: 'Mocniej trzyma.', time: 1, cost: 0, defects: [{ label: 'płyta g-k wyrwana wokół kołka', sev: 4.5, vis: 0.6, hazard: 0.2 }] } ] });
+  SURPRISES.syfon.push({ id: 'rdza-wyciek', after: -1, chance: 1, follow: true, title: 'Z kolana tryska woda', text: 'Kolano, które ruszyłeś, puściło i leje się po szafce.', options: [
+      { id: 'dobrze', label: 'Wymień kolano i osusz (12 zł)', desc: 'Czysto, choć mokro.', time: 7, cost: 12, defects: [] },
+      { id: 'skrot', label: 'Załóż opaskę zaciskową', desc: 'Trzyma kilka tygodni.', time: 3, cost: 5, defects: [{ label: 'opaska zamiast kolana', sev: 3, vis: 0.3 }] },
+      { id: 'fusz', label: 'Wsuń wiadro i wyjdź', desc: 'Kapie.', time: 1, cost: 0, defects: [{ label: 'stały wyciek pod zlewem', sev: 4.5, vis: 0.4 }] } ] });
+  SURPRISES.drzwi.push({ id: 'puchnie-zaklin', after: -1, chance: 1, follow: true, title: 'Drzwi zaklinowały się w ościeżnicy', text: 'Wilgotne drewno napuchło jeszcze bardziej. Skrzydło nie otwiera się w żadną stronę.', options: [
+      { id: 'dobrze', label: 'Zdejmij skrzydło i osusz (15 zł)', desc: 'Wyciągasz z zawiasów.', time: 9, cost: 15, defects: [] },
+      { id: 'skrot', label: 'Zeszlifuj w miejscu', desc: 'Pył wszędzie.', time: 4, cost: 0, defects: [{ label: 'skrzydło zeszlifowane na zawiasach', sev: 3, vis: 0.7 }] },
+      { id: 'fusz', label: 'Kopnij mocno', desc: 'Oderwało się.', time: 1, cost: 0, defects: [{ label: 'wyłamana ościeżnica', sev: 5, vis: 1 }] } ] });
+  SURPRISES.plytki.push({ id: 'plesn-wraca', after: -1, chance: 1, follow: true, title: 'Pleśń przebija przez hydroizolację', text: 'Folia świeża, a po godzinie na niej pojawiły się czarne kropki.', options: [
+      { id: 'dobrze', label: 'Zdejmij warstwę i wysusz (30 zł)', desc: 'Jeszcze raz od początku.', time: 10, cost: 30, defects: [] },
+      { id: 'skrot', label: 'Pokryj dodatkową warstwą', desc: 'Dwie warstwy folii.', time: 3, cost: 15, defects: [{ label: 'pleśń pod hydroizolacją', sev: 4, vis: 0.1 }] },
+      { id: 'fusz', label: 'Kładź płytki dalej', desc: 'Płytki przykryją.', time: 0, cost: 0, defects: [{ label: 'pleśń zamknięta pod płytkami', sev: 5.5, vis: 0.05, hazard: 0.2 }] } ] });
+  SURPRISES.grzejnik.push({ id: 'szlam-zator', after: -1, chance: 1, follow: true, title: 'Zator w obiegu', text: 'Szlam z grzejnika poszedł do rur. Cała grzałka znów cichnie.', options: [
+      { id: 'dobrze', label: 'Płukanie obiegu (40 zł)', desc: 'Cała grzałka na nowo.', time: 9, cost: 40, defects: [] },
+      { id: 'skrot', label: 'Odpowietrz i licz na szczęście', desc: 'Odpowietrzone, nie przepłukane.', time: 3, cost: 0, defects: [{ label: 'szlam w obiegu zacznie blokować dalej', sev: 3.5, vis: 0.1 }] },
+      { id: 'fusz', label: 'Zostaw', desc: 'Dojdzie do sąsiada.', time: 0, cost: 0, defects: [{ label: 'zator w całym obiegu', sev: 5, vis: 0.2 }] } ] });
+  SURPRISES.okno.push({ id: 'rama-pekla', after: -1, chance: 1, follow: true, title: 'Rama pękła przy dokręcaniu', text: 'Drewno puściło z trzaskiem, a szyba zaczęła się ruszać.', options: [
+      { id: 'dobrze', label: 'Wymień kawałek ramy (35 zł)', desc: 'Dobra stolarka.', time: 10, cost: 35, defects: [] },
+      { id: 'skrot', label: 'Klej epoksydowy i opaska', desc: 'Trzyma.', time: 4, cost: 8, defects: [{ label: 'rama sklejona na epoksyd', sev: 3, vis: 0.5 }] },
+      { id: 'fusz', label: 'Zalej pianką', desc: 'Pianka wszystko trzyma.', time: 1, cost: 10, defects: [{ label: 'rama pęknięta, szyba się rusza', sev: 5, vis: 0.6, hazard: 0.1 }] } ] });
+  SURPRISES.malowanie.push({ id: 'wilgoc-wraca', after: -1, chance: 1, follow: true, title: 'Plama wilgoci przebija przez grunt', text: 'Po wyschnięciu na świeżym gruncie pojawiła się ciemna plama.', options: [
+      { id: 'dobrze', label: 'Zablokuj plamę specjalną farbą (28 zł)', desc: 'Izolacja plamy.', time: 6, cost: 28, defects: [] },
+      { id: 'skrot', label: 'Dodatkowa warstwa gruntu', desc: 'Plama blednie.', time: 3, cost: 10, defects: [{ label: 'plama wilgoci wróci przez farbę', sev: 3.5, vis: 0.5 }] },
+      { id: 'fusz', label: 'Maluj dalej', desc: 'Zakryje.', time: 0, cost: 0, defects: [{ label: 'plama wilgoci pod farbą', sev: 4.5, vis: 0.4 }] } ] });
+  const CHAINS = {"kran:zawor": {"skrot": "zawor-pekl", "fusz": "zawor-pekl"}, "sciana:kabel": {"fusz": "kabel-iskra"}, "gniazdko:alu": {"skrot": "alu-iskra", "fusz": "alu-iskra"}, "polka:gk": {"fusz": "gk-pekniecie"}, "syfon:rdza": {"skrot": "rdza-wyciek", "fusz": "rdza-wyciek"}, "drzwi:puchnie": {"skrot": "puchnie-zaklin", "fusz": "puchnie-zaklin"}, "plytki:plesn": {"skrot": "plesn-wraca", "fusz": "plesn-wraca"}, "grzejnik:szlam": {"skrot": "szlam-zator", "fusz": "szlam-zator"}, "okno:rama": {"skrot": "rama-pekla", "fusz": "rama-pekla"}, "malowanie:wilgoc": {"skrot": "wilgoc-wraca", "fusz": "wilgoc-wraca"}};
+  for (const [key, m] of Object.entries(CHAINS)) { const [job, id] = key.split(':'), sur = SURPRISES[job].find(x => x.id === id); for (const [opt, then] of Object.entries(m)) sur.options.find(o => o.id === opt).then = then; }
+  /* Losuje niespodziankę po ukończeniu kroku (indeks od 0). Następstwa (follow) są pomijane: wywołuje je wybór gracza. */
   function rollSurprise(jobId, doneStep, rng) {
-    const l = SURPRISES[jobId] || [], x = l.find(s => s.after === doneStep);
+    const l = SURPRISES[jobId] || [], x = l.find(s => !s.follow && s.after === doneStep);
     return x && rng() < x.chance ? x : null;
   }
 
@@ -298,6 +435,14 @@
     { job: 'plytki', client: 'tesciowa', mult: 1.6, slot: 'dzien', time: '09:00' },
     { job: 'drzwi', client: 'grazyna', mult: 2.4, slot: 'noc', time: '23:15', due: 'ostry', intro: 'Pani Grażyna o 23:15: „Zamek się zatrzasnął od środka i nie mogę wyjść na balkon. Proszę przyjechać!”' },
     { job: 'plytki', client: 'heniek', mult: 2.0, slot: 'dzien', time: '10:00', due: 'normalny' },
+    { job: 'grzejnik', client: 'heniek', mult: 1.2, slot: 'dzien', time: '09:45' },
+    { job: 'okno', client: 'karyna', mult: 1.3, slot: 'dzien', time: '11:15' },
+    { job: 'malowanie', client: 'tesciowa', mult: 1.4, slot: 'dzien', time: '08:30', due: 'luzny' },
+    { job: 'grzejnik', client: 'grazyna', mult: 1.9, slot: 'noc', time: '22:20', due: 'normalny', intro: 'Pani Grażyna o 22:20: „Grzejnik zimny, a ja w koszuli nocnej. Proszę przyjechać!”' },
+    { job: 'okno', client: 'sebix', mult: 1.8, slot: 'dzien', time: '12:15', due: 'ostry' },
+    { job: 'malowanie', client: 'mirek', mult: 1.6, slot: 'dzien', time: '10:15' },
+    { job: 'okno', client: 'grazyna', mult: 2.2, slot: 'noc', time: '23:40', intro: 'Pani Grażyna o 23:40: „Z okna wieje tak, że świeca gaśnie. Przyjedzie pan jeszcze dziś?”' },
+    { job: 'grzejnik', client: 'mirek', mult: 1.7, slot: 'dzien', time: '14:30', due: 'normalny' },
   ];
 
   /* Telefony „z ulicy”: gdy skończą się zlecenia z listy, gracz może przesuwać zegar o godzinę. Co godzinę jest szansa na telefon. */
@@ -316,5 +461,6 @@
   }
 
 
-  return { callChance, rollCall, rollSurprise, SURPRISES, CLIENTS, JOBS, LEVELS };
+  const getSurprise = (jobId, id) => (SURPRISES[jobId] || []).find(x => x.id === id) || null;
+  return { callChance, rollCall, rollSurprise, getSurprise, SURPRISES, CLIENTS, JOBS, LEVELS };
 });

@@ -3,7 +3,7 @@
 const F = require('../prototypes/janusz/fuszerka.js'), C = require('../prototypes/janusz/czas.js'), St = require('../prototypes/janusz/stawka.js');
 const T = require('../prototypes/janusz/terminy.js'), B = require('../prototypes/janusz/bus.js'), Z = require('../prototypes/janusz/zmeczenie.js');
 const W = require('../prototypes/janusz/wypalenie.js'), K = require('../prototypes/janusz/klienci.js'), Sz = require('../prototypes/janusz/szkolenia.js'), U = require('../prototypes/janusz/ubezpieczenie.js'), O = require('../prototypes/janusz/osiedle.js');
-const J = require('../prototypes/janusz/jobs.js'), { JOBS, CLIENTS } = J;
+const J = require('../prototypes/janusz/jobs.js'), { JOBS, CLIENTS } = J, Sur = require('./niespodzianki.js');
 const lcg = s => () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
 const DAYS = 60;
 
@@ -45,11 +45,13 @@ function run(pol, seed) {
     if (r() < Z.nodChance(fat)) { defects.push({ label: 'zasnął', sev: 2, vis: 0.5 }); m.naps++; }
     const picks = job.steps.map((s, i) => ({ stepId: s.id, optionId: pick(i), accuracy: Math.max(0, Math.min(1, 0.7 + W.accMod(burn) + (r() - 0.5) * 0.3 - (night ? md.accPenalty : 0) + Z.accMod(fat) + cm.acc)) }));
     const payMult = md.payMult * (dueSpec ? dueSpec.pay : 1) * (pol.noTrust ? 1 : K.payMult(trust)) * cm.pay * price;
-    const res = F.evaluate(Object.assign({}, job, { base: Math.round(job.base * call.mult) }), picks, cl, { payMult, attentionMult: md.attention, hazardMult: md.hazard * cm.hazard, time: timeAdj + Math.round(job.steps.reduce((a, st, i) => a + st.options.find(o => o.id === pick(i)).time, 0) * (tm - 1) * 10) / 10, defects });
+    const sur = pol.noSur ? { time: 0, cost: 0, defects: [] } : Sur.roll(job.id, style === 'mieszanie' ? 'mieszanie' : style === 'solid' ? 'solid' : 'fusz', r, tm);
+    defects = defects.concat(sur.defects);
+    const res = F.evaluate(Object.assign({}, job, { base: Math.round(job.base * call.mult) }), picks, cl, { payMult, attentionMult: md.attention, hazardMult: md.hazard * cm.hazard, time: sur.time + timeAdj + Math.round(job.steps.reduce((a, st, i) => a + st.options.find(o => o.id === pick(i)).time, 0) * (tm - 1) * 10) / 10, defects });
     const minutes = C.minutes(Math.max(1, res.time), night), te = T.evaluate(dueSpec, minutes, res.payout);
     if (te.penalty) m.late++;
     const tax = res.payout * 0.1, income = res.payout + te.bonus;
-    money += income - res.cost - transport - te.penalty - tax; m.income += income; m.costs += res.cost + transport + te.penalty + tax;
+    money += income - res.cost - sur.cost - transport - te.penalty - tax; m.income += income; m.costs += res.cost + sur.cost + transport + te.penalty + tax;
     // reklamacja / OC
     const claim = F.rollClaim(res, r); if (claim) pendingClaim = claim;
     if (pendingClaim && r() < 0.5) { const cv = U.cover(oc, pendingClaim); oc = cv.oc; money -= cv.you; m.costs += cv.you; m.claims += cv.you; m.ocRecv += cv.insurer; pendingClaim = null; }

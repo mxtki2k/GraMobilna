@@ -338,7 +338,9 @@
     if (opt.fx.includes('seal-') || opt.fx === 'tape' || opt.fx === 'glue') cur.tokens.delete('broken'); // przestało kapać
     cur.step++;
     if (cur.step >= cur.job.steps.length) { finish(); return; }
-    const sp = Jobs.rollSurprise(cur.job.id, cur.step - 1, rnd);
+    let sp = Jobs.rollSurprise(cur.job.id, cur.step - 1, rnd);
+    if (!sp && cur.chain && cur.chain.at === cur.step - 1 && rnd() < 0.75) sp = Jobs.getSurprise(cur.job.id, cur.chain.id); // następstwo wcześniejszej decyzji
+    if (cur.chain && cur.chain.at <= cur.step - 1) cur.chain = null;
     if (sp) { surprise(sp); return; }
     renderJob();
   }
@@ -351,6 +353,7 @@
       const o = sp.options.find(x => x.id === b.dataset.a);
       cur.time += o.time; cur.cost += o.cost; o.defects.forEach(d => cur.extraDefects.push({ label: d.label, sev: d.sev, vis: d.vis, hazard: d.hazard || 0 }));
       cur.notes.push('⚠️ ' + sp.title + ': ' + o.label + '.');
+      if (o.then) cur.chain = { id: o.then, at: cur.step }; // skutek wyjdzie po następnym kroku
       $('modal').hidden = true; modalOpen = false; renderJob(); };
   }
 

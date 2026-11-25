@@ -9,7 +9,7 @@ const picks = (job, f) => job.steps.map((s, i) => ({ stepId: s.id, optionId: typ
 const sum = (job, k) => job.steps.reduce((a, s) => a + s.options.find(o => o.id === k).time, 0);
 
 t('schemat: każda robota ma id, tytuł, miejsce, stawkę, termin i kroki z trzema wariantami', () => {
-  assert(Object.keys(JOBS).length >= 7);
+  assert(Object.keys(JOBS).length >= 10);
   for (const [id, j] of Object.entries(JOBS)) {
     assert(j.id === id && j.title && j.place && j.intro && j.base > 0 && j.deadline > 0 && j.steps.length >= 4, id);
     const ids = new Set();
@@ -39,12 +39,23 @@ t('niespodzianki: poprawny schemat, kolejny krok istnieje, wybór ma rozwiązani
   for (const [id, list] of Object.entries(SURPRISES)) {
     assert(JOBS[id], id);
     for (const s of list) {
-      assert(s.id && s.title && s.text && s.chance > 0 && s.chance <= 0.5 && s.after >= 0 && s.after < JOBS[id].steps.length - 1, id + ':' + s.id);
+      assert(s.id && s.title && s.text && s.chance > 0 && s.chance <= 1, id + ':' + s.id);
+      if (s.follow) assert(s.after === -1, 'następstwo nie ma kroku: ' + s.id); else assert(s.chance <= 0.5 && s.after >= 0 && s.after < JOBS[id].steps.length - 1, id + ':' + s.id);
       assert.deepStrictEqual(s.options.map(o => o.id), ['dobrze', 'skrot', 'fusz']);
       assert(s.options[0].defects.length === 0 && s.options[2].defects.some(d => d.sev >= 2) && s.options[0].time > s.options[2].time && s.options.every(o => o.label && o.desc && o.cost >= 0), id + ':' + s.id);
     }
   }
   assert(Object.keys(SURPRISES).length === Object.keys(JOBS).length, 'każda robota ma niespodziankę');
+});
+t('łańcuchy: każde następstwo jest wywołane przez opcję, wskazuje istniejącą niespodziankę i zdąży się wydarzyć przed końcem roboty', () => {
+  const refs = new Set();
+  for (const [id, list] of Object.entries(SURPRISES)) for (const s of list.filter(x => !x.follow)) for (const o of s.options) if (o.then) {
+    const f = Jb.getSurprise(id, o.then); assert(f && f.follow, id + ':' + s.id + '->' + o.then); refs.add(id + ':' + o.then);
+    assert(s.after + 2 <= JOBS[id].steps.length - 1, 'za mało kroków po ' + s.id); assert(o.id !== 'dobrze', 'rozwiązanie bez skutków');
+  }
+  for (const [id, list] of Object.entries(SURPRISES)) for (const s of list.filter(x => x.follow)) assert(refs.has(id + ':' + s.id), 'nieużyte następstwo ' + s.id);
+  assert(refs.size >= 10);
+  assert.strictEqual(Jb.rollSurprise('kran', -1, () => 0), null, 'następstwa nie losują się same');
 });
 t('niespodzianki: losowanie według szansy, tylko po właściwym kroku', () => {
   const r = lcg(3); let hits = 0; for (let i = 0; i < 4000; i++) if (Jb.rollSurprise('kran', 0, r)) hits++;
@@ -52,10 +63,10 @@ t('niespodzianki: losowanie według szansy, tylko po właściwym kroku', () => {
   assert.strictEqual(Jb.rollSurprise('kran', 2, () => 0), null); assert.strictEqual(Jb.rollSurprise('nie-ma', 0, () => 0), null);
   assert(Jb.rollSurprise('plytki', 0, () => 0).id === 'plesn' && Jb.rollSurprise('plytki', 3, () => 0).id === 'serie');
 });
-t('poziomy: istnieją nowe roboty, klienci i zlecenia terminowe są poprawne, z nowymi robotami co najmniej 24 poziomy', () => {
-  assert(LEVELS.length >= 24);
+t('poziomy: istnieją nowe roboty, klienci i zlecenia terminowe są poprawne, co najmniej 32 poziomy', () => {
+  assert(LEVELS.length >= 32);
   for (const l of LEVELS) { assert(JOBS[l.job] && CLIENTS[l.client] && /^\d\d:\d\d$/.test(l.time) && (!l.due || T.KINDS[l.due])); }
-  for (const id of ['syfon', 'drzwi', 'plytki']) assert(LEVELS.some(l => l.job === id) && LEVELS.some(l => l.job === id && l.slot === 'noc') === (id !== 'plytki'), id);
+  for (const id of Object.keys(JOBS)) assert(LEVELS.some(l => l.job === id), id);
 });
 t('szkolenia i kalendarz obejmują każdą robotę', () => {
   const covered = new Set(Object.values(Sz.CERTS).flatMap(c => c.jobs)); for (const id of Object.keys(JOBS)) { assert(covered.has(id), 'kurs ' + id); assert(K.demandMult('zima', id) !== undefined); }
