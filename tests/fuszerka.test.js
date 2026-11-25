@@ -144,4 +144,14 @@ t('zakres wyników: indeks 0..100, zadowolenie 0..100, gwiazdki 1..5', () => {
   }
 });
 
+t('rażące wady zauważa nawet pobłażliwy klient, subtelne nie', () => {
+  const job = JOBS.kran, good = picks(job, 'dobrze', 1);
+  const sat = (d, c) => F.evaluate(job, good, CLIENTS[c], { defects: [d] }).satisfaction;
+  const obvious = { label: 'woda na suficie', sev: 4, vis: 1, hazard: 0 }, subtle = { label: 'drobna szczelina', sev: 8, vis: 0.5, hazard: 0 };
+  assert(sat(obvious, 'mirek') < sat(subtle, 'mirek'), 'Mirek: rażąca wada boli bardziej niż subtelna o tej samej widoczności łącznej');
+  assert(sat(obvious, 'mirek') < 100 && sat({ label: 'x', sev: 2, vis: 1, hazard: 0 }, 'mirek') === sat({ label: 'x', sev: 2, vis: 1, hazard: 0 }, 'mirek'));
+  // rażąca wada przy wymagającym kliencie liczy się tak jak dotąd (jego uwaga i tak przekracza próg)
+  assert(sat(obvious, 'tesciowa') <= sat(subtle, 'tesciowa'));
+});
+
 console.log('\n' + n + ' testów przeszło');

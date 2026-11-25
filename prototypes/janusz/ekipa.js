@@ -104,7 +104,7 @@
     const dil = w.diligence == null ? 0.5 : w.diligence, alc = ALC[state || 'trzezwy'] || 0;
     return {
       accBonus: (w.skill - 0.4) * 0.5 * moodK + (dil - 0.5) * 0.15 - alc * 0.4,
-      timeFactor: 1 - 0.12 * w.skill * (w.mood >= 80 ? 1.25 : 1) - 0.1 * (dil - 0.5) + alc * 0.1,
+      timeFactor: 1 - 0.17 * w.skill * (w.mood >= 80 ? 1.25 : 1) - 0.1 * (dil - 0.5) + alc * 0.1,
     };
   }
   /* Niepracowity (albo pijany) pomocnik czasem po cichu zrobi coś po swojemu. Zwraca wadę albo null. */
@@ -142,7 +142,7 @@
     let sum = 0; const parts = [];
     for (const w of workers) {
       const present = attendance(w, rng) === 'present';
-      const gain = present ? Math.round((80 + w.skill * 160) * (w.mood / 100)) : 0;
+      const gain = present ? Math.round((100 + w.skill * 200) * (w.mood / 100)) : 0;
       sum += gain; parts.push({ id: w.id, name: w.name, gain, present });
     }
     return { total: sum, parts };

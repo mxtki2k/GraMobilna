@@ -28,6 +28,7 @@
     { min: 40, key: 'fuszerka', name: 'Fuszerka' },
     { min: 70, key: 'katastrofa', name: 'Katastrofa budowlana' },
   ];
+  const OBVIOUS_VIS = 0.8, OBVIOUS_SEV = 2.5, OBVIOUS_ATT = 0.6;
   const K_INDEX = 14, K_SAT = 9, K_CLAIM = 12;
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
@@ -72,9 +73,10 @@
       const opt = job.steps[i].options.find(o => o.id === pk.optionId);
       time += opt.time || 0; cost += opt.cost || 0;
     });
-    let raw = 0, V = 0, H = 0, Z = 0;
+    let raw = 0, V = 0, H = 0, Z = 0, Vobv = 0;
     for (const d of defects) {
       raw += d.sev * (1 + d.hazard);
+      if (d.vis >= OBVIOUS_VIS && d.sev >= OBVIOUS_SEV) Vobv += d.sev * d.vis;
       V += d.sev * d.vis;
       H += d.sev * (1 - d.vis);
       Z += d.sev * d.hazard;
@@ -83,7 +85,8 @@
     const level = levelFor(index);
 
     const att = client.attention * client.strict * (adj.attentionMult || 1); // noc: klient zaspany
-    const perceived = V * att + (client.expert ? 0.5 * H * att : 0);
+    // rażące wady (widoczne i poważne) zauważy nawet pobłażliwy klient: uwaga nie spada poniżej progu
+    const perceived = (V - Vobv) * att + Vobv * Math.max(att, OBVIOUS_ATT) + (client.expert ? 0.5 * H * att : 0);
     const late = time > job.deadline;
     const latePenalty = late ? Math.min(20, time - job.deadline) : 0;
     const satisfaction = clamp(Math.round(100 * Math.exp(-perceived / K_SAT) - latePenalty + (adj.satBonus || 0)), 0, 100);

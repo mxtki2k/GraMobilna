@@ -55,7 +55,11 @@ t('pożyczki: limity, wymóg oceny dla banku, brak zmiany wejścia', () => {
 t('odsetki: lichwiarz puchnie szybciej niż bank', () => {
   const g = Fi.takeLoan(Fi.fresh(), 'gienek', 1000, 1).fin, bk = Fi.takeLoan(Fi.fresh(), 'bank', 1000, 4).fin;
   const g2 = Fi.settle(g, 0).fin, b2 = Fi.settle(bk, 0).fin;
-  assert(g2.loans[0].principal > b2.loans[0].principal && g2.loans[0].principal === 1250);
+  assert(g2.loans[0].principal > b2.loans[0].principal && g2.loans[0].principal === 1180);
+});
+t('odsetki: dług rośnie najwyżej do dwukrotności limitu pożyczkodawcy', () => {
+  let f = Fi.takeLoan(Fi.fresh(), 'gienek', 3000, 1).fin; for (let i = 0; i < 80; i++) f = Fi.settle(f, 0).fin;
+  assert.strictEqual(f.loans[0].principal, Fi.LENDERS.gienek.max * 2);
 });
 t('raty: płacisz najdroższe najpierw, brak środków = zaległość, spłata kasuje dług', () => {
   let f = Fi.takeLoan(Fi.takeLoan(Fi.fresh(), 'gienek', 1000, 1).fin, 'bank', 1000, 4).fin;

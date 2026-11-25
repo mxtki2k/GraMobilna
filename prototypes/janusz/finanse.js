@@ -10,9 +10,9 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   const LENDERS = {
-    bank: { id: 'bank', name: 'Bank „Spokojna Przystań”', rate: 0.04, max: 5000, minRating: 3.0, miss: 3 },
-    kuzyn: { id: 'kuzyn', name: 'Kuzyn Heniek', rate: 0.08, max: 1500, minRating: 0, miss: 3 },
-    gienek: { id: 'gienek', name: 'Pan Gienek (prywatnie)', rate: 0.25, max: 3000, minRating: 0, miss: 2 },
+    bank: { id: 'bank', name: 'Bank „Spokojna Przystań”', rate: 0.03, max: 5000, minRating: 2.5, miss: 3 },
+    kuzyn: { id: 'kuzyn', name: 'Kuzyn Heniek', rate: 0.05, max: 1500, minRating: 0, miss: 3 },
+    gienek: { id: 'gienek', name: 'Pan Gienek (prywatnie)', rate: 0.18, max: 3000, minRating: 0, miss: 2 },
   };
   const MIN_PAY = 0.15, TAX_RATE = 0.10, ACCOUNTANT_COST = 600, ACCOUNTANT_UPKEEP = 40;
 
@@ -36,7 +36,7 @@
   /* Dzień wypłaty: odsetki, potem raty od najdroższych. Zwraca { fin, paid, missed[] }. */
   function settle(fin, money) {
     const f = clone(fin); let left = money, paid = 0; const missed = [];
-    for (const l of f.loans) l.principal = Math.round(l.principal * (1 + l.rate));
+    for (const l of f.loans) l.principal = Math.min(Math.round(l.principal * (1 + l.rate)), LENDERS[l.lender].max * 2); // dług rośnie najwyżej do dwukrotności limitu
     const order = f.loans.slice().sort((a, b) => b.rate - a.rate);
     for (const l of order) {
       const m = Math.min(minPay(l), l.principal);

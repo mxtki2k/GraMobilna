@@ -1,0 +1,21 @@
+Tempo progresji, 400 dni, styl mieszanie, 60 przebiegów (mediana dnia osiągnięcia; w nawiasie ile przebiegów dotarło)
+
+pożyczka bank                      dzień    0.4  (60/60)
+kurs sep                           dzień    1.4  (60/60)
+siedziba 1 (Blaszak za miastem)    dzień    1.4  (60/60)
+1000 zł                            dzień    1.7  (60/60)
+bus 1                              dzień    1.9  (60/60)
+kurs hydr                          dzień    2.7  (60/60)
+kurs mont                          dzień    3.2  (60/60)
+kurs wyk                           dzień    3.8  (60/60)
+kurs stol                          dzień    5.5  (60/60)
+kurs plyt                          dzień    8.6  (60/60)
+siedziba 2 (Rudera po dziadku)     dzień     18  (60/60)
+5000 zł                            dzień   24.6  (60/60)
+bus 2                              dzień   29.6  (60/60)
+siedziba 3 (Biuro z placem)        dzień   45.2  (60/60)
+bus 3                              dzień   74.6  (60/60)
+siedziba 4 (Hala z biurem)         dzień  119.5  (60/60)
+siedziba 5 (Siedziba przy obwodnicy) dzień  255.8  (60/60)
+
+średni zysk netto na dzień (po wszystkich zakupach): 239 zł
