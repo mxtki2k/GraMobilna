@@ -185,3 +185,10 @@ Narzędzia istnieją wyłącznie jako **przedmioty w ekwipunku** (`alledrogo.js`
 - `terminy.js`: termin klienta (luźny ×1,25, umówiony ×1,0, ostry ×0,75 czasu zlecenia). Spóźnienie: kara 4–8% wypłaty za każde zaczęte 15 min (max 60%), skończenie w 80% czasu: premia 10%. Ostry termin płaci ×1,2, luźny ×0,95. Solidna robota nie mieści się w ostrym terminie (test).
 - `bus.js`: stan busa 0–100, zużycie przy każdym dojeździe (noc i słabszy bus szybciej), szansa awarii rośnie ze zużyciem. Awaria w drodze: laweta (180/260 zł), naprawa samemu (55%) albo kurier (bus zostaje zepsuty do remontu). Przegląd (+30%) i remont w Siedzibie.
 - Testy: `node tests/terminy_bus.test.js`.
+
+## Zmęczenie, stali klienci, rywal, szkolenia, OC
+- `zmeczenie.js`: zmęczenie 0–100. Praca męczy (6 pkt/h, noc ×1,6), czekanie odpoczywa (4 pkt/h), sen 8 h (noc 12 pkt/h, dzień 7 pkt/h). Wypoczęty +3 pkt celności, wykończony do −20 pkt, od 70% szansa na zaśnięcie przy robocie (wada).
+- `klienci.js`: zaufanie klienta −100…100 (5★ +10 … 1★ −20, pamiętliwi mocniej). Płaci ×0,95–1,15, stali klienci częściej dzwonią (+do 10 pkt szansy telefonu), wrogowie prawie wcale. Rywal (Bogdan-Bud) może przejąć telefon: obniżka o 15% wygrywa zawsze, zwykła oferta 50% + zaufanie.
+- `szkolenia.js`: cztery kursy (SEP, hydraulik, wykończeniówka, montaż): koszt, czas, zagrożenie ×0,35–0,8, celność +4–6 pkt, wypłata ×1,05–1,12 dla swojego rodzaju roboty.
+- `ubezpieczenie.js`: polisa OC ze składką co tydzień (rośnie z historią szkód), pokrywa 60% reklamacji i 80% wypadków powyżej 100 zł udziału własnego.
+- Testy: `node tests/mechaniki.test.js`.
