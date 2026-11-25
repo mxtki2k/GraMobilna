@@ -4,7 +4,7 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.Ubezp = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
-  const BASE = 60, PER_CLAIM = 25, COVER = { reklamacja: 0.6, wypadek: 0.8 }, DEDUCT = 100, MAX = 220;
+  const BASE = 40, PER_CLAIM = 10, COVER = { reklamacja: 0.6, wypadek: 0.8 }, DEDUCT = 100, MAX = 120;
   const fresh = () => ({ active: false, history: 0 });
   const premium = oc => Math.min(MAX, BASE + Math.round(oc.history * PER_CLAIM));
   const toggle = (oc, on) => Object.assign({}, oc, { active: !!on });

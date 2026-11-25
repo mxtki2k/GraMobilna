@@ -188,7 +188,10 @@ Narzędzia istnieją wyłącznie jako **przedmioty w ekwipunku** (`alledrogo.js`
 
 ## Zmęczenie, stali klienci, rywal, szkolenia, OC
 - `zmeczenie.js`: zmęczenie 0–100. Praca męczy (6 pkt/h, noc ×1,6), czekanie odpoczywa (4 pkt/h), sen 8 h (noc 12 pkt/h, dzień 7 pkt/h). Wypoczęty +3 pkt celności, wykończony do −20 pkt, od 70% szansa na zaśnięcie przy robocie (wada).
-- `klienci.js`: zaufanie klienta −100…100 (5★ +10 … 1★ −20, pamiętliwi mocniej). Płaci ×0,95–1,15, stali klienci częściej dzwonią (+do 10 pkt szansy telefonu), wrogowie prawie wcale. Rywal (Bogdan-Bud) może przejąć telefon: obniżka o 15% wygrywa zawsze, zwykła oferta 50% + zaufanie.
+- `klienci.js`: zaufanie klienta −100…100 (5★ +10 … 1★ −20, pamiętliwi mocniej). Płaci ×0,95–1,10, stali klienci częściej dzwonią (+do 6 pkt szansy telefonu), wrogowie prawie wcale. Rywal (Bogdan-Bud) może przejąć telefon: obniżka o 15% wygrywa zawsze, zwykła oferta 50% + zaufanie.
 - `szkolenia.js`: cztery kursy (SEP, hydraulik, wykończeniówka, montaż): koszt, czas, zagrożenie ×0,35–0,8, celność +4–6 pkt, wypłata ×1,05–1,12 dla swojego rodzaju roboty.
 - `ubezpieczenie.js`: polisa OC ze składką co tydzień (rośnie z historią szkód), pokrywa 60% reklamacji i 80% wypadków powyżej 100 zł udziału własnego.
 - Testy: `node tests/mechaniki.test.js`.
+
+### Balans nowych mechanik (`node tools/balans2.js`, wyniki w `tools/balans2_wyniki.txt`)
+Bot gra 60 dni gry, 150 przebiegów na scenariusz. Po strojeniu: sen przy 60–80% zmęczenia daje ok. +13% wobec braku snu, przegląd busa poniżej 60% ok. +13%, szkolenia ok. +13%, polisa OC ok. +9% dla ryzykownego stylu (neutralna dla solidnego), zaufanie klientów ok. +19%, fuszerka bez przerwy się nie opłaca, obniżka ceny przy rywalu jest neutralna. Bot to uproszczenie: pomija wypadki z `swiat.js`, pomocników i długi.

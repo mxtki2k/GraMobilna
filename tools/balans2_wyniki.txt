@@ -1,0 +1,23 @@
+Symulacja 60 dni gry, 150 przebiegów na scenariusz (zarobek netto po wszystkich kosztach)
+
+— zmęczenie (próg snu)
+sen przy zmęczeniu nigdy              772 zł/d    80 zł/h·prac  prac.zlec 253  ★ 4.24  zmęcz  84 % awar 41.6  zaśn 32.1  spóźn 54.1  reklam 30464  OC + 0/-0
+sen przy zmęczeniu 40                 826 zł/d   106 zł/h·prac  prac.zlec 231  ★ 4.46  zmęcz  25 % awar 38.0  zaśn  0.0  spóźn 31.2  reklam 27096  OC + 0/-0
+sen przy zmęczeniu 60                 874 zł/d   105 zł/h·prac  prac.zlec 247  ★ 4.45  zmęcz  34 % awar 40.5  zaśn  0.0  spóźn 33.6  reklam 29037  OC + 0/-0
+sen przy zmęczeniu 80                 872 zł/d   102 zł/h·prac  prac.zlec 250  ★ 4.42  zmęcz  45 % awar 41.1  zaśn  0.1  spóźn 34.8  reklam 29720  OC + 0/-0
+
+— serwis busa
+przegląd poniżej nigdy%               874 zł/d   105 zł/h·prac  prac.zlec 247  ★ 4.45  zmęcz  34 % awar 40.5  zaśn  0.0  spóźn 33.6  reklam 29037  OC + 0/-0
+przegląd poniżej 40%                  953 zł/d   117 zł/h·prac  prac.zlec 250  ★ 4.46  zmęcz  33 % awar 18.7  zaśn  0.0  spóźn 27.0  reklam 29658  OC + 0/-0
+przegląd poniżej 60%                  985 zł/d   123 zł/h·prac  prac.zlec 251  ★ 4.47  zmęcz  33 % awar  7.4  zaśn  0.0  spóźn 23.6  reklam 30355  OC + 0/-0
+przegląd poniżej 80%                  964 zł/d   122 zł/h·prac  prac.zlec 249  ★ 4.47  zmęcz  32 % awar  5.5  zaśn  0.0  spóźn 23.8  reklam 29560  OC + 0/-0
+
+— szkolenia, OC, rywal, styl
+bez dodatków                          985 zł/d   123 zł/h·prac  prac.zlec 251  ★ 4.47  zmęcz  33 % awar  7.4  zaśn  0.0  spóźn 23.6  reklam 30355  OC + 0/-0
++ szkolenia                          1127 zł/d   146 zł/h·prac  prac.zlec 241  ★ 4.51  zmęcz  33 % awar  7.4  zaśn  0.0  spóźn 23.0  reklam 25317  OC + 0/-0
++ OC                                 1065 zł/d   133 zł/h·prac  prac.zlec 251  ★ 4.47  zmęcz  33 % awar  7.4  zaśn  0.0  spóźn 23.6  reklam 16151  OC + 14204/-9439
+bez efektów zaufania klientów         831 zł/d   110 zł/h·prac  prac.zlec 238  ★ 4.33  zmęcz  28 % awar  6.9  zaśn  0.0  spóźn 22.8  reklam 25233  OC + 0/-0
+rywal: zawsze zbij cenę               980 zł/d   121 zł/h·prac  prac.zlec 253  ★ 4.47  zmęcz  33 % awar  7.4  zaśn  0.0  spóźn 24.6  reklam 30194  OC + 0/-0
+styl solidny (nie skraca)             993 zł/d   112 zł/h·prac  prac.zlec 200  ★ 4.55  zmęcz  40 % awar  5.6  zaśn  0.0  spóźn 59.9  reklam 3616  OC + 0/-0
+styl fuszerka                          30 zł/d     9 zł/h·prac  prac.zlec 350  ★ 4.22  zmęcz   4 % awar 10.9  zaśn  0.0  spóźn  0.0  reklam 177550  OC + 0/-0
+wszystko razem (solid+skraca ostre)   1091 zł/d   129 zł/h·prac  prac.zlec 200  ★ 4.63  zmęcz  39 % awar  5.7  zaśn  0.1  spóźn 43.5  reklam 4372  OC + 3688/-4486

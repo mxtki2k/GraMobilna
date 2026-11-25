@@ -10,8 +10,9 @@ t('zmęczenie: praca męczy, w nocy mocniej, odpoczynek i sen regenerują (noc s
   assert(Z.rest(50, 60, false) === 46 && Z.rest(100, 480, true, true) < Z.rest(100, 480, true, false) && Z.rest(5, 480, true, true) === 0);
 });
 t('zmęczenie: wypoczęty pracuje celniej, zmęczony gorzej, ledwo żywy zasypia', () => {
-  assert(Z.accMod(10) > 0 && Z.accMod(30) === 0 && Z.accMod(70) < 0 && Z.accMod(100) === -0.2 && Z.accMod(60) > Z.accMod(90));
-  assert(Z.nodChance(69) === 0 && Z.nodChance(85) > 0 && Z.nodChance(100) === 0.25);
+  assert(Z.accMod(10) > 0 && Z.accMod(30) === 0 && Z.accMod(70) < 0 && Z.accMod(100) === -0.3 && Z.accMod(60) > Z.accMod(90));
+  assert(Z.nodChance(69) === 0 && Z.nodChance(85) > 0 && Z.nodChance(100) === 0.35);
+  assert(Z.timeMult(40) === 1 && Z.timeMult(100) === 1.3 && Z.timeMult(75) > 1);
   assert.deepStrictEqual([5, 30, 50, 70, 95].map(Z.label), ['wypoczęty', 'w porządku', 'zmęczony', 'wykończony', 'ledwo żyjesz']);
 });
 t('klienci: zaufanie rośnie po dobrej robocie i spada po złej (pamiętliwi mocniej)', () => {
@@ -22,7 +23,7 @@ t('klienci: zaufanie rośnie po dobrej robocie i spada po złej (pamiętliwi moc
   assert.deepStrictEqual([60, 30, 0, -30, -80].map(K.level), ['stały klient', 'zaufany', 'znajomy', 'nieufny', 'wróg']);
 });
 t('klienci: mnożnik wypłaty w granicach 0,95–1,15, waga telefonów rośnie z zaufaniem', () => {
-  assert(K.payMult(100) === 1.15 && K.payMult(-100) === 0.95 && K.payMult(0) === 1 && K.payMult(50) > K.payMult(10));
+  assert(K.payMult(100) === 1.1 && K.payMult(-100) === 0.95 && K.payMult(0) === 1 && K.payMult(50) > K.payMult(10));
   assert(K.weight(60) > K.weight(0) && K.weight(-60) < 0.1 && K.weight(-10) < 1);
   const r = lcg(4), ids = Object.keys(CLIENTS), rel = { mirek: { trust: 75, jobs: 5 }, karyna: { trust: -80, jobs: 2 } }, c = {};
   for (let i = 0; i < 3000; i++) { const x = K.pick(r, ids, rel); assert(CLIENTS[x]); c[x] = (c[x] || 0) + 1; }
@@ -42,7 +43,7 @@ t('szkolenia: każdy rodzaj roboty ma kurs, uprawnienia zmieniają ryzyko i wyp�
 });
 t('szkolenia: zakup sprawdza gotówkę i duplikaty', () => {
   assert(!Sz.buy({}, 'sep', 10).ok && !Sz.buy({ sep: true }, 'sep', 9999).ok && !Sz.buy({}, 'x', 9999).ok);
-  const r = Sz.buy({}, 'sep', 9999); assert(r.ok && r.certs.sep && r.cost === 650 && r.hours === 16);
+  const r = Sz.buy({}, 'sep', 9999); assert(r.ok && r.certs.sep && r.cost === 900 && r.hours === 16);
 });
 t('OC: bez polisy płacisz całość, z polisą część pokrywa ubezpieczyciel, składka rośnie ze szkodami', () => {
   const none = U.cover(U.fresh(), { kind: 'reklamacja', amount: 500 }); assert(none.you === 500 && none.insurer === 0);

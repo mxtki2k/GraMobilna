@@ -9,10 +9,12 @@
   const gain = (f, minutes, night) => clamp(Math.round((f + minutes / 60 * PER_HOUR_WORK * (night ? NIGHT_MULT : 1)) * 10) / 10, 0, 100);
   /* Odpoczynek: czekanie na telefon (lekki) albo sen (w nocy skuteczniejszy niż w dzień). */
   const rest = (f, minutes, sleep, night) => clamp(Math.round((f - minutes / 60 * (sleep ? (night ? SLEEP_NIGHT : SLEEP_DAY) : REST_PER_HOUR)) * 10) / 10, 0, 100);
-  /* Poprawka celności: wypoczęty +0,03, od 40 w dół aż do −0,2 przy 100. */
-  const accMod = f => f < 20 ? 0.03 : f <= 40 ? 0 : -Math.round((f - 40) / 60 * 0.2 * 1000) / 1000;
-  /* Szansa na zaśnięcie przy robocie (na krok): od 70, do 25% przy 100. */
-  const nodChance = f => f < 70 ? 0 : Math.round((f - 70) / 30 * 0.25 * 1000) / 1000;
+  /* Poprawka celności: wypoczęty +0,03, od 40 w dół aż do −0,3 przy 100. */
+  const accMod = f => f < 20 ? 0.03 : f <= 40 ? 0 : -Math.round((f - 40) / 60 * 0.3 * 1000) / 1000;
+  /* Zmęczony pracuje wolniej: od 50% do +30% czasu przy 100%. */
+  const timeMult = f => 1 + Math.round(Math.max(0, f - 50) / 50 * 0.3 * 1000) / 1000;
+  /* Szansa na zaśnięcie przy robocie (na krok): od 70, do 35% przy 100. */
+  const nodChance = f => f < 70 ? 0 : Math.round((f - 70) / 30 * 0.35 * 1000) / 1000;
   const label = f => f < 20 ? 'wypoczęty' : f < 40 ? 'w porządku' : f < 60 ? 'zmęczony' : f < 80 ? 'wykończony' : 'ledwo żyjesz';
-  return { gain, rest, accMod, nodChance, label };
+  return { gain, rest, accMod, timeMult, nodChance, label };
 });
