@@ -13,7 +13,7 @@
     materialy: { type: 'koszt', label: 'Materiały' }, transport: { type: 'koszt', label: 'Transport (kurier)' }, wypadki: { type: 'koszt', label: 'Mandaty i wypadki' },
     pensje: { type: 'koszt', label: 'Pensje' }, utrzymanie: { type: 'koszt', label: 'Utrzymanie siedziby' }, podatki: { type: 'koszt', label: 'Podatki' },
     kary: { type: 'koszt', label: 'Kary i windykacja' }, reklamacje: { type: 'koszt', label: 'Reklamacje' }, kradziez: { type: 'koszt', label: 'Kradzieże' },
-    odsetki: { type: 'koszt', label: 'Odsetki' }, serwis: { type: 'koszt', label: 'Serwis narzędzi' },
+    odsetki: { type: 'koszt', label: 'Odsetki' }, serwis: { type: 'koszt', label: 'Serwis narzędzi i busa' },
     zakupy: { type: 'inwestycja', label: 'Inwestycje i zakupy' }, dlug: { type: 'dlug', label: 'Pożyczki i spłaty długu' },
     inne: { type: 'koszt', label: 'Inne' },
   };

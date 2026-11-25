@@ -149,21 +149,21 @@
   // Zlecenia nocne (22:00–06:00) płacą więcej (dopłata), ale są ryzykowniejsze: ciemno, zaspany klient, więcej wypadków i kontroli.
   const LEVELS = [
     { job: 'kran', client: 'mirek', mult: 1, slot: 'dzien', time: '09:00' },
-    { job: 'polka', client: 'karyna', mult: 1.1, slot: 'dzien', time: '13:00' },
+    { due: 'normalny', job: 'polka', client: 'karyna', mult: 1.1, slot: 'dzien', time: '13:00' },
     { job: 'sciana', client: 'sebix', mult: 1.2, slot: 'dzien', time: '08:30' },
-    { job: 'kran', client: 'grazyna', mult: 1.4, slot: 'noc', time: '23:00', intro: 'Pani Grażyna dzwoni o 23:00: kran w łazience się rozerwał i woda leje się na sąsiada z dołu. „Niech pan przyjedzie natychmiast!”' },
-    { job: 'gniazdko', client: 'mirek', mult: 1.5, slot: 'noc', time: '01:30', intro: 'Pan Mirek budzi cię po pierwszej w nocy: gniazdko w kuchni iskrzy i pachnie spalenizną. „Ale tylko szybko, bo jutro do pracy.”' },
+    { due: 'ostry', job: 'kran', client: 'grazyna', mult: 1.4, slot: 'noc', time: '23:00', intro: 'Pani Grażyna dzwoni o 23:00: kran w łazience się rozerwał i woda leje się na sąsiada z dołu. „Niech pan przyjedzie natychmiast!”' },
+    { due: 'ostry', job: 'gniazdko', client: 'mirek', mult: 1.5, slot: 'noc', time: '01:30', intro: 'Pan Mirek budzi cię po pierwszej w nocy: gniazdko w kuchni iskrzy i pachnie spalenizną. „Ale tylko szybko, bo jutro do pracy.”' },
     { job: 'sciana', client: 'tesciowa', mult: 1.7, slot: 'dzien', time: '10:00' },
-    { job: 'gniazdko', client: 'grazyna', mult: 2, slot: 'noc', time: '22:30', intro: 'Pani Grażyna po zmroku: „Wyłączyło prąd w całym mieszkaniu, a w kuchni coś bzyczy. Czy może pan przyjechać dziś?”' },
-    { job: 'polka', client: 'heniek', mult: 2.2, slot: 'dzien', time: '14:00' },
+    { due: 'normalny', job: 'gniazdko', client: 'grazyna', mult: 2, slot: 'noc', time: '22:30', intro: 'Pani Grażyna po zmroku: „Wyłączyło prąd w całym mieszkaniu, a w kuchni coś bzyczy. Czy może pan przyjechać dziś?”' },
+    { due: 'normalny', job: 'polka', client: 'heniek', mult: 2.2, slot: 'dzien', time: '14:00' },
     { job: 'kran', client: 'sebix', mult: 1.6, slot: 'dzien', time: '07:30' },
-    { job: 'gniazdko', client: 'tesciowa', mult: 1.8, slot: 'dzien', time: '11:00' },
-    { job: 'polka', client: 'grazyna', mult: 1.8, slot: 'noc', time: '22:15', intro: 'Pani Grażyna po zmroku: „Półka spadła i obudziła wnuka. Może pan od razu, zanim zasnę?”' },
+    { due: 'normalny', job: 'gniazdko', client: 'tesciowa', mult: 1.8, slot: 'dzien', time: '11:00' },
+    { due: 'ostry', job: 'polka', client: 'grazyna', mult: 1.8, slot: 'noc', time: '22:15', intro: 'Pani Grażyna po zmroku: „Półka spadła i obudziła wnuka. Może pan od razu, zanim zasnę?”' },
     { job: 'sciana', client: 'heniek', mult: 2.4, slot: 'dzien', time: '09:30' },
-    { job: 'kran', client: 'heniek', mult: 2.6, slot: 'noc', time: '00:30', intro: 'Pan Heniek o wpół do pierwszej: „Ja tego nie robię po nocach, ale ten kran robi mi wannę w piwnicy.”' },
+    { due: 'ostry', job: 'kran', client: 'heniek', mult: 2.6, slot: 'noc', time: '00:30', intro: 'Pan Heniek o wpół do pierwszej: „Ja tego nie robię po nocach, ale ten kran robi mi wannę w piwnicy.”' },
     { job: 'gniazdko', client: 'karyna', mult: 2.4, slot: 'dzien', time: '15:30' },
-    { job: 'sciana', client: 'karyna', mult: 2.2, slot: 'noc', time: '23:30', intro: 'Karyna pisze o 23:30: „Jutro robię relację z remontu, a w ścianie dziura. Przyjedziesz dziś?”' },
-    { job: 'polka', client: 'tesciowa', mult: 2.8, slot: 'dzien', time: '12:00' },
+    { due: 'normalny', job: 'sciana', client: 'karyna', mult: 2.2, slot: 'noc', time: '23:30', intro: 'Karyna pisze o 23:30: „Jutro robię relację z remontu, a w ścianie dziura. Przyjedziesz dziś?”' },
+    { due: 'ostry', job: 'polka', client: 'tesciowa', mult: 2.8, slot: 'dzien', time: '12:00' },
   ];
 
   /* Telefony „z ulicy”: gdy skończą się zlecenia z listy, gracz może przesuwać zegar o godzinę. Co godzinę jest szansa na telefon. */

@@ -180,3 +180,8 @@ Narzędzia istnieją wyłącznie jako **przedmioty w ekwipunku** (`alledrogo.js`
 - `ksiega.js`: księga miesiąca po kategoriach; „Plus w miesiącu” = przychody + koszty (inwestycje i dług osobno). Raport pojawia się na zmianę miesiąca i w Finansach.
 - `stawka.js`: „zostaje” = wypłata − materiały − transport − pomocnik (pensja/3, w nocy ×1,5) − zużycie narzędzi − podatek − udział w utrzymaniu; podzielone przez godziny pracy.
 - UI: pasek daty i godziny, koszt wzięcia pomocnika i stawka z nim/bez, dylemat transportu tylko dla jadących, lista etapów naprawy, animacja narzędzia przed zmianą sceny.
+
+## Zlecenia terminowe i awarie busa
+- `terminy.js`: termin klienta (luźny ×1,25, umówiony ×1,0, ostry ×0,75 czasu zlecenia). Spóźnienie: kara 4–8% wypłaty za każde zaczęte 15 min (max 60%), skończenie w 80% czasu: premia 10%. Ostry termin płaci ×1,2, luźny ×0,95. Solidna robota nie mieści się w ostrym terminie (test).
+- `bus.js`: stan busa 0–100, zużycie przy każdym dojeździe (noc i słabszy bus szybciej), szansa awarii rośnie ze zużyciem. Awaria w drodze: laweta (180/260 zł), naprawa samemu (55%) albo kurier (bus zostaje zepsuty do remontu). Przegląd (+30%) i remont w Siedzibie.
+- Testy: `node tests/terminy_bus.test.js`.

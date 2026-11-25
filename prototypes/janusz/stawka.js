@@ -15,10 +15,11 @@
     const lines = [
       { key: 'payout', label: 'Wypłata od klienta', value: round(g('payout')) },
       { key: 'materials', label: 'Materiały', value: -round(g('materials')) },
-      { key: 'transport', label: 'Transport, mandaty, wypadki', value: -round(g('transport')) },
+      { key: 'transport', label: 'Transport, awarie, mandaty', value: -round(g('transport')) },
       { key: 'helper', label: 'Pomocnik (udział w pensji)', value: -round(g('helper')) },
       { key: 'tools', label: 'Zużycie narzędzi', value: -round(g('tools')) },
       { key: 'tax', label: 'Podatek od faktury', value: -round(g('tax')) },
+      { key: 'penalty', label: 'Kara za spóźnienie', value: -round(g('penalty')) },
       { key: 'overhead', label: 'Utrzymanie firmy (udział)', value: -round(g('overhead')) },
     ];
     const net = round(lines.reduce((s, l) => s + l.value, 0)), hours = Math.max(1 / 60, (o.minutes || 0) / 60);

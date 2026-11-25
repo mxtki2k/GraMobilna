@@ -99,7 +99,7 @@ t('księga: średnia stawka miesiąca z zysków netto i godzin pracy', () => {
 t('stawka: zostaje po odjęciu wszystkich kosztów i dzieli przez godziny', () => {
   const e = S.jobEconomics({ payout: 400, materials: 40, transport: 70, helper: 30, tools: 10, tax: 40, overhead: 10, minutes: 120 });
   assert.strictEqual(e.net, 200); assert.strictEqual(e.hours, 2); assert.strictEqual(e.perHour, 100); assert.strictEqual(e.grossPerHour, 200); assert.strictEqual(e.costs, 200);
-  assert.strictEqual(e.lines.length, 7); assert.strictEqual(e.lines[0].value, 400); assert(e.lines.slice(1).every(l => l.value <= 0));
+  assert.strictEqual(e.lines.length, 8); assert.strictEqual(e.lines[0].value, 400); assert(e.lines.slice(1).every(l => l.value <= 0));
   assert(S.jobEconomics({ payout: 100, materials: 300, minutes: 60 }).perHour < 0);
 });
 
