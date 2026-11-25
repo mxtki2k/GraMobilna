@@ -143,7 +143,133 @@
           { id: 'fusz', label: 'Ustaw ciężkie, pewnie wytrzyma', desc: 'Wszystkie encyklopedie.', time: 0, cost: 0, defects: [{ label: 'przeciążona półka', sev: 4, vis: 0, hazard: 0.4 }], fx: 'load-heavy' } ] },
       ],
     },
+    syfon: {
+      id: 'syfon', title: 'Zapchany zlew', place: 'Kuchnia', base: 210, deadline: 30,
+      intro: 'Woda w zlewie stoi i brzydko pachnie. Pół butelki „Kreta” nic nie dało, a pod szafką już mokro.',
+      steps: [
+        { id: 'przygotuj', name: 'Zabezpiecz miejsce', hint: 'Pod syfonem zbierze się brudna woda.', options: [
+          { id: 'dobrze', label: 'Wiadro, szmaty i zakręcony zawór', desc: 'Nic nie spłynie na podłogę.', time: 5, cost: 0, defects: [], fx: 'bucket' },
+          { id: 'skrot', label: 'Samo wiadro', desc: 'Lekko chlapnie.', time: 2, cost: 0, defects: [{ label: 'woda na podłodze pod zlewem', sev: 1, vis: 0.6 }], fx: 'bucket-only' },
+          { id: 'fusz', label: 'Podłóż ręcznik', desc: 'Chłonie. Do pewnego momentu.', time: 1, cost: 0, defects: [{ label: 'kałuża pod szafką', sev: 2.5, vis: 1 }], fx: 'towel' } ] },
+        { id: 'rozkrec', name: 'Odkręć syfon', hint: 'Plastikowe nakrętki łatwo zerwać.', options: [
+          { id: 'dobrze', label: 'Nakrętki ręką, po kolei', desc: 'Wolno, ale nic nie zniszczysz.', time: 6, cost: 0, skill: true, defects: [], fx: 'trap-off' },
+          { id: 'skrot', label: 'Kluczem do rur', desc: 'Idzie szybko, nakrętki trochę mniej.', time: 3, cost: 0, skill: true, defects: [{ label: 'zmasakrowane nakrętki syfonu', sev: 1.5, vis: 0.3 }], fx: 'trap-wrench' },
+          { id: 'fusz', label: 'Wlej drugi „Kret” i czekaj', desc: 'Chemia sama zrobi robotę.', time: 1, cost: 12, defects: [{ label: 'żrąca chemia w rurach i w zlewie', sev: 3, vis: 0.2, hazard: 0.3 }], fx: 'chem' } ] },
+        { id: 'czysc', name: 'Wyczyść rurę', hint: 'Tłuszcz siedzi głębiej, niż widać.', options: [
+          { id: 'dobrze', label: 'Sprężyna i szczotka', desc: 'Dokładnie, na brudno.', time: 8, cost: 0, skill: true, defects: [], fx: 'pipe-clean' },
+          { id: 'skrot', label: 'Przepychacz', desc: 'Przepchane. Częściowo.', time: 4, cost: 0, defects: [{ label: 'tłuszcz zostaje w kolanku', sev: 3, vis: 0.1 }], fx: 'plunger' },
+          { id: 'fusz', label: 'Zalej gorącą wodą', desc: 'Rozpuści. Przesunie dalej.', time: 1, cost: 0, defects: [{ label: 'zator wróci za tydzień', sev: 4, vis: 0.1 }], fx: 'hot-water' } ] },
+        { id: 'uszczelnij', name: 'Złóż syfon i uszczelnij', hint: 'Każde połączenie to potencjalny wyciek.', options: [
+          { id: 'dobrze', label: 'Nowe uszczelki', desc: 'Czternaście złotych spokoju.', time: 6, cost: 14, skill: true, defects: [], fx: 'gasket-new' },
+          { id: 'skrot', label: 'Stare uszczelki', desc: 'Są jeszcze miękkie. Chyba.', time: 3, cost: 0, skill: true, defects: [{ label: 'stara uszczelka zacznie przeciekać', sev: 3, vis: 0.15 }], fx: 'gasket-old' },
+          { id: 'fusz', label: 'Silikon na wszystko', desc: 'Silikon uszczelnia każdy problem.', time: 2, cost: 10, defects: [{ label: 'silikon zamiast uszczelek', sev: 4, vis: 0.5 }], fx: 'silicone' } ] },
+        { id: 'test', name: 'Próba odpływu', hint: 'Sprawdź pod obciążeniem, nie na sucho.', options: [
+          { id: 'dobrze', label: 'Napełnij zlew i spuść całą wodę', desc: 'Jeśli suche, jest dobrze.', time: 5, cost: 0, defects: [], fx: 'drain-ok' },
+          { id: 'skrot', label: 'Puść wodę z kranu na minutę', desc: 'Płynie, więc płynie.', time: 2, cost: 0, defects: [{ label: 'brak próby pod obciążeniem', sev: 1.5, vis: 0.1 }], fx: 'drain-quick' },
+          { id: 'fusz', label: 'Pewnie płynie', desc: 'Nikt nie sprawdza.', time: 0, cost: 0, defects: [{ label: 'brak próby odpływu', sev: 3, vis: 0.15 }], fx: 'drain-none' } ] },
+      ],
+    },
+    drzwi: {
+      id: 'drzwi', title: 'Drzwi, które nie domykają', place: 'Przedpokój', base: 280, deadline: 34,
+      intro: 'Drzwi wejściowe trzeba dociskać barkiem, a zamek klinuje się co drugi raz. Sąsiad od miesiąca słyszy to codziennie.',
+      steps: [
+        { id: 'diagnoza', name: 'Znajdź przyczynę', hint: 'Zawiasy, zamek czy spuchnięta ościeżnica?', options: [
+          { id: 'dobrze', label: 'Poziomica, zawiasy i zapadka', desc: 'Sprawdzasz po kolei.', time: 6, cost: 0, defects: [], fx: 'diag-good' },
+          { id: 'skrot', label: 'Na oko, pewnie zawiasy', desc: 'Pewnie, że zawiasy.', time: 2, cost: 0, defects: [{ label: 'nie sprawdzono prawdziwej przyczyny', sev: 1.5, vis: 0.1 }], fx: 'diag-eye' },
+          { id: 'fusz', label: 'Kopnij i zobacz', desc: 'Diagnostyka kopniakiem.', time: 0, cost: 0, defects: [{ label: 'diagnoza kopniakiem', sev: 2.5, vis: 0.3 }], fx: 'diag-kick' } ] },
+        { id: 'zawiasy', name: 'Napraw zawiasy', hint: 'Skrzydło ciągnie w dół i otwory się wyrabiają.', options: [
+          { id: 'dobrze', label: 'Dokręć, wyrównaj, podkładki', desc: 'Skrzydło wraca na miejsce.', time: 8, cost: 6, skill: true, defects: [], fx: 'hinge-ok' },
+          { id: 'skrot', label: 'Dokręć wkręty', desc: 'Za miesiąc znowu.', time: 3, cost: 0, skill: true, defects: [{ label: 'wkręty znowu się poluzują', sev: 2.5, vis: 0.1 }], fx: 'hinge-tight' },
+          { id: 'fusz', label: 'Klej do drewna w otwory', desc: 'Zawias trzyma się klejem.', time: 1, cost: 4, defects: [{ label: 'zawias na kleju', sev: 4, vis: 0.3 }], fx: 'hinge-glue' } ] },
+        { id: 'zamek', name: 'Zamek i zapadka', hint: 'Zapadka musi wejść w zaczep bez walki.', options: [
+          { id: 'dobrze', label: 'Nowa wkładka i smar', desc: '38 zł i święty spokój.', time: 7, cost: 38, skill: true, defects: [], fx: 'lock-new' },
+          { id: 'skrot', label: 'Naoliwić olejem', desc: 'Pachnie, działa. Chwilę.', time: 2, cost: 3, defects: [{ label: 'zamek znów się zatnie', sev: 2, vis: 0.2 }], fx: 'lock-oil' },
+          { id: 'fusz', label: 'Zaklej zapadkę taśmą', desc: 'Nie zatrzaśnie się. Nie zatnie się.', time: 1, cost: 0, defects: [{ label: 'drzwi nie zamykają się na klucz', sev: 4.5, vis: 0.5, hazard: 0.3 }], fx: 'lock-tape' } ] },
+        { id: 'luz', name: 'Dopasuj skrzydło do ościeżnicy', hint: 'Szczelina ma być równa dookoła.', options: [
+          { id: 'dobrze', label: 'Zdejmij skrzydło i zeszlifuj krawędź', desc: 'Równo, bez poprawek.', time: 8, cost: 0, skill: true, defects: [], fx: 'plane-good' },
+          { id: 'skrot', label: 'Szlif raz po wierzchu', desc: 'Prawie równo.', time: 3, cost: 0, skill: true, defects: [{ label: 'nierówna szczelina przy ościeżnicy', sev: 2, vis: 0.5 }], fx: 'plane-rough' },
+          { id: 'fusz', label: 'Wepchnij klin i nie ruszaj', desc: 'Klin trzyma.', time: 1, cost: 0, defects: [{ label: 'drzwi trzymają się na kliniku', sev: 3.5, vis: 0.8 }], fx: 'plane-none' } ] },
+        { id: 'test', name: 'Sprawdź zamykanie', hint: 'Dziesięć razy, z kluczem i bez.', options: [
+          { id: 'dobrze', label: 'Zamknij dziesięć razy', desc: 'Z kluczem i bez.', time: 5, cost: 0, defects: [], fx: 'door-ok' },
+          { id: 'skrot', label: 'Zamknij raz', desc: 'Zamknęły się.', time: 2, cost: 0, defects: [{ label: 'brak próby zamykania', sev: 1.5, vis: 0.1 }], fx: 'door-quick' },
+          { id: 'fusz', label: 'Wyjdź i zatrzaśnij', desc: 'Najwyżej zadzwonią.', time: 0, cost: 0, defects: [{ label: 'drzwi niesprawdzone', sev: 3, vis: 0.2 }], fx: 'door-untested' } ] },
+      ],
+    },
+    plytki: {
+      id: 'plytki', title: 'Płytki w łazience', place: 'Łazienka', base: 560, deadline: 50,
+      intro: 'Stare płytki odpadły przy prysznicu. Klient chce nowych: równych, szczelnych i „żeby ładnie wyglądało na zdjęciach”.',
+      steps: [
+        { id: 'podloze', name: 'Przygotuj podłoże', hint: 'Płytki są tak dobre jak ściana pod nimi.', options: [
+          { id: 'dobrze', label: 'Wyrównaj, odkurz, zagruntuj', desc: 'Klej będzie miał się czego trzymać.', time: 8, cost: 25, defects: [], fx: 'base-good' },
+          { id: 'skrot', label: 'Odkurz', desc: 'Pył to też podłoże.', time: 3, cost: 0, defects: [{ label: 'płytki odejdą przez pył', sev: 3, vis: 0.1 }], fx: 'base-quick' },
+          { id: 'fusz', label: 'Układaj na brudnym', desc: 'Klej wszystko zniesie.', time: 0, cost: 0, defects: [{ label: 'brak przygotowania podłoża', sev: 5, vis: 0.1 }], fx: 'base-none' } ] },
+        { id: 'hydro', name: 'Hydroizolacja', hint: 'Prysznic to nie to samo, co salon.', options: [
+          { id: 'dobrze', label: 'Dwie warstwy i taśma w narożnikach', desc: 'Nic nie przesiąknie.', time: 8, cost: 40, defects: [], fx: 'hydro-good' },
+          { id: 'skrot', label: 'Jedna warstwa', desc: 'Raczej wystarczy.', time: 4, cost: 20, defects: [{ label: 'cienka hydroizolacja pod prysznicem', sev: 3, vis: 0.05, hazard: 0.1 }], fx: 'hydro-thin' },
+          { id: 'fusz', label: 'Pomiń, płytki są wodoodporne', desc: 'Płytki są. Szczeliny też.', time: 0, cost: 0, defects: [{ label: 'brak hydroizolacji, woda pójdzie do sąsiada', sev: 6, vis: 0.05, hazard: 0.15 }], fx: 'hydro-none' } ] },
+        { id: 'klej', name: 'Nałóż klej', hint: 'Cała płytka ma leżeć na kleju, nie na pustkach.', options: [
+          { id: 'dobrze', label: 'Grzebień, równa warstwa', desc: 'Żadnych pustych miejsc.', time: 6, cost: 30, skill: true, defects: [], fx: 'glue-comb' },
+          { id: 'skrot', label: 'Szpachlą, bez grzebienia', desc: 'Szybciej, ale grudki.', time: 3, cost: 30, skill: true, defects: [{ label: 'puste przestrzenie pod płytkami', sev: 3, vis: 0.1 }], fx: 'glue-blob' },
+          { id: 'fusz', label: 'Plamy co trzecią płytkę', desc: 'Oszczędność kleju.', time: 1, cost: 15, defects: [{ label: 'płytki na plamach kleju', sev: 4.5, vis: 0.1 }], fx: 'glue-sparse' } ] },
+        { id: 'uklad', name: 'Układanie płytek', hint: 'Tu widać wszystko. Każdy ukośny milimetr.', options: [
+          { id: 'dobrze', label: 'Poziomica, krzyżyki, sznurek', desc: 'Idealnie prosto.', time: 12, cost: 0, skill: true, defects: [], fx: 'lay-level' },
+          { id: 'skrot', label: 'Na oko, krzyżyki', desc: 'Prawie prosto.', time: 6, cost: 0, skill: true, defects: [{ label: 'płytki lekko nierówne', sev: 3, vis: 0.6 }], fx: 'lay-eye' },
+          { id: 'fusz', label: 'Układaj szybko, jak leci', desc: 'Pasuje, nie pasuje.', time: 3, cost: 0, skill: true, defects: [{ label: 'krzywe płytki, różne fugi', sev: 5, vis: 1 }], fx: 'lay-crooked' } ] },
+        { id: 'fuga', name: 'Fugowanie', hint: 'Fuga nie jest ozdobą, tylko szczelnością.', options: [
+          { id: 'dobrze', label: 'Fuga po dobie, zmycie nadmiaru', desc: 'Czysto i szczelnie.', time: 6, cost: 15, defects: [], fx: 'grout-good' },
+          { id: 'skrot', label: 'Fuga od razu', desc: 'Klej jeszcze pracuje.', time: 3, cost: 15, defects: [{ label: 'fuga popęka', sev: 2.5, vis: 0.2 }], fx: 'grout-fast' },
+          { id: 'fusz', label: 'Bez fugi, trzymają się same', desc: 'Przecież się nie ruszą.', time: 0, cost: 0, defects: [{ label: 'brak fugi', sev: 4, vis: 0.9 }], fx: 'grout-none' } ] },
+        { id: 'silikon', name: 'Silikon i próba szczelności', hint: 'Narożniki pracują, fuga tam pęknie.', options: [
+          { id: 'dobrze', label: 'Silikon sanitarny i próba wodą', desc: 'Woda nie wyjdzie.', time: 4, cost: 12, defects: [], fx: 'sil-good' },
+          { id: 'skrot', label: 'Silikon bez próby', desc: 'Pewnie szczelny.', time: 2, cost: 12, defects: [{ label: 'brak próby szczelności prysznica', sev: 2, vis: 0.1 }], fx: 'sil-quick' },
+          { id: 'fusz', label: 'Silikon „kiedyś”', desc: 'Narożniki same się zasklepią.', time: 0, cost: 0, defects: [{ label: 'brak silikonu w narożnikach', sev: 3, vis: 0.6 }], fx: 'sil-none' } ] },
+      ],
+    },
   };
+
+  /* Niespodzianki w trakcie roboty: po ukończeniu kroku `after` (od 0) z szansą `chance` wychodzi problem, który trzeba rozwiązać.
+   * Opcje mają czas, koszt, wady (jak w krokach) i opcjonalny token sceny. */
+  const SURPRISES = {
+    kran: [{ id: 'zawor', after: 0, chance: 0.3, title: 'Zawór pod zlewem jest przerdzewiały', text: 'Przy zakręcaniu zawór chrupnął. Wygląda na to, że siedzi na ostatnim gwincie.', options: [
+      { id: 'dobrze', label: 'Wymień zawór (25 zł)', desc: 'Dłużej, ale na lata.', time: 6, cost: 25, defects: [] },
+      { id: 'skrot', label: 'Dokręć mocniej', desc: 'Przecież trzyma.', time: 1, cost: 0, defects: [{ label: 'zawór pęknie przy następnym zakręceniu', sev: 3.5, vis: 0.1 }] },
+      { id: 'fusz', label: 'Udawaj, że nie widzisz', desc: 'Klient i tak nie zagląda pod zlew.', time: 0, cost: 0, defects: [{ label: 'przerdzewiały zawór pod zlewem', sev: 4, vis: 0.2 }] } ] }],
+    sciana: [{ id: 'kabel', after: 1, chance: 0.3, title: 'W ścianie biegnie kabel', text: 'Pod gipsem widać biały przewód biegnący przez dziurę. Nie wiesz, czy jest pod napięciem.', options: [
+      { id: 'dobrze', label: 'Sprawdź wykrywaczem i obejdź', desc: 'Dobrze, że był.', time: 5, cost: 0, defects: [] },
+      { id: 'skrot', label: 'Zadzwoń do elektryka (80 zł)', desc: 'Przyjeżdża za godzinę.', time: 4, cost: 80, defects: [] },
+      { id: 'fusz', label: 'Zaszpachluj bez sprawdzania', desc: 'Co oczy nie widzą…', time: 0, cost: 0, defects: [{ label: 'kabel zalany gipsem', sev: 4, vis: 0.05, hazard: 0.5 }] } ] }],
+    gniazdko: [{ id: 'alu', after: 0, chance: 0.35, title: 'Przewody w puszce są aluminiowe', text: 'Stara instalacja. Aluminium z miedzią się nie lubi, a ty masz tylko zwykłe złączki.', options: [
+      { id: 'dobrze', label: 'Złączki Al-Cu (20 zł)', desc: 'Specjalne złączki robią robotę.', time: 6, cost: 20, defects: [] },
+      { id: 'skrot', label: 'Odłóż i powiedz klientowi', desc: 'Naprawisz resztę, ale zaznaczysz ryzyko.', time: 2, cost: 0, defects: [{ label: 'zostaje stara aluminiowa instalacja', sev: 2, vis: 0.4 }] },
+      { id: 'fusz', label: 'Skręć jak jest', desc: 'Miedź z aluminium, ślub idealny.', time: 0, cost: 0, defects: [{ label: 'miedź skręcona z aluminium', sev: 5, vis: 0.05, hazard: 0.6 }] } ] }],
+    polka: [{ id: 'gk', after: 1, chance: 0.3, title: 'Ściana to płyta g-k, a nie mur', text: 'Wiertło weszło zbyt łatwo. Zwykłe kołki nie utrzymają ciężaru.', options: [
+      { id: 'dobrze', label: 'Kołki do płyt (10 zł)', desc: 'Motylkowe trzymają.', time: 4, cost: 10, defects: [] },
+      { id: 'skrot', label: 'Przenieś półkę na słup', desc: 'Szukasz profilu stelaża.', time: 3, cost: 0, defects: [{ label: 'półka w innym miejscu niż ustalono', sev: 1, vis: 0.5 }] },
+      { id: 'fusz', label: 'Zwykłe kołki i jakoś', desc: 'Płyta wytrzyma.', time: 0, cost: 0, defects: [{ label: 'półka wyrwie płytę g-k', sev: 5, vis: 0.1, hazard: 0.3 }] } ] }],
+    syfon: [{ id: 'rdza', after: 1, chance: 0.35, title: 'Rura pod zlewem jest przerdzewiała', text: 'Po odkręceniu syfonu kolano osypało się w palcach.', options: [
+      { id: 'dobrze', label: 'Wymień kolano (12 zł)', desc: 'Nowe, gładkie, szczelne.', time: 6, cost: 12, defects: [] },
+      { id: 'skrot', label: 'Owiń taśmą', desc: 'Wystarczy na teraz.', time: 2, cost: 3, defects: [{ label: 'rdza przebije za miesiąc', sev: 3.5, vis: 0.1 }] },
+      { id: 'fusz', label: 'Udawaj, że nie widzisz', desc: 'Nie ruszaj, nie cieknie.', time: 0, cost: 0, defects: [{ label: 'przerdzewiała rura pod zlewem', sev: 4, vis: 0.3, hazard: 0.2 }] } ] }],
+    drzwi: [{ id: 'puchnie', after: 0, chance: 0.35, title: 'Ościeżnica spuchła od wilgoci', text: 'Drewno jest wilgotne i miękkie. Samo dokręcenie niczego nie zmieni.', options: [
+      { id: 'dobrze', label: 'Osusz i zaimpregnuj (18 zł)', desc: 'Najpierw wysycha, potem dopasujesz.', time: 7, cost: 18, defects: [] },
+      { id: 'skrot', label: 'Zeszlifuj, ile się da', desc: 'Prawie w tolerancji.', time: 3, cost: 0, defects: [{ label: 'ościeżnica dalej wilgotna', sev: 3, vis: 0.3 }] },
+      { id: 'fusz', label: 'Zignoruj', desc: 'Jakoś będzie.', time: 0, cost: 0, defects: [{ label: 'spuchnięta ościeżnica', sev: 4, vis: 0.6 }] } ] }],
+    plytki: [
+      { id: 'plesn', after: 0, chance: 0.4, title: 'Pod starymi płytkami pleśń', text: 'Za odpadniętymi płytkami ściana jest czarna i wilgotna.', options: [
+        { id: 'dobrze', label: 'Skuj, osusz, zagruntuj (30 zł)', desc: 'Pleśń znika razem z tynkiem.', time: 10, cost: 30, defects: [] },
+        { id: 'skrot', label: 'Spryskaj środkiem grzybobójczym', desc: 'Pachnie chlorem. Nie tylko.', time: 3, cost: 15, defects: [{ label: 'pleśń wróci pod płytkami', sev: 3.5, vis: 0.2 }] },
+        { id: 'fusz', label: 'Zalep nowymi płytkami', desc: 'Ściana swoje, płytki swoje.', time: 0, cost: 0, defects: [{ label: 'pleśń zamurowana pod płytkami', sev: 5, vis: 0.05, hazard: 0.1 }] } ] },
+      { id: 'serie', after: 3, chance: 0.3, title: 'Zabrakło płytek z jednej serii', text: 'Zostało pięć sztuk, a do końca ściany trzeba osiem. Nowa partia ma inny odcień.', options: [
+        { id: 'dobrze', label: 'Pojedź po dodatkowe (kurier 60 zł)', desc: 'Z tej samej serii, jeśli jest.', time: 8, cost: 60, defects: [] },
+        { id: 'skrot', label: 'Docinaj mniejsze', desc: 'Dużo cienkich docinek.', time: 3, cost: 0, defects: [{ label: 'dużo cienkich docinek na ścianie', sev: 2, vis: 0.6 }] },
+        { id: 'fusz', label: 'Połącz serie', desc: 'Odcień „ciepły i zimny”.', time: 1, cost: 0, defects: [{ label: 'dwa odcienie płytek na jednej ścianie', sev: 2.5, vis: 0.9 }] } ] },
+    ],
+  };
+  /* Losuje niespodziankę po ukończeniu kroku (indeks od 0). Zwraca obiekt albo null. */
+  function rollSurprise(jobId, doneStep, rng) {
+    const l = SURPRISES[jobId] || [], x = l.find(s => s.after === doneStep);
+    return x && rng() < x.chance ? x : null;
+  }
 
   // kolejność poziomów: zlecenie + klient + mnożnik wypłaty + pora (dzień lub noc) i godzina rozpoczęcia.
   // Zlecenia nocne (22:00–06:00) płacą więcej (dopłata), ale są ryzykowniejsze: ciemno, zaspany klient, więcej wypadków i kontroli.
@@ -164,6 +290,14 @@
     { job: 'gniazdko', client: 'karyna', mult: 2.4, slot: 'dzien', time: '15:30' },
     { due: 'normalny', job: 'sciana', client: 'karyna', mult: 2.2, slot: 'noc', time: '23:30', intro: 'Karyna pisze o 23:30: „Jutro robię relację z remontu, a w ścianie dziura. Przyjedziesz dziś?”' },
     { due: 'ostry', job: 'polka', client: 'tesciowa', mult: 2.8, slot: 'dzien', time: '12:00' },
+    { job: 'syfon', client: 'mirek', mult: 1.2, slot: 'dzien', time: '10:30' },
+    { job: 'drzwi', client: 'sebix', mult: 1.3, slot: 'dzien', time: '09:15', due: 'normalny' },
+    { job: 'syfon', client: 'grazyna', mult: 1.8, slot: 'noc', time: '22:45', intro: 'Pani Grażyna dzwoni o 22:45: „Zlew stoi i śmierdzi, a jutro mam gości. Przyjedzie pan dziś?”' },
+    { job: 'plytki', client: 'karyna', mult: 1.3, slot: 'dzien', time: '08:00', due: 'luzny' },
+    { job: 'drzwi', client: 'heniek', mult: 2.2, slot: 'dzien', time: '13:30', due: 'ostry' },
+    { job: 'plytki', client: 'tesciowa', mult: 1.6, slot: 'dzien', time: '09:00' },
+    { job: 'drzwi', client: 'grazyna', mult: 2.4, slot: 'noc', time: '23:15', due: 'ostry', intro: 'Pani Grażyna o 23:15: „Zamek się zatrzasnął od środka i nie mogę wyjść na balkon. Proszę przyjechać!”' },
+    { job: 'plytki', client: 'heniek', mult: 2.0, slot: 'dzien', time: '10:00', due: 'normalny' },
   ];
 
   /* Telefony „z ulicy”: gdy skończą się zlecenia z listy, gracz może przesuwać zegar o godzinę. Co godzinę jest szansa na telefon. */
@@ -182,5 +316,5 @@
   }
 
 
-  return { callChance, rollCall, CLIENTS, JOBS, LEVELS };
+  return { callChance, rollCall, rollSurprise, SURPRISES, CLIENTS, JOBS, LEVELS };
 });

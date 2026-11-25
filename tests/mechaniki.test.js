@@ -37,7 +37,7 @@ t('konkurencja: szansa zależy od przewagi rywala, zaufanie chroni; obniżka wyg
   assert(K.contest('cut', 0, Math.random).priceMult < 1 && K.contest('normal', 0, () => 0).priceMult === 1); assert.throws(() => K.contest('x', 0, Math.random));
 });
 t('szkolenia: każdy rodzaj roboty ma kurs, uprawnienia zmieniają ryzyko i wypłatę tylko dla swojego typu', () => {
-  assert.deepStrictEqual(Object.values(Sz.CERTS).map(c => c.job).sort(), Object.keys(JOBS).sort());
+  assert.deepStrictEqual(Array.from(new Set(Object.values(Sz.CERTS).flatMap(c => c.jobs))).sort(), Object.keys(JOBS).sort());
   const c = { sep: true };
   assert(Sz.modsFor(c, 'gniazdko').hazard < 0.5 && Sz.modsFor(c, 'gniazdko').pay > 1 && Sz.modsFor(c, 'kran').hazard === 1 && Sz.modsFor({}, 'gniazdko').acc === 0);
 });

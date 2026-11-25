@@ -11,6 +11,9 @@
     sciana: { wiosna: 1.2, lato: 1.05, 'jesień': 1.0, zima: 0.9 },
     gniazdko: { wiosna: 1.0, lato: 0.95, 'jesień': 1.2, zima: 1.15 },
     polka: { wiosna: 1.05, lato: 0.95, 'jesień': 1.1, zima: 1.0 },
+    syfon: { wiosna: 1.0, lato: 0.95, 'jesień': 1.05, zima: 1.2 },
+    drzwi: { wiosna: 1.0, lato: 0.95, 'jesień': 1.2, zima: 1.1 },
+    plytki: { wiosna: 1.15, lato: 1.1, 'jesień': 0.95, zima: 0.85 },
   };
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 

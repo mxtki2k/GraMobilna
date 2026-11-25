@@ -338,7 +338,20 @@
     if (opt.fx.includes('seal-') || opt.fx === 'tape' || opt.fx === 'glue') cur.tokens.delete('broken'); // przestało kapać
     cur.step++;
     if (cur.step >= cur.job.steps.length) { finish(); return; }
+    const sp = Jobs.rollSurprise(cur.job.id, cur.step - 1, rnd);
+    if (sp) { surprise(sp); return; }
     renderJob();
+  }
+  /* Niespodzianka w trakcie roboty: problem wychodzi dopiero po otwarciu, trzeba wybrać rozwiązanie. */
+  function surprise(sp) {
+    modalOpen = true; $('mtitle').textContent = '⚠️ ' + sp.title; $('mtext').textContent = sp.text;
+    $('mchoices').innerHTML = sp.options.map(o => '<button data-a="' + o.id + '">' + o.label + '<small>' + o.desc + ' · ⏱ ' + Czas.fmtUnits(o.time, cur.night) + (o.cost ? ' · 💰 ' + zl(o.cost) : '') + '</small></button>').join('');
+    $('modal').hidden = false;
+    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return;
+      const o = sp.options.find(x => x.id === b.dataset.a);
+      cur.time += o.time; cur.cost += o.cost; o.defects.forEach(d => cur.extraDefects.push({ label: d.label, sev: d.sev, vis: d.vis, hazard: d.hazard || 0 }));
+      cur.notes.push('⚠️ ' + sp.title + ': ' + o.label + '.');
+      $('modal').hidden = true; modalOpen = false; renderJob(); };
   }
 
   // ---------- mini-gra na wyczucie: zatrzymaj znacznik w zielonej strefie ----------

@@ -383,9 +383,154 @@
   }
 
 
+
+  // ---------------------------------------------------------------- KUCHNIA: zapchany zlew (syfon)
+  function syfon(T, f, o) {
+    o = o || {}; const g = G();
+    tiledWall(g, 34); rc(g, '1', 0, 34, W, 28); dith(g, '2', 0, 34, W, 28, 1); skirting(g, 58, '3'); woodFloor(g, 62);
+    // okno
+    rc(g, '&', 6, 6, 24, 22); rc(g, '+', 7, 7, 22, 20); rc(g, '^', 9, 9, 18, 16); dith(g, '~', 9, 9, 18, 7); rc(g, '+', 17, 9, 2, 16);
+    if (o.night) { nightGlass(g, 9, 9, 18, 16, f); rc(g, '+', 17, 9, 2, 16); }
+    // blat, zlew, bateria
+    rc(g, '8', 28, 31, 80, 4); rc(g, '9', 28, 31, 80, 1); rc(g, '-', 28, 35, 80, 1);
+    rc(g, 'G', 44, 26, 44, 7); rc(g, 'g', 45, 27, 42, 5); rc(g, '#', 45, 27, 42, 1); rc(g, 'G', 46, 31, 40, 1);
+    rc(g, '%', 64, 14, 4, 12); rc(g, '#', 64, 14, 1, 12); rc(g, '%', 60, 12, 12, 3); rc(g, '&', 71, 14, 1, 9); rc(g, 'a', 71, 23 + (f % 2), 1, 1);
+    // szafka: otwarta, widać rury
+    rc(g, '8', 28, 36, 80, 26); rc(g, '_', 31, 38, 74, 22); dith(g, 'd', 31, 38, 74, 22, 1); rc(g, '9', 28, 36, 3, 26); rc(g, '9', 105, 36, 3, 26); rc(g, '8', 28, 60, 80, 2);
+    // odpływ i rura do ściany
+    rc(g, 'g', 62, 33, 4, 10); rc(g, '#', 62, 33, 1, 10); rc(g, 'G', 65, 33, 1, 10);
+    rc(g, 'g', 80, 40, 24, 4); rc(g, '#', 80, 40, 24, 1); rc(g, 'G', 80, 43, 24, 1);
+    const trapOut = has(T, 'trap-off', 'pipe-clean');
+    const clogged = T.has('broken') && !has(T, 'trap-off', 'pipe-clean', 'gasket-new', 'gasket-old', 'silicone', 'drain-ok', 'drain-quick', 'drain-none', 'plunger', 'hot-water');
+    const leaking = clogged && !has(T, 'bucket', 'bucket-only', 'towel');
+    if (!trapOut) {
+      rc(g, 'g', 62, 42, 4, 6); rc(g, 'g', 62, 46, 18, 4); rc(g, 'g', 77, 40, 4, 10);
+      rc(g, '#', 62, 46, 18, 1); rc(g, 'G', 63, 49, 17, 1); rc(g, '#', 77, 40, 1, 10); rc(g, 'G', 80, 40, 1, 10);
+      rc(g, 'y', 61, 44, 6, 2); rc(g, 'Y', 61, 45, 6, 1); rc(g, 'y', 76, 38, 6, 2); rc(g, 'Y', 76, 39, 6, 1);
+      if (clogged) { rc(g, 'T', 64, 47, 14, 2); dith(g, 'H', 66, 47, 10, 2); }
+    } else { // brak syfonu: widać otwarte końcówki
+      rc(g, 'k', 62, 43, 4, 2); rc(g, 'k', 77, 40, 4, 2); rc(g, 'y', 61, 42, 6, 1); rc(g, 'y', 76, 38, 6, 1);
+      rc(g, 'g', 84, 55, 18, 4); rc(g, 'g', 84, 49, 4, 8); rc(g, 'g', 98, 49, 4, 8); rc(g, '#', 84, 55, 18, 1); rc(g, 'y', 83, 49, 6, 1); rc(g, 'y', 97, 49, 6, 1); rc(g, 'k', 88, 56, 10, 2);
+      if (T.has('pipe-clean')) { for (let i = 0; i < 10; i++) { px(g, 'g', 88 + i, 52 + ((i + f) % 2)); px(g, '#', 88 + i, 51 + ((i * 3) % 3)); } for (const [x, y] of [[90, 48], [96, 46], [100, 50]]) px(g, f % 2 ? 'w' : 'e', x, y); }
+      else { rc(g, 'T', 88, 54, 8, 2); dith(g, 'H', 87, 53, 10, 3); }
+    }
+    // kapanie z nieszczelnego syfonu
+    if (leaking) { const y = [50, 53, 56, 59][f % 4]; rc(g, 'a', 70, y, 2, 3); px(g, '#', 71, y); rc(g, 'a', 62, 52, 1, 3); }
+    // woda w zlewie
+    if (clogged) { rc(g, 'a', 47, 28, 38, 4); dith(g, '#', 49 + (f % 2) * 3, 28, 12, 1); dith(g, 'A', 60, 30, 16, 1); for (const [x, y] of [[52, 27], [68, 26], [78, 27]]) px(g, 'w', x + (f % 2), y); }
+    // przygotowanie
+    if (T.has('bucket')) { rc(g, 'b', 62, 51, 20, 10); rc(g, 'B', 62, 59, 20, 2); rc(g, 'c', 63, 51, 18, 1); rc(g, 'B', 62, 51, 1, 10); rc(g, 'B', 81, 51, 1, 10); rc(g, 'N', 24, 63, 12, 4); rc(g, 'n', 24, 64, 10, 2); rc(g, '+', 24, 66, 14, 2); }
+    if (T.has('bucket-only')) { rc(g, 'b', 62, 55, 16, 6); rc(g, 'B', 62, 59, 16, 2); rc(g, 'a', 83, 61, 10, 1); dith(g, 'a', 80, 62, 14, 1); }
+    if (T.has('towel')) { rc(g, 'w', 56, 60, 28, 3); rc(g, 'm', 56, 60, 28, 1); rc(g, 'a', 60, 62, 20, 1); dith(g, 'a', 58, 61, 26, 1); }
+    // rozkręcanie
+    if (T.has('trap-off')) { for (const [x, y] of [[88, 47], [94, 52]]) { rc(g, 'N', x, y, 4, 4); rc(g, 'n', x, y, 4, 1); } rc(g, 'n', 12, 62, 14, 2); spr(g, 10, 60, CHECK); }
+    if (T.has('trap-wrench')) { rc(g, 'R', 60, 44, 8, 4); for (const [x, y] of [[61, 45], [64, 46], [66, 44]]) px(g, 'r', x, y); rc(g, 'R', 75, 39, 8, 3); px(g, 'r', 78, 40); line(g, 'G', 54, 36, 62, 44, 2); rc(g, 'k', 52, 34, 4, 5); disc(g, 'Y', 12, 62, 4); spr(g, 9, 60, CHECK_Y); }
+    if (T.has('chem')) { rc(g, 'n', 93, 44, 4, 10); rc(g, 'N', 93, 52, 4, 2); rc(g, 'e', 94, 41, 2, 3); for (let i = 0; i < 6; i++) disc(g, i % 2 ? 'e' : 'n', 52 + i * 6 + ((f + i) % 3), 22 - ((f + i * 2) % 4) * 2, 1); disc(g, 'R', 12, 62, 4); disc(g, 'r', 12, 62, 3); spr(g, 10, 59, BANG.map(r => r.replace(/k/g, 'w').replace(/y/g, 'r'))); }
+    // czyszczenie
+    if (T.has('plunger')) { rc(g, 'R', 60, 21, 10, 5); rc(g, 'r', 61, 21, 8, 3); rc(g, 'T', 64, 8, 2, 14); rc(g, 'h', 64, 8, 2, 3); }
+    if (T.has('hot-water')) { for (let i = 0; i < 5; i++) { const x = 52 + i * 8 + ((f + i) % 2), y = 20 - ((f * 2 + i * 3) % 12); rc(g, '#', x, y, 3, 2); px(g, 'w', x + 1, y - 1); } rc(g, 'o', 100, 22, 8, 9); rc(g, 'O', 100, 30, 8, 1); rc(g, 'G', 108, 24, 3, 2); }
+    // uszczelnianie
+    if (T.has('gasket-new') && !trapOut) { for (const [x, y, w] of [[60, 43, 8], [75, 37, 8]]) { rc(g, 'o', x, y, w, 2); rc(g, 'O', x, y + 2, w, 1); } rc(g, 'o', 63, 47, 2, 2); }
+    if (T.has('gasket-old') && !trapOut) { for (const [x, y, w] of [[60, 43, 8], [75, 37, 8]]) { rc(g, 'G', x, y, w, 2); rc(g, 'd', x, y + 2, w, 1); px(g, 'k', x + 2, y); px(g, 'k', x + 5, y + 1); } }
+    if (T.has('silicone') && !trapOut) { for (const [x, y] of [[60, 43], [75, 37], [66, 47], [76, 48]]) { rc(g, 'w', x, y, 8, 3); px(g, '#', x + 1, y); rc(g, '=', x, y + 2, 8, 1); px(g, 'w', x + 3, y + 3); } }
+    // próba odpływu
+    if (T.has('drain-ok')) { rc(g, '#', 47, 28, 38, 3); disc(g, 'N', 100, 20, 5); disc(g, 'n', 100, 20, 4); spr(g, 97, 18, CHECK); }
+    if (T.has('drain-quick')) { rc(g, 'a', 47, 29, 38, 2); disc(g, 'Y', 100, 20, 5); disc(g, 'e', 100, 20, 4); spr(g, 97, 18, CHECK_Y); }
+    if (T.has('drain-none')) { disc(g, 'R', 100, 20, 5); disc(g, 'r', 100, 20, 4); spr(g, 98, 17, QMARK.map(r => r.replace(/r/g, 'w'))); }
+    return g;
+  }
+
+  // ---------------------------------------------------------------- PRZEDPOKÓJ: drzwi, które nie domykają
+  function drzwi(T, f, o) {
+    o = o || {}; const g = G();
+    wallpaper(g, 66, ['2', '3', '1']); skirting(g, 66, '3'); woodFloor(g, 70);
+    rc(g, '9', 0, 70, 3, 10); // wycieraczka
+    rc(g, 'T', 90, 71, 28, 6); rc(g, 't', 91, 72, 26, 4); dith(g, 'T', 92, 73, 24, 2);
+    // ościeżnica i skrzydło
+    rc(g, '8', 28, 4, 58, 66); rc(g, '7', 28, 4, 58, 1); rc(g, '_', 32, 8, 50, 62);
+    const wedge = T.has('broken') && !has(T, 'hinge-ok', 'hinge-tight', 'hinge-glue', 'plane-good', 'plane-rough', 'plane-none');
+    const sag = wedge ? 3 : 0;
+    rc(g, 't', 33, 9, 48, 61 - sag); rc(g, 'T', 33, 9 + 61 - sag, 48, 0);
+    for (const [x, y, w, h] of [[37, 13, 18, 22], [59, 13, 18, 22], [37, 40, 18, 22 - sag], [59, 40, 18, 22 - sag]]) { rc(g, 'T', x, y, w, h); rc(g, 't', x + 1, y + 1, w - 2, h - 2); dith(g, 'T', x + 2, y + 2, w - 4, 3, 1); }
+    rc(g, 'T', 33, 9, 1, 61 - sag); rc(g, 'h', 33, 9, 48, 1);
+    // szczelina u dołu i z boku
+    if (wedge) { for (let i = 0; i < 5; i++) rc(g, 'k', 80 - i, 64 + i - sag, 1 + i, 1); rc(g, 'e', 77, 62, 4, 1); rc(g, 'k', 33, 69, 48, 1); dith(g, 'T', 40, 72, 20, 2); rc(g, 'T', 76, 70, 6, 1); }
+    // klamka i zamek
+    rc(g, 'G', 72, 38, 7, 10); rc(g, 'g', 73, 39, 5, 8); rc(g, 'k', 75, 41, 1, 3); rc(g, 'y', 66, 42, 9, 3); rc(g, 'Y', 66, 44, 9, 1); rc(g, 'y', 62, 41, 6, 5); rc(g, 'Y', 62, 45, 6, 1);
+    // zawiasy
+    for (const y of [14, 38, 60]) { rc(g, 'G', 28, y, 6, 7); rc(g, 'g', 29, y + 1, 4, 5); rc(g, 'k', 30, y + 2, 1, 3); px(g, 'd', 31, y + 3); }
+    // diagnoza
+    if (T.has('diag-good')) { rc(g, 'y', 38, 6, 38, 4); rc(g, 'Y', 38, 9, 38, 1); rc(g, 'c', 52, 7, 9, 2); rc(g, 'n', 56, 7, 2, 2); rc(g, 'k', 38, 6, 1, 4); rc(g, 'k', 75, 6, 1, 4); }
+    if (T.has('diag-eye')) { for (const [x, y] of [[88, 8], [94, 14]]) { rc(g, 'Y', x, y, 8, 8); rc(g, 'e', x + 1, y + 1, 6, 6); spr(g, x + 1, y, QMARK.map(r => r.replace(/r/g, 'k'))); } }
+    if (T.has('diag-kick')) { rc(g, 'k', 48, 52, 8, 6); rc(g, 'd', 49, 53, 6, 4); rc(g, 'k', 50, 58, 2, 1); rc(g, 'k', 54, 58, 2, 1); line(g, 'r', 40, 50, 44, 54); line(g, 'r', 44, 48, 48, 53); }
+    // zawiasy po naprawie
+    if (T.has('hinge-ok')) for (const y of [14, 38, 60]) { rc(g, 'n', 26, y, 2, 7); rc(g, 'o', 33, y + 1, 3, 5); px(g, 'w', 29, y + 1); }
+    if (T.has('hinge-tight')) for (const y of [14, 38, 60]) { for (const dy of [1, 3, 5]) { rc(g, 'r', 29, y + dy, 2, 1); rc(g, 'R', 31, y + dy, 1, 1); } }
+    if (T.has('hinge-glue')) for (const y of [14, 38, 60]) { rc(g, 'e', 26, y - 1, 12, 3); rc(g, 'Y', 26, y + 2, 12, 1); rc(g, 'e', 27, y + 8, 4, 3); px(g, 'w', 28, y); }
+    // zamek po naprawie
+    if (T.has('lock-new')) { rc(g, 'e', 71, 37, 9, 12); rc(g, 'y', 72, 38, 7, 10); rc(g, 'k', 74, 41, 2, 4); rc(g, '#', 72, 38, 7, 1); if (f % 4 < 2) { px(g, 'w', 78, 38); px(g, 'w', 71, 47); } }
+    if (T.has('lock-oil')) { rc(g, 'o', 74, 47, 3, 3); rc(g, 'O', 75, 50, 1, 3 + (f % 3)); rc(g, 'o', 74, 46, 3, 1); }
+    if (T.has('lock-tape')) { rc(g, 'g', 81, 40, 6, 7); rc(g, 'G', 81, 40, 1, 7); for (let i = 0; i < 6; i++) px(g, '=', 81 + i, 41 + (i % 3) * 2); }
+    // dopasowanie skrzydła
+    if (T.has('plane-good')) { rc(g, 'k', 81, 9, 1, 61); rc(g, 'k', 33, 69, 48, 1); for (let i = 0; i < 5; i++) px(g, 'e', 90 + i * 4, 76 - (i % 2)); }
+    if (T.has('plane-rough')) { for (let y = 9; y < 70; y += 6) rc(g, 'k', 81 - ((y / 6) % 3), y, 1 + ((y / 6) % 3), 6); for (let i = 0; i < 12; i++) px(g, 'e', 84 + i * 3, 73 + (i % 3)); rc(g, 'e', 40, 73, 30, 1); }
+    if (T.has('plane-none')) { rc(g, 'T', 78, 64, 8, 6); rc(g, 'h', 78, 64, 8, 1); rc(g, 'H', 78, 69, 8, 1); rc(g, 'k', 81, 9, 1, 55); }
+    // próba
+    if (T.has('door-ok')) { disc(g, 'N', 106, 24, 6); disc(g, 'n', 106, 24, 5); spr(g, 103, 22, CHECK); }
+    if (T.has('door-quick')) { disc(g, 'Y', 106, 24, 6); disc(g, 'e', 106, 24, 5); spr(g, 103, 22, CHECK_Y); }
+    if (T.has('door-untested')) { disc(g, 'R', 106, 24, 6); disc(g, 'r', 106, 24, 5); spr(g, 104, 21, QMARK.map(r => r.replace(/r/g, 'w'))); }
+    if (o.night) { rc(g, 'y', 8, 8, 12, 10); rc(g, 'e', 9, 9, 10, 8); rc(g, 'k', 13, 6, 2, 2); }
+    return g;
+  }
+
+  // ---------------------------------------------------------------- ŁAZIENKA: płytki w prysznicu
+  function plytki(T, f, o) {
+    o = o || {}; const g = G();
+    rc(g, '4', 0, 0, W, 62); rc(g, '6', 0, 0, 14, 62); for (let y = 0; y < 62; y += 10) rc(g, '5', 0, y + 9, 14, 1); rc(g, '5', 13, 0, 1, 62); // stara płytka po lewej
+    rc(g, '5', 106, 0, 22, 62); for (let y = 0; y < 62; y += 10) rc(g, '6', 106, y + 9, 22, 1); rc(g, '6', 106, 0, 1, 62);
+    rc(g, '%', 0, 62, W, 3); rc(g, '+', 0, 65, W, 15); rc(g, 'G', 58, 70, 10, 3); rc(g, 'k', 61, 71, 4, 1); rc(g, '#', 0, 65, W, 1);
+    const X0 = 18, Y0 = 8, WW = 82, HH = 54;
+    // ściana pod płytki (stan podłoża)
+    const hasGrid = has(T, 'lay-level', 'lay-eye', 'lay-crooked');
+    if (!hasGrid) {
+      if (has(T, 'base-good')) { rc(g, '3', X0, Y0, WW, HH); rc(g, '2', X0, Y0, WW, 1); for (let y = Y0 + 4; y < Y0 + HH; y += 9) dith(g, '1', X0 + 2, y, WW - 4, 1, y); }
+      else if (has(T, 'base-quick')) { rc(g, 'G', X0, Y0, WW, HH); dith(g, 'g', X0, Y0, WW, HH); for (let i = 0; i < 14; i++) px(g, 'w', X0 + 3 + (i * 17) % (WW - 6), Y0 + 2 + (i * 11) % (HH - 4)); }
+      else if (has(T, 'base-none')) { rc(g, '&', X0, Y0, WW, HH); dith(g, 'G', X0, Y0, WW, HH, 1); for (const [x, y, w, h] of [[26, 18, 10, 6], [60, 30, 12, 8], [40, 44, 9, 5], [80, 14, 10, 6]]) { rc(g, 'N', x, y, w, h); dith(g, 'k', x, y, w, h); } }
+      else { rc(g, '&', X0, Y0, WW, HH); dith(g, 'G', X0, Y0, WW, HH, 1); line(g, 'k', 30, 12, 44, 30); line(g, 'k', 70, 10, 62, 28); for (let i = 0; i < 16; i++) px(g, 'g', X0 + 2 + (i * 13) % (WW - 4), Y0 + 2 + (i * 7) % (HH - 4)); rc(g, '4', 56, 8, 16, 6); rc(g, '4', 18, 8, 10, 4); }
+      if (has(T, 'hydro-none')) { line(g, 'r', X0 + WW - 16, Y0 + 4, X0 + WW - 6, Y0 + 14, 2); line(g, 'r', X0 + WW - 6, Y0 + 4, X0 + WW - 16, Y0 + 14, 2); }
+      if (has(T, 'hydro-good')) { rc(g, 'b', X0, Y0, WW, HH); dith(g, 'B', X0, Y0, WW, HH, 1); rc(g, 'w', X0, Y0, 3, HH); rc(g, 'w', X0 + WW - 3, Y0, 3, HH); rc(g, 'w', X0, Y0 + HH - 3, WW, 3); }
+      if (has(T, 'hydro-thin')) { dith(g, 'c', X0, Y0, WW, HH); rc(g, 'c', X0, Y0 + HH - 2, WW, 2); }
+      const gl = has(T, 'glue-comb') ? 1 : has(T, 'glue-blob') ? 2 : has(T, 'glue-sparse') ? 3 : 0;
+      if (gl === 1) { rc(g, 'g', X0 + 6, Y0 + 6, WW - 12, HH - 12); for (let y = Y0 + 6; y < Y0 + HH - 6; y += 2) rc(g, 'G', X0 + 6, y, WW - 12, 1); rc(g, '#', X0 + 6, Y0 + 6, WW - 12, 1); }
+      if (gl === 2) { rc(g, 'G', X0 + 6, Y0 + 6, WW - 12, HH - 12); for (let i = 0; i < 20; i++) { const x = X0 + 8 + (i * 19) % (WW - 22), y = Y0 + 8 + (i * 13) % (HH - 22); rc(g, 'g', x, y, 7, 4); px(g, '#', x + 1, y); } }
+      if (gl === 3) { for (const [x, y] of [[30, 16], [56, 20], [76, 36], [38, 40], [60, 50]]) { rc(g, 'g', x, y, 7, 5); px(g, '#', x + 1, y); } }
+    } else {
+      // gotowa okładzina: 9 kolumn x 6 rzędów płytek
+      const lvl = T.has('lay-level'), eye = T.has('lay-eye');
+      rc(g, '6', X0, Y0, WW, HH);
+      for (let r = 0; r < 6; r++) for (let c = 0; c < 9; c++) {
+        let x = X0 + 1 + c * 9, y = Y0 + 1 + r * 9, w = 8, h = 8;
+        if (eye) y += ((c + r) % 3 === 0 ? 1 : 0) - (c === 4 ? 1 : 0);
+        if (!lvl && !eye) { x += (r % 2 ? 2 : -1) + ((c * 3 + r) % 2); y += (c % 3) - 1; w = 7 + ((c + r) % 2); h = 7 + ((c * 2 + r) % 2); }
+        rc(g, '+', x, y, w, h); rc(g, '#', x, y, w, 1); rc(g, '=', x, y + h - 1, w, 1); px(g, 'w', x + 1, y + 1);
+      }
+      const gr = has(T, 'grout-good') ? 'g' : has(T, 'grout-fast') ? 'g' : has(T, 'grout-none') ? 'k' : null;
+      if (gr) { for (let c = 0; c <= 9; c++) rc(g, gr === 'k' ? 'd' : '%', X0 + c * 9, Y0, 1, HH); for (let r = 0; r <= 6; r++) rc(g, gr === 'k' ? 'd' : '%', X0, Y0 + r * 9, WW, 1); if (has(T, 'grout-good')) dith(g, '#', X0, Y0 + 27, WW, 1, 1); if (has(T, 'grout-fast')) for (const [x, y] of [[27, 17], [45, 35], [63, 26], [81, 44], [36, 8]]) { line(g, 'k', X0 + x - 18, y, X0 + x - 15, y + 3); px(g, 'k', X0 + x - 14, y + 4); } }
+      else { for (let c = 0; c <= 9; c++) rc(g, '6', X0 + c * 9, Y0, 1, HH); }
+    }
+    // narożnik i silikon
+    if (T.has('sil-good')) { rc(g, 'w', X0 - 2, Y0, 2, HH); rc(g, 'w', X0, Y0 + HH, WW, 2); rc(g, '#', X0 - 2, Y0, 1, HH); disc(g, 'N', 110, 20, 5); disc(g, 'n', 110, 20, 4); spr(g, 107, 18, CHECK); for (let i = 0; i < 4; i++) px(g, 'a', 24 + i * 16, 66 + (f % 2)); }
+    if (T.has('sil-quick')) { rc(g, 'w', X0 - 2, Y0, 2, HH); rc(g, 'w', X0, Y0 + HH, WW, 2); disc(g, 'Y', 110, 20, 5); disc(g, 'e', 110, 20, 4); spr(g, 107, 18, CHECK_Y); }
+    if (T.has('sil-none')) { rc(g, 'k', X0 - 2, Y0, 2, HH); rc(g, 'k', X0, Y0 + HH, WW, 2); disc(g, 'R', 110, 20, 5); disc(g, 'r', 110, 20, 4); spr(g, 108, 17, QMARK.map(r => r.replace(/r/g, 'w'))); }
+    // narzędzia: wiaderko z klejem i pace
+    rc(g, 'k', 104, 56, 14, 14); rc(g, 'b', 105, 57, 12, 12); rc(g, 'B', 105, 67, 12, 2); rc(g, 'g', 106, 58, 10, 3); rc(g, 'G', 108, 52, 3, 5);
+    if (o.night) { rc(g, 'y', 8, 70, 8, 6); }
+    return g;
+  }
+
   // ---------------------------------------------------------------- ANIMACJE CZYNNOŚCI (narzędzie w akcji nad sceną)
-  const ACTIONS = { kran: ['wrench', 'wrench', 'wrench', 'tester'], sciana: ['trowel', 'trowel', 'sander', 'roller'], gniazdko: ['tester', 'pliers', 'screwdriver', 'tester'], polka: ['pencil', 'drill', 'screwdriver', 'hammer'] };
-  const TARGETS = { kran: [[11, 44], [65, 29], [65, 40], [86, 33]], sciana: [[66, 36], [66, 36], [66, 36], [66, 36]], gniazdko: [[12, 40], [100, 18], [64, 36], [64, 36]], polka: [[64, 32], [34, 34], [64, 32], [64, 30]] };
+  const ACTIONS = { kran: ['wrench', 'wrench', 'wrench', 'tester'], sciana: ['trowel', 'trowel', 'sander', 'roller'], gniazdko: ['tester', 'pliers', 'screwdriver', 'tester'], polka: ['pencil', 'drill', 'screwdriver', 'hammer'], syfon: ['pliers', 'wrench', 'pliers', 'wrench', 'tester'], drzwi: ['tester', 'screwdriver', 'screwdriver', 'sander', 'tester'], plytki: ['trowel', 'roller', 'trowel', 'pencil', 'trowel', 'tester'] };
+  const TARGETS = { kran: [[11, 44], [65, 29], [65, 40], [86, 33]], sciana: [[66, 36], [66, 36], [66, 36], [66, 36]], gniazdko: [[12, 40], [100, 18], [64, 36], [64, 36]], polka: [[64, 32], [34, 34], [64, 32], [64, 30]], syfon: [[70, 58], [64, 44], [64, 46], [72, 44], [66, 28]], drzwi: [[56, 20], [31, 40], [74, 42], [80, 40], [60, 44]], plytki: [[58, 36], [58, 36], [58, 36], [58, 36], [58, 36], [58, 36]] };
   const actionFor = (jobId, step) => ({ kind: ACTIONS[jobId][step], at: TARGETS[jobId][step] });
   const star = (g, x, y) => { for (const [dx, dy, c] of [[0, 0, 'w'], [-2, 0, 'y'], [2, 0, 'y'], [0, -2, 'y'], [0, 2, 'y'], [-1, -1, 'o'], [1, 1, 'o'], [-1, 1, 'o'], [1, -1, 'o']]) px(g, c, x + dx, y + dy); };
   const TOOLS = {
@@ -423,7 +568,7 @@
     return im;
   }
 
-  const JOB_SCENES = { kran, sciana, gniazdko, polka };
+  const JOB_SCENES = { kran, sciana, gniazdko, polka, syfon, drzwi, plytki };
   /* Rysuje siatkę na canvasie 128x80 (przeglądarka). */
   function draw(canvas, grid, opts) {
     opts = opts || {}; const im = opts.night ? nightRGBA(grid, opts.light) : Pix.rgba(grid, 1), ctx = canvas.getContext('2d');
@@ -432,5 +577,5 @@
   /* Scena zlecenia dla zbioru tokenów stanu i klatki animacji. */
   const job = (id, tokens, frame, opts) => JOB_SCENES[id](tokens instanceof Set ? tokens : new Set(tokens || []), frame || 0, opts || {});
 
-  return { action, actionFor, ACTIONS, TARGETS, TOOLS, nightRGBA, job, draw, JOB_SCENES, hq, sciana, gniazdko, polka, W, H, G, rc, px, dith, line, disc, spr, has, tiledWall, wallpaper, skirting, woodFloor, door, kran, CHECK };
+  return { action, actionFor, ACTIONS, TARGETS, TOOLS, nightRGBA, job, draw, JOB_SCENES, hq, sciana, gniazdko, polka, syfon, drzwi, plytki, W, H, G, rc, px, dith, line, disc, spr, has, tiledWall, wallpaper, skirting, woodFloor, door, kran, CHECK };
 });

@@ -200,3 +200,9 @@ Bot gra 60 dni gry, 150 przebiegów na scenariusz. Po strojeniu: sen przy 60–8
 - `wypalenie.js`: wypalenie 0–100 rośnie z każdego zlecenia (+1,5, więcej przy zmęczeniu i nocą), nie znika we śnie. Od 40%: celność do −10 pkt i do +20% czasu, od 80%: do 15% szans, że nie odbierzesz telefonu.
 - Dzień wolny (24 h): wypalenie −25, zmęczenie do zera. Urlop (4 dni, 200 zł): wypalenie do zera, nastrój ekipy +10, ale zaufanie klientów spada o 0,5 pkt dziennie, a rywal zyskuje przewagę.
 - Symulacja: dzień wolny przy 40% wypalenia daje ok. +3% wobec braku wolnego, urlop jest droższy (ok. −8%), więc to ostateczność.
+
+## Nowe rodzaje robót i niespodzianki
+- Trzy nowe roboty z własnymi scenami pixel art i animacjami narzędzi: **Zapchany zlew** (syfon, 5 kroków: zabezpieczenie, rozkręcanie, czyszczenie, uszczelnianie, próba), **Drzwi, które nie domykają** (5 kroków: diagnoza, zawiasy, zamek, dopasowanie skrzydła, próba), **Płytki w łazience** (6 kroków: podłoże, hydroizolacja, klej, układanie, fugowanie, silikon i próba). Razem 7 rodzajów robót i 24 poziomy (nowe też nocne i terminowe).
+- Niespodzianki: po wskazanym kroku z szansą 30–40% wychodzi problem (przerdzewiały zawór, kabel w ścianie, pleśń pod płytkami, zabrakło płytek z jednej serii...). Gracz wybiera: rozwiązać solidnie (czas i koszt), na skróty albo zignorować. Każda robota ma co najmniej jedną.
+- Szkolenia: nowe kursy (stolarski, glazurniczy), hydrauliczny obejmuje też syfon. Kalendarz popytu: zima kraniki i syfony, jesień drzwi, wiosna i lato płytki.
+- Testy: `node tests/roboty.test.js`.
