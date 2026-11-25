@@ -13,6 +13,7 @@ Uwagi:
 | Pliki | Źródło | Licencja |
 |---|---|---|
 | `pixel/*.png`, `pixel/_sheet.png` (ikony, narzędzia, nastroje, portrety 16x16) | Rysowane kodem w `prototypes/janusz/pixel.js`, eksport `tools/export_pixel.js` | Własność projektu |
+| `pixel/scenes/*.png` (sceny 128x80: kran, ściana, gniazdko, półka, siedziba) | Rysowane kodem w `prototypes/janusz/scenes.js`, eksport `tools/export_pixel.js` | Własność projektu |
 | Czcionki Jersey 10 i VT323 (ładowane z Google Fonts w prototypie) | Google Fonts | SIL Open Font License. Przy dołączaniu plików TTF do apki sprawdź i zachowaj notę licencyjną. |
 
 Pliki w `pixel/` są generowane, nie edytuj ich ręcznie: zmiany rób w `pixel.js` i uruchom eksport ponownie.

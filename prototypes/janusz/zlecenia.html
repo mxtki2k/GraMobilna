@@ -140,7 +140,7 @@
   .bar > i, .mbar > i { background-image: repeating-linear-gradient(90deg, transparent 0 6px, rgba(0,0,0,.35) 6px 8px); }
   .mark { background: #fff; box-shadow: 0 0 0 2px #000; }
   .scene { border: 0 !important; box-shadow: 0 0 0 3px #000; background: #14171a !important; }
-  .pxscene { image-rendering: pixelated; }
+  .pxscene { image-rendering: pixelated; width: 100%; height: auto; display: block; aspect-ratio: 8 / 5; background: #14171a; }
   .seg button.on { background: #ffc300; color: #14171a; box-shadow: inset -3px -3px 0 #b98f00, inset 3px 3px 0 #ffe27a, 0 0 0 3px #000; }
   .tag { font-family: var(--vt); font-size: 16px; }
   .chip { font-size: 17px; } .hint, .sub, .tally, .jobmeta { font-size: 19px; }
@@ -179,6 +179,7 @@
 <div class="modal" id="modal" hidden><div class="card" role="dialog" aria-modal="true" aria-labelledby="mtitle"><h2 id="mtitle"></h2><p id="mtext"></p><div class="choices" id="mchoices"></div></div></div>
 
 <script src="pixel.js"></script>
+<script src="scenes.js"></script>
 <script src="fuszerka.js"></script>
 <script src="jobs.js"></script>
 <script src="ekipa.js"></script>

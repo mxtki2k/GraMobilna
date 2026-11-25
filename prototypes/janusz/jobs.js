@@ -52,72 +52,11 @@
         1: ['Hańba. Idę po poziomicę i pogadamy.', 'To nie naprawa, to zbrodnia.'] } },
   };
 
-  // ---------- scenki SVG (320x200). data-show / data-hide: tokeny stanu rozdzielone znakiem | ----------
-  const SCENE_KRAN = `
-<rect width="320" height="200" fill="#cfd8dc"/>
-<g stroke="#b6c3ca" stroke-width="1"><path d="M0 40h320M0 80h320M0 120h320"/><path d="M80 0v150M160 0v150M240 0v150"/></g>
-<rect y="150" width="320" height="50" fill="#8d99a3"/>
-<path d="M60 150h200v12q0 26-26 26h-148q-26 0-26-26z" fill="#eceff1" stroke="#90a4ae" stroke-width="3"/>
-<rect x="146" y="64" width="24" height="70" rx="4" fill="#b0bec5" stroke="#78909c" stroke-width="2"/>
-<rect x="146" y="58" width="68" height="18" rx="6" fill="#b0bec5" stroke="#78909c" stroke-width="2"/>
-<rect x="202" y="58" width="12" height="30" rx="4" fill="#b0bec5" stroke="#78909c" stroke-width="2"/>
-<g data-show="broken" data-hide="seal-new|seal-old|tape|glue|woda-off">
-  <circle class="drip" cx="208" cy="100" r="4" fill="#4fc3f7"/><circle class="drip d2" cx="208" cy="118" r="3" fill="#4fc3f7"/>
-</g>
-<ellipse data-show="flood" cx="160" cy="182" rx="116" ry="12" fill="#4fc3f7" opacity=".75"/>
-<g data-show="woda-off"><circle cx="40" cy="50" r="16" fill="#66bb6a" stroke="#2e7d32" stroke-width="3"/><path d="M32 50l6 6 12-14" stroke="#fff" stroke-width="4" fill="none"/></g>
-<rect data-show="seal-new" x="144" y="112" width="28" height="7" rx="3" fill="#ef8f2d"/>
-<rect data-show="seal-old" x="144" y="112" width="28" height="7" rx="3" fill="#4e4e4e"/>
-<g data-show="tape"><rect x="143" y="96" width="34" height="18" rx="3" fill="#fafafa" stroke="#bdbdbd"/><path d="M146 100l28 0M146 106l28 0M146 111l28 0" stroke="#d0d0d0"/></g>
-<g data-show="glue"><rect x="132" y="130" width="60" height="22" fill="#b5523b" stroke="#7a2f20" stroke-width="2"/><ellipse cx="160" cy="124" rx="26" ry="10" fill="#f6d55c" stroke="#c9a400" stroke-width="2"/></g>`;
-
-  const SCENE_SCIANA = `
-<rect width="320" height="200" fill="#d7ccc8"/>
-<rect y="168" width="320" height="32" fill="#a1887f"/><rect y="164" width="320" height="6" fill="#efebe9"/>
-<rect data-show="paint-full" width="320" height="164" fill="#bcd2c8"/>
-<g data-show="broken" data-hide="plaster-good|plaster-thick|foam|wardrobe">
-  <polygon points="118,64 168,52 204,78 196,128 150,142 114,112" fill="#4e342e" stroke="#3e2723" stroke-width="3"/>
-  <polygon points="134,76 166,70 184,88 178,112 150,120 132,104" fill="#3e2723"/>
-</g>
-<g data-show="plaster-good"><polygon points="118,64 168,52 204,78 196,128 150,142 114,112" fill="#efebe9" stroke="#e0d8d4" stroke-width="2"/></g>
-<g data-show="plaster-thick"><polygon points="118,64 168,52 204,78 196,128 150,142 114,112" fill="#efebe9" stroke="#bcaaa4" stroke-width="3"/><path d="M130 80l24 18-10 20M170 70l8 26" stroke="#a1887f" stroke-width="2" fill="none"/></g>
-<g data-show="foam"><ellipse cx="158" cy="98" rx="48" ry="40" fill="#f5d76e" stroke="#c9a400" stroke-width="2"/><path d="M130 90l18 6M170 112l20-6" stroke="#c9a400" stroke-width="2"/></g>
-<g data-show="sand-none"><circle cx="140" cy="84" r="5" fill="#d7ccc8"/><circle cx="180" cy="104" r="6" fill="#d7ccc8"/><circle cx="156" cy="122" r="4" fill="#d7ccc8"/></g>
-<polygon data-show="paint-patch" points="118,64 168,52 204,78 196,128 150,142 114,112" fill="#c9b8a3" stroke="#b8a68f" stroke-width="2" opacity=".95"/>
-<g data-show="wardrobe"><rect x="92" y="34" width="132" height="132" rx="4" fill="#8d6e63" stroke="#5d4037" stroke-width="4"/><path d="M158 34v132" stroke="#5d4037" stroke-width="3"/><circle cx="148" cy="100" r="4" fill="#d7ccc8"/><circle cx="168" cy="100" r="4" fill="#d7ccc8"/></g>`;
-
-  const SCENE_GNIAZDKO = `
-<rect width="320" height="200" fill="#cfd8dc"/>
-<rect y="150" width="320" height="50" fill="#8d99a3"/>
-<rect x="120" y="50" width="80" height="80" rx="10" fill="#fafafa" stroke="#b0bec5" stroke-width="3" data-hide="outlet-glue|outlet-new"/>
-<g data-show="outlet-new"><rect x="120" y="50" width="80" height="80" rx="10" fill="#ffffff" stroke="#90a4ae" stroke-width="3"/><circle cx="145" cy="90" r="7" fill="#37474f"/><circle cx="175" cy="90" r="7" fill="#37474f"/></g>
-<g data-show="outlet-glue"><g transform="rotate(-9 160 90)"><rect x="120" y="50" width="80" height="80" rx="10" fill="#f0f0f0" stroke="#b0bec5" stroke-width="3"/><circle cx="145" cy="90" r="7" fill="#37474f"/><circle cx="175" cy="90" r="7" fill="#37474f"/></g><ellipse cx="204" cy="132" rx="14" ry="6" fill="#f6d55c"/></g>
-<g data-hide="outlet-glue|outlet-new"><circle cx="145" cy="90" r="7" fill="#37474f"/><circle cx="175" cy="90" r="7" fill="#37474f"/></g>
-<g data-show="broken|outlet-old"><circle cx="198" cy="58" r="22" fill="#3e2723" opacity=".55"/><circle cx="125" cy="118" r="12" fill="#3e2723" opacity=".5"/></g>
-<g data-show="broken|spark" data-hide="outlet-new|outlet-old|outlet-glue"><path class="spark" d="M160 60l-12 24 14-4-10 26 28-34-16 4z" fill="#ffd54f" stroke="#ff8f00" stroke-width="2"/></g>
-<g data-show="spark" data-hide="outlet-new|outlet-old|outlet-glue"><path class="spark s2" d="M104 70l-10 14 10-2z" fill="#ffd54f"/><path class="spark s2" d="M214 100l12 8-12 2z" fill="#ffd54f"/></g>
-<g data-show="cable-twist"><path d="M160 130v24" stroke="#37474f" stroke-width="6"/><rect x="146" y="150" width="28" height="12" rx="4" fill="#212121"/></g>
-<g data-show="prad-off"><circle cx="40" cy="40" r="16" fill="#66bb6a" stroke="#2e7d32" stroke-width="3"/><path d="M32 40l6 6 12-14" stroke="#fff" stroke-width="4" fill="none"/></g>`;
-
-  const SCENE_POLKA = `
-<rect width="320" height="200" fill="#d7ccc8"/>
-<rect y="176" width="320" height="24" fill="#a1887f"/>
-<g data-show="broken" data-hide="shelf-on"><g transform="rotate(-14 160 90)"><rect x="70" y="86" width="180" height="12" rx="2" fill="#a47551" stroke="#6d4c33" stroke-width="2"/></g><circle cx="76" cy="92" r="4" fill="#8d99a3"/></g>
-<g data-show="shelf-on">
-  <g data-show="level-good"><rect x="70" y="86" width="180" height="12" rx="2" fill="#a47551" stroke="#6d4c33" stroke-width="2"/></g>
-  <g data-show="level-eye"><g transform="rotate(-3 160 92)"><rect x="70" y="86" width="180" height="12" rx="2" fill="#a47551" stroke="#6d4c33" stroke-width="2"/></g></g>
-  <g data-show="level-bad"><g transform="rotate(-8 160 92)"><rect x="70" y="86" width="180" height="12" rx="2" fill="#a47551" stroke="#6d4c33" stroke-width="2"/></g></g>
-</g>
-<g data-show="book"><rect x="90" y="104" width="46" height="14" fill="#c62828" stroke="#7f0000" stroke-width="2"/></g>
-<g data-show="load-ok"><rect x="100" y="56" width="20" height="30" fill="#3949ab"/><rect x="122" y="62" width="16" height="24" fill="#ef6c00"/><ellipse cx="206" cy="72" rx="14" ry="14" fill="#80cbc4"/></g>
-<g data-show="load-heavy">
-  <rect x="86" y="44" width="26" height="42" fill="#3949ab"/><rect x="112" y="52" width="22" height="34" fill="#ef6c00"/><rect x="134" y="40" width="26" height="46" fill="#6a1b9a"/>
-  <rect x="162" y="56" width="22" height="30" fill="#2e7d32"/><rect x="186" y="46" width="30" height="40" fill="#c62828"/><circle cx="232" cy="68" r="16" fill="#80cbc4"/>
-</g>`;
+  // Sceny rysuje scenes.js (pixel art). Tokeny 'fx' z opcji kroków steruje stanem sceny.
 
   const JOBS = {
     kran: {
-      id: 'kran', title: 'Cieknący kran', place: 'Łazienka', base: 220, deadline: 26, scene: SCENE_KRAN,
+      id: 'kran', title: 'Cieknący kran', place: 'Łazienka', base: 220, deadline: 26,
       intro: 'Z kranu kapie od tygodnia. Rachunek za wodę rośnie, a miska już się przelewa.',
       steps: [
         { id: 'woda', name: 'Odetnij wodę', hint: 'Najpierw trzeba przerwać dopływ.', options: [
@@ -139,7 +78,7 @@
       ],
     },
     sciana: {
-      id: 'sciana', title: 'Dziura w ścianie', place: 'Pokój', base: 300, deadline: 40, scene: SCENE_SCIANA,
+      id: 'sciana', title: 'Dziura w ścianie', place: 'Pokój', base: 300, deadline: 40,
       intro: 'Po przesunięciu szafy została dziura wielkości pięści. Klient chce, żeby było „jak nowe”.',
       steps: [
         { id: 'przygotuj', name: 'Przygotuj dziurę', hint: 'Dobra szpachla zaczyna się od czystej krawędzi.', options: [
@@ -161,7 +100,7 @@
       ],
     },
     gniazdko: {
-      id: 'gniazdko', title: 'Iskrzące gniazdko', place: 'Kuchnia', base: 350, deadline: 30, scene: SCENE_GNIAZDKO,
+      id: 'gniazdko', title: 'Iskrzące gniazdko', place: 'Kuchnia', base: 350, deadline: 30,
       intro: 'Gniazdko iskrzy przy każdym włączeniu czajnika. Klient twierdzi, że „zawsze tak miało”.',
       steps: [
         { id: 'prad', name: 'Odetnij prąd', hint: 'Zanim cokolwiek dotkniesz.', options: [
@@ -183,7 +122,7 @@
       ],
     },
     polka: {
-      id: 'polka', title: 'Krzywa półka', place: 'Salon', base: 160, deadline: 22, scene: SCENE_POLKA,
+      id: 'polka', title: 'Krzywa półka', place: 'Salon', base: 160, deadline: 22,
       intro: 'Półka na książki wisi pod kątem i ledwo się trzyma. Klient chce ją powiesić „raz a dobrze”.',
       steps: [
         { id: 'rozmiar', name: 'Wyznacz miejsce', hint: 'Dobry początek to równa linia.', options: [

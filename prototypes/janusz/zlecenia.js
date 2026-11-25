@@ -21,15 +21,16 @@
   const reputation = () => { const r = ST.ratings.slice(-10); return r.length ? r.reduce((a, b) => a + b, 0) / r.length : null; };
 
   // ---------- scenka: tokeny stanu ----------
-  function applyScene(root, tokens) {
-    root.querySelectorAll('[data-show],[data-hide]').forEach(el => {
-      const show = el.dataset.show ? el.dataset.show.split('|') : null;
-      const hide = el.dataset.hide ? el.dataset.hide.split('|') : null;
-      const vis = (!show || show.some(t => tokens.has(t))) && (!hide || !hide.some(t => tokens.has(t)));
-      el.style.display = vis ? '' : 'none';
-    });
+  /* Rysuje sceny pixel art w kontenerze. Tokeny stanu przekazuje się do sceny zlecenia, siedziba bierze stan z gry. */
+  let sceneFrame = 0, sceneTokens = new Set(['broken']);
+  function hqOpts() { return { tier: ST.hq.tier, up: ST.hq.up, assets: ST.hq.assets, season: Kalendarz.seasonOf(ST.day).name, tools: ST.inv.length }; }
+  function paintScene(cv) {
+    const grid = cv.dataset.scene === 'hq' ? Scenes.hq(hqOpts(), sceneFrame) : Scenes.job(cv.dataset.job, sceneTokens, sceneFrame);
+    Scenes.draw(cv, grid);
   }
-  const sceneHTML = job => '<div class="scene"><svg viewBox="0 0 320 200" role="img" aria-label="' + job.title + '">' + job.scene + '</svg></div>';
+  function applyScene(root, tokens) { sceneTokens = tokens; root.querySelectorAll('canvas.pxscene').forEach(paintScene); }
+  setInterval(() => { sceneFrame = (sceneFrame + 1) % 4; document.querySelectorAll('canvas.pxscene').forEach(cv => { if (cv.offsetParent !== null) paintScene(cv); }); }, 380);
+  const sceneHTML = job => '<div class="scene"><canvas class="pxscene" width="128" height="80" data-scene="job" data-job="' + job.id + '" role="img" aria-label="' + job.title + '"></canvas></div>';
 
   // ---------- poziomy ----------
   let cur = null; // bieżące zlecenie
@@ -271,7 +272,7 @@
       return '<div class="def"><span>' + d.label + '</span><span>' + tags + '</span></div>'; }).join('') : '<div class="def"><span>Brak wad. Naprawdę dobra robota.</span></div>';
     $('job').hidden = true; $('result').hidden = false;
     $('result').innerHTML =
-      '<div class="scene">' + '<svg viewBox="0 0 320 200">' + cur.job.scene + '</svg></div>' +
+      sceneHTML(cur.job) +
       '<div class="bubble"><span class="av">' + cur.client.em + '</span><div><b>' + cur.client.name + '</b> <span class="stars">' + stars(r.stars) + '</span><br>„' + comment + '”</div></div>' +
       '<div><div class="glabels"><span>Fuszerometr</span><span>' + r.index + ' / 100</span></div><div class="gauge" role="meter" aria-valuenow="' + r.index + '" aria-valuemin="0" aria-valuemax="100"><i style="left:' + r.index + '%"></i></div>' +
       '<div class="glabels" style="margin-top:6px"><span>solidnie</span><span>na oko</span><span>fuszerka</span><span>katastrofa</span></div></div>' +
@@ -444,39 +445,7 @@
   }
 
   // ---------- siedziba ----------
-  function hqSVG(hq, tools) {
-    const t = hq.tier, u = hq.up, a = hq.assets;
-    const wall = ['#8a8f94', '#a9b4bb', '#b9a98e', '#d3cbb9', '#b7c1c8', '#a7bfd1'][t];
-    const roof = ['#7a3b24', '#2b2b2b', '#b5472f', '#34495e'][u.dach];
-    const frame = ['#5b3a29', '#9c7a53', '#f4f4f4', '#f4f4f4'][u.okna], glass = u.okna >= 3 ? '#8ecae6' : '#cfd8dc';
-    const doorC = ['#8a4b2a', '#7b5a3b', '#6b7a86', '#4a5a66'][u.drzwi];
-    let b = '';
-    const win = (x, y, w, h) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + glass + '" stroke="' + frame + '" stroke-width="3"/>' + (u.okna === 0 ? '<path d="M' + x + ' ' + y + 'l' + w + ' ' + h + '" stroke="#555" stroke-width="1"/>' : '');
-    let dx = 150, dy = 120, dw = 22, dh = 50, x0 = 90, x1 = 230, top = 100;
-    if (t === 0) { x0 = 90; x1 = 230; top = 105; b += '<rect x="90" y="105" width="140" height="65" fill="' + wall + '"/><rect x="90" y="98" width="140" height="8" fill="' + roof + '"/>' + '<rect x="108" y="120" width="70" height="50" fill="#6f7479"/><path d="M108 132h70M108 144h70M108 156h70" stroke="#5a5f64"/>'; dx = 190; dy = 130; dw = 24; dh = 40; }
-    else if (t === 1) { x0 = 55; x1 = 265; top = 95; b += '<rect x="55" y="95" width="210" height="75" fill="' + wall + '"/>' + Array.from({ length: 20 }, (_, i) => '<path d="M' + (60 + i * 10) + ' 95v75" stroke="#8b979f"/>').join('') + '<rect x="50" y="86" width="220" height="10" fill="' + roof + '"/>'; dx = 215; dy = 122; }
-    else if (t === 2) { x0 = 85; x1 = 235; top = 95; b += '<g transform="rotate(-1 160 140)"><rect x="85" y="100" width="150" height="70" fill="' + wall + '"/><polygon points="75,102 160,48 245,102" fill="' + roof + '"/><rect x="205" y="52" width="14" height="30" fill="#8d5a46"/>' + (u.ogrz >= 1 ? '<circle cx="212" cy="44" r="6" fill="#cfcfcf" opacity=".8"/><circle cx="218" cy="34" r="8" fill="#cfcfcf" opacity=".6"/>' : '') + '</g>'; dx = 150; }
-    else if (t === 3) { x0 = 80; x1 = 240; top = 62; b += '<rect x="80" y="62" width="160" height="108" fill="' + wall + '"/><rect x="76" y="54" width="168" height="10" fill="' + roof + '"/><path d="M20 170v-26h40v26M260 170v-26h40v26" stroke="#7a7a7a" stroke-width="3"/>'; dx = 150; }
-    else if (t === 4) { x0 = 40; x1 = 280; top = 80; b += '<rect x="40" y="80" width="170" height="90" fill="' + wall + '"/><rect x="210" y="62" width="70" height="108" fill="#c9d3da"/><rect x="36" y="72" width="178" height="10" fill="' + roof + '"/><rect x="206" y="54" width="78" height="10" fill="' + roof + '"/>'; dx = 140; }
-    else { x0 = 80; x1 = 240; top = 30; b += '<rect x="80" y="30" width="160" height="140" fill="' + wall + '"/>' + Array.from({ length: 4 }, (_, r) => Array.from({ length: 5 }, (_, c) => '<rect x="' + (90 + c * 30) + '" y="' + (40 + r * 22) + '" width="24" height="16" fill="#8ecae6" opacity=".9"/>').join('')).join('') + '<rect x="76" y="24" width="168" height="8" fill="' + roof + '"/>'; dx = 150; dy = 126; dh = 44; }
-    // okna (poza hurtem szklanych lokali)
-    if (t <= 2) b += win(x0 + 14, top + 22, 30, 22) + (t === 1 ? win(x0 + 60, top + 22, 30, 22) : '') + (t === 2 ? win(x1 - 54, top + 22, 30, 22) : '');
-    if (t === 3) b += win(95, 80, 30, 22) + win(195, 80, 30, 22) + win(95, 122, 30, 22) + win(195, 122, 30, 22);
-    if (t === 4) b += win(60, 96, 30, 22) + win(110, 96, 30, 22) + win(228, 80, 34, 24) + win(228, 122, 34, 24);
-    // drzwi
-    b += '<rect x="' + dx + '" y="' + dy + '" width="' + dw + '" height="' + dh + '" fill="' + doorC + '" stroke="#222" stroke-width="2"/>' + (u.drzwi >= 3 ? '<circle cx="' + (dx + dw + 5) + '" cy="' + (dy + 20) + '" r="3" fill="#ffd54f"/>' : '') + (u.alarm >= 1 ? '<rect x="' + (dx + 3) + '" y="' + (dy + 24) + '" width="6" height="6" fill="#aaa" stroke="#444"/>' : '');
-    // szyld
-    if (u.szyld === 1) b += '<rect x="' + (dx - 36) + '" y="' + (top - 4) + '" width="76" height="16" fill="#f4f4f4" stroke="#999"/><path d="M' + (dx - 30) + ' ' + (top + 4) + 'h64" stroke="#c33" stroke-width="3"/>';
-    if (u.szyld >= 2) b += '<rect x="' + (dx - 40) + '" y="' + (top - 8) + '" width="84" height="20" rx="4" fill="#ffc300" stroke="#8a6a00" stroke-width="2"/><path d="M' + (dx - 32) + ' ' + (top + 2) + 'h68" stroke="#1b1e22" stroke-width="4"/>' + (u.szyld === 3 ? '<circle cx="' + (dx + 54) + '" cy="' + (top + 2) + '" r="5" fill="#8ecae6"/>' : '');
-    // alarm / kamera
-    if (u.alarm >= 2) b += '<circle cx="' + (x1 - 6) + '" cy="' + (top + 8) + '" r="4" fill="#e53935"/>';
-    // narzędzia
-    if (tools > 0) b += '<rect x="' + (dx - 30) + '" y="160" width="20" height="10" fill="#c62828" stroke="#6a1b1b"/>';
-    // auto / bus
-    const van = a.bus === 0 ? '<rect x="238" y="152" width="48" height="20" rx="6" fill="#8d99a3"/><circle cx="252" cy="173" r="5" fill="#222"/><circle cx="274" cy="173" r="5" fill="#222"/>'
-      : '<rect x="228" y="140" width="68" height="32" rx="6" fill="' + (a.bus === 3 ? '#ffc300' : '#f4f4f4') + '" stroke="#555" stroke-width="2"/><rect x="274" y="146" width="18" height="12" fill="#8ecae6"/>' + (a.bus >= 2 ? '<path d="M232 164h40" stroke="#1565c0" stroke-width="4"/>' : '') + (a.bus === 3 ? '<circle cx="250" cy="154" r="6" fill="#1b1e22"/>' : '') + '<circle cx="244" cy="173" r="6" fill="#222"/><circle cx="282" cy="173" r="6" fill="#222"/>';
-    return '<div class="scene" data-pxw="192" style="background:#9ec5e0"><svg viewBox="0 0 320 200" role="img" aria-label="Siedziba firmy"><rect width="320" height="200" fill="#9ec5e0"/><rect y="170" width="320" height="30" fill="#6b6f73"/><rect y="168" width="320" height="4" fill="#4d5156"/>' + b + van + '</svg></div>';
-  }
+  function hqSVG() { return '<div class="scene"><canvas class="pxscene" width="128" height="80" data-scene="hq" role="img" aria-label="Siedziba firmy"></canvas></div>'; }
   function chipsFor(l) {
     const c = [];
     if (l.trust) c.push('zaufanie +' + l.trust); if (l.comfort) c.push('komfort +' + l.comfort); if (l.sec) c.push('ochrona +' + l.sec);
@@ -500,7 +469,7 @@
       return card(def.name, cur ? 'obecnie: ' + def.levels[cur - 1].name : 'obecnie: ' + (def.base || 'brak'), nl ? chipsFor(nl) : '', nl ? 'assets:' + k : '', nl ? nl.cost : 0, nl ? nl.name : ''); }).join('');
     const eff = ['Klienci płacą ×' + rt.payMult.toFixed(2).replace('.', ','), '+' + rt.satBonus + ' pkt zadowolenia klientów', 'komfort ekipy: +' + Math.round(e.comfort * 0.5) + ' do bazowego nastroju',
       'ochrona ' + e.security + '%: mniej kradzieży', 'narzędzia: ' + toolSummary() + '', 'flota: wypadki ×' + String(e.accMult).replace('.', ','), 'utrzymanie: ' + zl(e.upkeep) + ' co dzień wypłaty'];
-    $('hq').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Siedziba firmy</h2>' + hqSVG(hq, ST.inv.length) +
+    $('hq').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Siedziba firmy</h2>' + hqSVG() +
       '<div class="hd" style="display:flex;justify-content:space-between;align-items:baseline"><span class="nm" style="font-family:var(--display);font-size:1.4rem">' + t.name + '</span><span class="bignum" style="font-size:2rem;color:var(--hi)">' + rt.stars.toFixed(1).replace('.', ',') + ' ★</span></div>' +
       '<div class="hint">' + t.desc + '</div>' +
       '<div class="break">' + parts.map(p => '<div class="brow"><span>' + p[0] + '</span><span class="b"><i style="width:' + pct(p[1]) + '%"></i></span><b>' + pct(p[1]) + '%</b></div>').join('') + '</div>' +
@@ -678,7 +647,7 @@
   // pikselizacja: emoji i znaczniki @postać zamieniane na sprite'y, sceny SVG na obrazy w małej rozdzielczości
   (function () {
     let busy = false;
-    const run = () => { if (busy) return; busy = true; try { Pix.pixelize(document.body); Pix.scenify(document.body, 128); } finally { busy = false; } };
+    const run = () => { if (busy) return; busy = true; try { Pix.pixelize(document.body); document.querySelectorAll('canvas.pxscene:not([data-drawn])').forEach(cv => { cv.dataset.drawn = '1'; paintScene(cv); }); } finally { busy = false; } };
     new MutationObserver(() => requestAnimationFrame(run)).observe(document.body, { childList: true, subtree: true });
     run();
   })();

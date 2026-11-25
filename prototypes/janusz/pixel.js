@@ -11,6 +11,10 @@
     y: '#ffc300', Y: '#b98f00', o: '#f4a259', O: '#a8561b', r: '#e63946', R: '#8a1f2b', m: '#ff8fa3',
     b: '#4f9de0', B: '#1d4f8a', c: '#8ecae6', n: '#6ccf7f', N: '#2e7d32',
     s: '#f1c27d', S: '#c68642', h: '#8a5a2b', H: '#4a2f17', e: '#f6d55c', p: '#b39ddb', P: '#5e35b1', t: '#c98a4b', T: '#6e4520',
+    // kolory scen (ściany, kafle, drewno, woda, chrom, tynk)
+    '1': '#efe6da', '2': '#d9cbb9', '3': '#bfae9a', '4': '#e8f0f3', '5': '#c4d3da', '6': '#93a7b3',
+    '7': '#a9774a', '8': '#7a5232', '9': '#d1a06a', a: '#4fc3f7', A: '#1e88c8', '#': '#eef3f6', '%': '#b4c2cb', '&': '#6f8391',
+    '+': '#faf7f2', '=': '#ddd5c9', '-': '#3b2a22', _: '#241812', '~': '#bfe3f5', '^': '#8cc4e6', '$': '#7fb069', '?': '#a9c9a0', '!': '#6e9a5c',
   };
   const hex = c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
 
