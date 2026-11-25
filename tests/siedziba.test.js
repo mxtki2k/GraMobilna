@@ -38,7 +38,7 @@ t('przeprowadzka: nowy lokal zeruje remonty budynku, ale narzędzia i bus zostaj
   const r = H.buyTier(h, 5000);
   assert(r.ok && r.hq.tier === 1);
   assert(Object.values(r.hq.up).every(v => v === 0));
-  assert(r.hq.assets.narzedzia === 3 && r.hq.assets.bus === 3);
+  assert(r.hq.assets.bus === 3 && r.hq.assets.narzedzia === undefined);
   assert.strictEqual(H.buyTier(h, 100).ok, false);
   assert.strictEqual(H.buyTier(maxed(5), 1e9).ok, false);
 });
@@ -84,13 +84,51 @@ t('wypłata za zlecenie rośnie, gdy ocena firmy rośnie (spięcie z modułem fu
   assert(F.evaluate(job, q, CLIENTS.grazyna, { satBonus: 8 }).satisfaction > F.evaluate(job, q, CLIENTS.grazyna, { satBonus: 0 }).satisfaction);
 });
 
-t('narzędzia: szybciej i celniej; komfort podnosi nastrój ekipy po wypłacie', () => {
+t('narzędzia nie są już w siedzibie: efekty bez bonusu czasu i celności, komfort podnosi nastrój ekipy', () => {
+  assert.strictEqual(H.ASSETS.narzedzia, undefined);
   const e0 = H.effects(H.fresh()), e3 = H.effects(maxed(3));
-  assert(e3.timeBonus > e0.timeBonus && e3.accBonus > e0.accBonus && e3.comfort > e0.comfort);
-  const w = Object.assign(E.newWorker(E.CANDIDATES[1]), { mood: 70 });
-  const pay = { [w.id]: w.wage };
+  assert(e0.timeBonus === undefined && e0.accBonus === undefined && e3.comfort > e0.comfort);
+  const w = Object.assign(E.newWorker(E.CANDIDATES[1]), { mood: 70 }), pay = { [w.id]: w.wage };
   const plain = E.applyPay([w], pay).workers[0].mood, cosy = E.applyPay([w], pay, { patienceBonus: e3.comfort * 0.5 }).workers[0].mood;
   assert(cosy > plain);
+});
+
+t('ocena firmy: sprzęt to bus plus jakość narzędzi z ekwipunku', () => {
+  const h = H.fresh();
+  const none = H.rating(h, [], [], 0, 0), tools = H.rating(h, [], [], 0, 1);
+  assert(tools.parts.sprzet > none.parts.sprzet && tools.stars > none.stars);
+  const van = H.buy(h, 'assets', 'bus', 1e9).hq;
+  assert(H.rating(van, [], [], 0, 0).parts.sprzet > none.parts.sprzet);
+  assert(H.rating(van, [], [], 0, 1).parts.sprzet <= 1);
+});
+
+t('ochrona: alarm, kamery i ochrona fizyczna zmniejszają szansę kradzieży (łup z busa i ekwipunku)', () => {
+  const rich = (() => { const h = H.fresh(); h.assets.bus = 3; return h; })(), loot = 2000;
+  const none = H.theftChance(rich, loot);
+  const alarm = H.buy(H.buy(rich, 'up', 'alarm', 1e9).hq, 'up', 'alarm', 1e9).hq;
+  const cams = H.buy(rich, 'up', 'kamery', 1e9).hq, guard = H.buy(rich, 'up', 'ochrona', 1e9).hq;
+  assert(H.theftChance(alarm, loot) < none && H.theftChance(cams, loot) < none && H.theftChance(guard, loot) < none);
+  assert(H.theftChance(maxed(5), loot) < H.theftChance(alarm, loot) && H.effects(maxed(5)).security <= 95);
+});
+
+t('im większy łup (bus i ekwipunek), tym większa atrakcyjność i szansa kradzieży przy tych samych zabezpieczeniach', () => {
+  const poor = H.fresh(), rich = H.fresh(); rich.assets.bus = 3;
+  assert(H.attractiveness(rich) > H.attractiveness(poor) && H.theftChance(rich) > H.theftChance(poor));
+  assert(H.theftChance(poor, 3000) > H.theftChance(poor, 0) && H.theftChance(poor, 300) < H.theftChance(poor, 3000));
+  assert(H.lootValue(rich) > H.lootValue(poor));
+});
+
+t('przebieg kradzieży: strata rośnie z wartością łupu, kamery odzyskują część, może zniknąć przedmiot z ekwipunku', () => {
+  const rich = H.fresh(); rich.assets.bus = 3;
+  const seq = r => { let i = 0; return () => r[i++ % r.length]; };
+  const a = H.resolveTheft(rich, seq([0, 0.5, 0.5, 0.5]), 1500);
+  assert(a && a.loss > 200 && a.recovered === 0 && a.toolLost === undefined);
+  const cams = H.buy(H.buy(rich, 'up', 'kamery', 1e9).hq, 'up', 'kamery', 1e9).hq;
+  const b = H.resolveTheft(cams, seq([0, 0.5, 0.5, 0.5]), 1500);
+  assert(b && b.recovered > 0 && b.net < b.loss);
+  assert(H.resolveTheft(rich, seq([0, 0.5, 0.9, 0.0]), 1500).itemStolen === true);
+  assert.strictEqual(H.resolveTheft(rich, seq([0, 0.5, 0.9, 0.0]), 0).itemStolen, false);
+  assert.strictEqual(H.resolveTheft(rich, seq([0.999]), 1500), null);
 });
 
 t('bus: mniej wypadków i tańsze naprawy; utrzymanie rośnie', () => {
@@ -99,49 +137,6 @@ t('bus: mniej wypadków i tańsze naprawy; utrzymanie rośnie', () => {
   const van = S.driveRisk(w, 'pijany', { heat: 0.25, accMult: H.effects(maxed(0)).accMult }, 'worker').accident;
   assert(van < base);
   assert(H.effects(maxed(5)).upkeep > H.effects(H.fresh()).upkeep);
-});
-
-t('ochrona: alarm, kamery i ochrona fizyczna zmniejszają szansę kradzieży', () => {
-  const rich = (() => { const h = H.fresh(); h.assets.narzedzia = 3; h.assets.bus = 3; return h; })();
-  const none = H.theftChance(rich);
-  const alarm = H.buy(H.buy(rich, 'up', 'alarm', 1e9).hq, 'up', 'alarm', 1e9).hq;
-  const cams = H.buy(rich, 'up', 'kamery', 1e9).hq, guard = H.buy(rich, 'up', 'ochrona', 1e9).hq;
-  assert(H.theftChance(alarm) < none && H.theftChance(cams) < none && H.theftChance(guard) < none);
-  assert(H.theftChance(maxed(5)) < H.theftChance(alarm) && H.effects(maxed(5)).security <= 95);
-});
-
-t('im lepszy sprzęt, tym większa atrakcyjność i szansa kradzieży przy tych samych zabezpieczeniach', () => {
-  const poor = H.fresh(), rich = H.fresh(); rich.assets.narzedzia = 3; rich.assets.bus = 3;
-  assert(H.attractiveness(rich) > H.attractiveness(poor) && H.theftChance(rich) > H.theftChance(poor));
-  assert(H.lootValue(rich) > H.lootValue(poor));
-  const mid = H.fresh(); mid.assets.narzedzia = 1;
-  assert(H.theftChance(poor) < H.theftChance(mid) && H.theftChance(mid) < H.theftChance(rich));
-});
-
-t('przebieg kradzieży: strata rośnie z wartością łupu, kamery odzyskują część, możliwa utrata narzędzi', () => {
-  const rich = H.fresh(); rich.assets.narzedzia = 3; rich.assets.bus = 3;
-  const seq = r => { let i = 0; return () => r[i++ % r.length]; };
-  const a = H.resolveTheft(rich, seq([0, 0.5, 0.5, 0.5]));
-  assert(a && a.loss > 200 && a.recovered === 0);
-  const cams = H.buy(H.buy(rich, 'up', 'kamery', 1e9).hq, 'up', 'kamery', 1e9).hq;
-  const b = H.resolveTheft(cams, seq([0, 0.5, 0.5, 0.5]));
-  assert(b && b.recovered > 0 && b.net < b.loss);
-  const c = H.resolveTheft(rich, seq([0, 0.5, 0.0, 0.0]));
-  assert(c.toolLost && c.hq.assets.narzedzia === 2 && rich.assets.narzedzia === 3);
-  assert.strictEqual(H.resolveTheft(rich, seq([0.999])), null);
-});
-
-t('zużycie narzędzi: bonus maleje wraz ze stanem, serwis przywraca, połamane narzędzia psują robotę', () => {
-  const h = H.fresh(); h.assets.narzedzia = 3;
-  const fresh = H.effects(h).timeBonus;
-  const worn = H.effects(H.wear(h, 80)).timeBonus;
-  assert(worn < fresh && worn >= fresh * 0.5 - 1e-9);
-  const w2 = H.wear(h, 80);
-  assert(H.repairCost(w2) > H.repairCost(h) && H.repair(w2, 10).ok === false);
-  assert.strictEqual(H.repair(w2, 1e6).hq.cond, 100);
-  assert(H.breakChance(w2) > 0 && H.breakChance(h) === 0);
-  assert(H.clone(w2).cond === 20 && H.buyTier(w2, 1e9).hq.cond === 20);
-  assert(H.rating(w2, [], [], 0).stars < H.rating(h, [], [], 0).stars);
 });
 
 t('opłacalność: najtańszy remont daje wyraźny zysk w ocenie na złotówkę (szyld vs ogrzewanie)', () => {

@@ -149,6 +149,14 @@ t('fabuła: wybory ustawiają flagi, zapisują dziennik i zwracają skutki', () 
   const inv = Fa.BEATS.find(b => b.id === 'inwestor');
   assert(!Fa.choiceAvailable(inv.choices[1], ctx0({ gossip: 40 })) && Fa.choiceAvailable(inv.choices[1], ctx0({ gossip: 70 })));
 });
+t('fabuła: spadek po dziadku daje walizkę narzędzi do jedynego systemu narzędzi', () => {
+  const r = Fa.resolve(Fa.fresh(), 'spadek', 0);
+  assert(r.effects.giveItem && r.effects.giveItem.type === 'zestaw' && r.effects.giveItem.brand === 'Walizka dziadka');
+  assert(!Fa.resolve(Fa.fresh(), 'spadek', 1).effects.giveItem);
+  const A = require('../prototypes/janusz/alledrogo.js'); const it = A.makeItem(r.effects.giveItem);
+  assert(it.status === 'sprawny' && it.unboxed && A.forJob([it], 'kran').length === 1);
+});
+
 t('fabuła: zakończenia zależą od flag i statystyk', () => {
   assert.strictEqual(Fa.ending({ flags: { sprzedane: true }, rating: 4.5, fusz: 5, tier: 4 }).id, 'holding');
   assert.strictEqual(Fa.ending({ flags: {}, rating: 4.3, fusz: 10, tier: 2 }).id, 'uczciwy');
@@ -165,9 +173,9 @@ t('spięcie: lichwiarz + brak rat → windykacja; ukryty przychód + donos → k
   assert.strictEqual(Fi.collection(f.loans[0]).kind, 'windykacja');
   let g = Fi.addIncome(Fi.fresh(), 3000, false);
   assert(Fi.rollAudit(g, { force: true }, seq([0])).audit.penalty > 0);
-  const rich = H.fresh(); rich.assets.narzedzia = 3; rich.assets.bus = 3;
+  const rich = H.fresh(); rich.assets.bus = 3;
   const cams = H.buy(H.buy(rich, 'up', 'kamery', 1e9).hq, 'up', 'kamery', 1e9).hq;
-  assert(H.resolveTheft(cams, seq([0, 0.5, 0.5, 0.9])).recovered > 0);
+  assert(H.resolveTheft(cams, seq([0, 0.5, 0.5, 0.9]), 2000).recovered > 0);
 });
 
 console.log('\n' + n + ' testów przeszło');

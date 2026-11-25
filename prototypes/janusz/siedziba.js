@@ -3,11 +3,11 @@
  *
  * Ocena firmy (1–5 ★) = 1 + 4 · (0,30 · siedziba + 0,15 · sprzęt + 0,30 · opinie + 0,25 · rzetelność)
  *   siedziba   = 1 − e^(−(baza lokalu + mnożnik lokalu · Σ zaufanie z remontów) / 70)  (miękkie nasycenie)
- *   sprzęt     = (poziom narzędzi + poziom busa) / 6
+ *   sprzęt     = 0,5 · poziom busa / 3 + 0,5 · jakość narzędzi z ekwipunku (alledrogo.js, 0–1)
  *   opinie     = średnia gwiazdek z ostatnich 10 zleceń / 5 (brak danych = 0,5)
  *   rzetelność = 1 − średni indeks fuszerki z ostatnich 8 zleceń / 100 − 0,05 · liczba otwartych reklamacji (brak danych = 0,5)
  * Skutki: mnożnik wypłat (0,85–1,25, plus popyt z szyldu), bonus do zadowolenia klientów (do +8),
- * komfort (podnosi bazowy nastrój ekipy), ochrona (mniej kradzieży), narzędzia (szybciej, celniej),
+ * komfort (podnosi bazowy nastrój ekipy), ochrona (mniej kradzieży),
  * flota (mniej wypadków), a wszystko ma koszty utrzymania doliczane przy dniu wypłaty.
  */
 (function (root, factory) {
@@ -60,20 +60,16 @@
       { name: 'Siatka i zamykana brama', cost: 1000, sec: 25 },
       { name: 'Ochroniarz na noc', cost: 4000, sec: 40, upkeep: 60, trust: 3 } ] },
   };
-  /* Majątek firmy: przechodzi z tobą do nowego lokalu. */
+  /* Majątek firmy: przechodzi z tobą do nowego lokalu. Narzędzia to osobny system (alledrogo.js): pojedyncze przedmioty z ekwipunku. */
   const ASSETS = {
-    narzedzia: { name: 'Narzędzia', levels: [
-      { name: 'Porządne klucze i wkrętaki', cost: 400, time: 0.04, acc: 0.03 },
-      { name: 'Wiertarka udarowa i poziomica laserowa', cost: 1500, time: 0.08, acc: 0.06, trust: 2 },
-      { name: 'Pełny warsztat', cost: 5000, time: 0.12, acc: 0.09, trust: 5 } ] },
     bus: { name: 'Bus', base: 'Stary kombi', levels: [
       { name: 'Używany bus', cost: 2500, accMult: 0.8, upkeep: 15 },
       { name: 'Bus po serwisie', cost: 7000, accMult: 0.65, upkeep: 30 },
       { name: 'Sprinter z logo firmy', cost: 18000, accMult: 0.55, upkeep: 50, trust: 6 } ] },
   };
 
-  const fresh = () => ({ tier: 0, up: { okna: 0, drzwi: 0, dach: 0, ogrz: 0, szyld: 0, alarm: 0, kamery: 0, ochrona: 0 }, assets: { narzedzia: 0, bus: 0 }, cond: 100 });
-  const clone = hq => ({ tier: hq.tier, up: Object.assign({}, hq.up), assets: Object.assign({}, hq.assets), cond: hq.cond == null ? 100 : hq.cond });
+  const fresh = () => ({ tier: 0, up: { okna: 0, drzwi: 0, dach: 0, ogrz: 0, szyld: 0, alarm: 0, kamery: 0, ochrona: 0 }, assets: { bus: 0 } });
+  const clone = hq => ({ tier: hq.tier, up: Object.assign({}, hq.up), assets: Object.assign({}, hq.assets) });
 
   function nextTier(hq) { return TIERS[hq.tier + 1] || null; }
   function nextLevel(group, key, hq) {
@@ -105,34 +101,20 @@
     for (const k of Object.keys(UPGRADES)) for (let i = 0; i < (hq.up[k] || 0); i++) {
       const l = UPGRADES[k].levels[i]; trustB += l.trust || 0; comfort += l.comfort || 0; sec += l.sec || 0; demand += l.demand || 0; upk += l.upkeep || 0; recover = Math.max(recover, l.recover || 0);
     }
-    let time = 0, acc = 0, trustA = 0, accMult = 1, vUp = 0;
-    for (let i = 0; i < hq.assets.narzedzia; i++) { const l = ASSETS.narzedzia.levels[i]; time = l.time; acc = l.acc; trustA += l.trust || 0; }
+    let trustA = 0, accMult = 1, vUp = 0;
     for (let i = 0; i < hq.assets.bus; i++) { const l = ASSETS.bus.levels[i]; accMult = l.accMult; vUp = l.upkeep; trustA += l.trust || 0; }
     return {
       tier: t, trustBuilding: t.base + t.mult * trustB, trustAssets: trustA,
       comfort: Math.round(t.mult * comfort), security: clamp(sec, 0, 95), demand, recover,
-      timeBonus: time * condFactor(hq), accBonus: acc * condFactor(hq), accMult, upkeep: t.upkeep + vUp + upk,
+      accMult, upkeep: t.upkeep + vUp + upk,
     };
   }
 
-  /* Stan narzędzi: im niższy, tym gorszy bonus (do połowy). */
-  function condFactor(hq) { return 0.5 + 0.5 * clamp((hq.cond == null ? 100 : hq.cond) / 100, 0, 1); }
-  function wear(hq, amount) { const h = clone(hq); h.cond = clamp(h.cond - amount, 0, 100); return h; }
-  function repairCost(hq) { const lvl = hq.assets.narzedzia; return lvl ? Math.round((100 - hq.cond) * 2 + lvl * 20) : 0; }
-  function repair(hq, money) {
-    if (!hq.assets.narzedzia) return { ok: false, reason: 'Nie masz narzędzi do serwisu.' };
-    const c = repairCost(hq); if (hq.cond >= 100) return { ok: false, reason: 'Narzędzia są sprawne.' };
-    if (money < c) return { ok: false, reason: 'Brakuje ' + (c - money) + ' zł.' };
-    const h = clone(hq); h.cond = 100; return { ok: true, hq: h, cost: c };
-  }
-  /* Szansa, że zepsute narzędzie psuje robotę (poniżej 30% stanu). */
-  function breakChance(hq) { return hq.assets.narzedzia && hq.cond < 30 ? (30 - hq.cond) / 100 : 0; }
-
   /* Ocena firmy. hist: [{index}] (ostatnie zlecenia), ratings: [gwiazdki], openClaims: liczba. */
-  function rating(hq, hist, ratings, openClaims) {
+  function rating(hq, hist, ratings, openClaims, toolScore) {
     const e = effects(hq);
     const siedziba = 1 - Math.exp(-e.trustBuilding / 70);
-    const sprzet = clamp((hq.assets.narzedzia + hq.assets.bus) / 6, 0, 1) * (0.7 + 0.3 * clamp((hq.cond == null ? 100 : hq.cond) / 100, 0, 1));
+    const sprzet = clamp(0.5 * (hq.assets.bus || 0) / 3 + 0.5 * clamp(toolScore || 0, 0, 1), 0, 1); // bus + narzędzia z ekwipunku
     const rr = (ratings || []).slice(-10);
     const opinie = rr.length ? rr.reduce((a, b) => a + b, 0) / rr.length / 5 : 0.5;
     const hh = (hist || []).slice(-8);
@@ -147,7 +129,6 @@
   /* Wartość łupu: im lepszy sprzęt i bus, tym bardziej opłaca się włamanie. */
   function lootValue(hq) {
     let v = 0;
-    for (let i = 0; i < hq.assets.narzedzia; i++) v += ASSETS.narzedzia.levels[i].cost;
     for (let i = 0; i < hq.assets.bus; i++) v += ASSETS.bus.levels[i].cost;
     return v;
   }
@@ -160,11 +141,10 @@
     const e = effects(hq), loot = lootValue(hq) + (extra || 0);
     const loss = Math.round(Math.max(40, Math.min(1500, 60 + loot * (0.04 + rng() * 0.08))));
     const recovered = Math.round(loss * e.recover * (rng() < 0.7 ? 1 : 0));
-    let toolLost = false, next = clone(hq);
-    if (hq.assets.narzedzia > 0 && rng() < (1 - e.security / 100) * 0.25) { next.assets.narzedzia--; toolLost = true; }
+    const next = clone(hq);
     const itemStolen = (extra || 0) > 0 && rng() < (1 - e.security / 100) * 0.4;
-    return { loss, recovered, net: loss - recovered, toolLost, itemStolen, hq: next, cameras: e.recover > 0 };
+    return { loss, recovered, net: loss - recovered, itemStolen, hq: next, cameras: e.recover > 0 };
   }
 
-  return { TIERS, UPGRADES, ASSETS, fresh, clone, nextTier, nextLevel, buyTier, buy, effects, rating, payoutMult, theftChance, lootValue, attractiveness, resolveTheft, wear, repair, repairCost, breakChance, condFactor };
+  return { TIERS, UPGRADES, ASSETS, fresh, clone, nextTier, nextLevel, buyTier, buy, effects, rating, payoutMult, theftChance, lootValue, attractiveness, resolveTheft };
 });

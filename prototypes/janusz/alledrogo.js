@@ -18,7 +18,9 @@
   const between = (lo, hi, rng) => Math.round(lo + (hi - lo) * rng());
 
   /* Co wolno kupić. jobs = na jakie zlecenia pomaga. hazardMult = redukcja zagrożenia wad (np. miernik prądu). */
+  const ALL_JOBS = ['kran', 'sciana', 'gniazdko', 'polka'];
   const TYPES = {
+    zestaw: { id: 'zestaw', name: 'Zestaw narzędzi ręcznych', jobs: ALL_JOBS, base: 150, acc: 0.05, time: 0.04, brands: ['Walizka majstra', 'Zestaw 100 elementów', 'Skrzynka „Złota rączka”'] },
     wiertarka: { id: 'wiertarka', name: 'Wiertarka udarowa', jobs: ['polka', 'sciana'], base: 180, acc: 0.07, time: 0.05, brands: ['Turbo-Wiert 3000', 'Hammer-Max', 'Ryś Pro'] },
     poziomica: { id: 'poziomica', name: 'Poziomica laserowa', jobs: ['polka'], base: 120, acc: 0.10, time: 0.04, brands: ['Laser-Prosto', 'Libelka X', 'Równo.pl'] },
     klucze: { id: 'klucze', name: 'Klucze do rur', jobs: ['kran'], base: 90, acc: 0.08, time: 0.06, brands: ['Hydro-Klucz', 'Rurman', 'Zestaw „Złota rączka”'] },
@@ -212,5 +214,37 @@
     return { price, complaint: false, gossip: 0, text: 'Kupiec nie zauważył. Tym razem.' };
   }
 
-  return { TYPES, CLASSES, TIER_NAME, TIER_PRICE, SELLERS, newPrice, classForCond, genListings, refresh, removeListing, ask, buyNow, bid, tickOrders, unbox, bonus, forJob, totalBonus, failChance, breakItem, wear, dispute, refundLost, value, inventoryValue, sell };
+  /* Jedyny system narzędzi w grze: ekwipunek składa się wyłącznie z takich przedmiotów. */
+  let _seq = 100000;
+  function makeItem(o) {
+    const base = { id: ++_seq, type: 'zestaw', tier: 2, brand: 'Walizka majstra', claimed: 'uzywane', cond: 80, life: 25, hidden: false, fake: false, paid: 0, source: 'start',
+      sellerName: 'własne', sellerHonesty: 1, uses: 0, status: 'sprawny', unboxed: true, protectUses: 0 };
+    return Object.assign(base, o);
+  }
+  /* Pokrycie zleceń: łączna premia narzędzi dla każdego rodzaju zlecenia. */
+  function coverage(inv) {
+    const out = {}; ALL_JOBS.forEach(j => { out[j] = totalBonus(forJob(inv, j)); }); return out;
+  }
+  /* Jakość ekwipunku 0–1 (średnia z czterech zleceń, 0,2 = maksymalna premia). Wchodzi do oceny firmy. */
+  function toolScore(inv) {
+    const c = coverage(inv); return clamp(ALL_JOBS.reduce((s, j) => s + c[j].acc / 0.2, 0) / ALL_JOBS.length, 0, 1);
+  }
+
+  /* Serwis: sprawne narzędzie wraca do 100% stanu, zepsute da się naprawić z 60% szansą (usuwa też ukrytą wadę). */
+  function repairCost(item) {
+    const T = TYPES[item.type];
+    if (item.status !== 'sprawny') return Math.max(30, Math.round(T.base * TIER_PRICE[item.tier - 1] * 0.5));
+    return Math.round((100 - item.cond) * (0.4 + 0.3 * item.tier));
+  }
+  function repair(item, money, rng) {
+    const broken = item.status !== 'sprawny';
+    if (!broken && item.cond >= 100) return { ok: false, reason: 'Narzędzie jest w pełni sprawne.' };
+    const cost = repairCost(item);
+    if (money < cost) return { ok: false, reason: 'Brakuje ' + (cost - money) + ' zł.' };
+    if (!broken) return { ok: true, success: true, cost, item: Object.assign({}, item, { cond: 100 }), text: 'Serwis: ' + item.brand + ' wrócił do pełnego stanu.' };
+    if (rng() < 0.6) return { ok: true, success: true, cost, item: Object.assign({}, item, { status: 'sprawny', cond: Math.max(item.cond, 70), life: item.life + 3, hidden: false }), text: 'Udało się naprawić „' + item.brand + '”. Ukryta wada też zniknęła.' };
+    return { ok: true, success: false, cost, item, text: 'Serwisant rozłożył ręce: „' + item.brand + '” nie nadaje się do naprawy. Pieniądze przepadły.' };
+  }
+
+  return { ALL_JOBS, makeItem, coverage, toolScore, repairCost, repair, TYPES, CLASSES, TIER_NAME, TIER_PRICE, SELLERS, newPrice, classForCond, genListings, refresh, removeListing, ask, buyNow, bid, tickOrders, unbox, bonus, forJob, totalBonus, failChance, breakItem, wear, dispute, refundLost, value, inventoryValue, sell };
 });

@@ -17,7 +17,7 @@
     { id: 'spadek', chapter: 1, title: 'Spadek po dziadku', when: c => c.done === 0,
       text: 'Dziadek Zdzisław zostawił ci ruderę po drugiej stronie osiedla, walizkę narzędzi i listę „spraw do załatwienia”, której nikt nie chce czytać. Ciotka proponuje układ.',
       choices: [
-        { label: 'Przejmij warsztat dziadka', sub: '+600 zł, walizka z narzędziami jest twoja', effects: { money: 600, flags: ['warsztat'], note: 'Walizka dziadka pachnie smarem i wspomnieniami.' } },
+        { label: 'Przejmij warsztat dziadka', sub: '+600 zł i walizka z narzędziami (zestaw używany, ale sprawny)', effects: { money: 600, giveItem: { type: 'zestaw', tier: 2, brand: 'Walizka dziadka', claimed: 'uzywane', cond: 65, life: 25, source: 'spadek', sellerName: 'dziadek Zdzisław' }, flags: ['warsztat'], note: 'Walizka dziadka pachnie smarem i wspomnieniami. Trafia do twoich narzędzi.' } },
         { label: 'Weź gotówkę od ciotki', sub: '+1200 zł, ale rodzina będzie gadać', effects: { money: 1200, gossip: -5, flags: ['ciotka'], note: 'Ciotka zadzwoniła do pół rodziny.' } } ] },
     { id: 'gienek', chapter: 1, title: 'Pan Gienek puka do drzwi', when: c => c.done >= 2,
       text: 'W progu stoi Pan Gienek w skórzanej kurtce. „Dziadek pożyczył ode mnie dwa tysiące. Termin minął, procent leci.” Dzwoni na komórkę, ale nie jest to rozmowa o pogodzie.',

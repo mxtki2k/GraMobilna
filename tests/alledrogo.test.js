@@ -166,4 +166,30 @@ t('opłacalność: używane po przejściach bywają okazją albo pułapką, stat
   assert(newLife / nn > 3 * (usedLife / nu));
 });
 
+t('jeden system narzędzi: zestaw ręczny pasuje do wszystkich zleceń, makeItem tworzy sprawny przedmiot', () => {
+  assert.deepStrictEqual(A.TYPES.zestaw.jobs, ['kran', 'sciana', 'gniazdko', 'polka']);
+  const it = A.makeItem({ brand: 'Walizka dziadka', tier: 2, cond: 65 });
+  assert(it.status === 'sprawny' && it.unboxed && it.uses === 0 && it.cond === 65 && it.id > 100000);
+  assert(A.makeItem({}).id !== A.makeItem({}).id);
+  for (const j of ['kran', 'sciana', 'gniazdko', 'polka']) assert.strictEqual(A.forJob([it], j).length, 1, j);
+});
+
+t('pokrycie i jakość ekwipunku: więcej i lepsze narzędzia dają wyższy wynik, zepsute nie liczą się', () => {
+  assert.strictEqual(A.toolScore([]), 0);
+  const one = [A.makeItem({ tier: 1, cond: 60 })], pro = [A.makeItem({ tier: 3, cond: 100 })], more = pro.concat([A.makeItem({ type: 'wiertarka', tier: 3, cond: 100 }), A.makeItem({ type: 'poziomica', tier: 3, cond: 100 })]);
+  assert(A.toolScore(pro) > A.toolScore(one) && A.toolScore(more) > A.toolScore(pro) && A.toolScore(more) <= 1);
+  assert.strictEqual(A.toolScore([A.makeItem({ status: 'zepsute' })]), 0);
+  const c = A.coverage(more); assert(c.polka.acc > c.kran.acc && c.sciana.acc > c.kran.acc && c.kran.acc > 0);
+});
+
+t('serwis: sprawne wraca do 100%, zepsute naprawia się z 60% szansą i traci ukrytą wadę, brak pieniędzy blokuje', () => {
+  const worn = A.makeItem({ cond: 40, tier: 2 });
+  const r = A.repair(worn, 1000, seq([0.5])); assert(r.ok && r.success && r.item.cond === 100 && r.cost === Math.round(60 * 1.0));
+  assert.strictEqual(A.repair(worn, 5, seq([0.5])).ok, false); assert.strictEqual(A.repair(A.makeItem({ cond: 100 }), 1000, seq([0.5])).ok, false);
+  const dead = A.makeItem({ status: 'zepsute', hidden: true, cond: 20, life: 0 });
+  const fix = A.repair(dead, 1000, seq([0.1])); assert(fix.success && fix.item.status === 'sprawny' && !fix.item.hidden && fix.item.cond >= 70 && fix.item.life >= 3);
+  const fail = A.repair(dead, 1000, seq([0.9])); assert(fail.ok && !fail.success && fail.item.status === 'zepsute' && fail.cost > 0);
+  assert(A.repairCost(dead) > A.repairCost(A.makeItem({ cond: 90 })));
+});
+
 console.log('\n' + n + ' testów przeszło');

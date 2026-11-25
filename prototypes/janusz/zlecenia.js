@@ -9,7 +9,11 @@
   const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, fav: {}, flash: [], forceAudit: false, inv: [], orders: [], market: null });
   let ST = fresh();
   try { const r = localStorage.getItem('zlecenia_v1'); if (r) ST = Object.assign(fresh(), JSON.parse(r)); } catch (e) {}
-  (() => { const f = Siedziba.fresh(); ST.hq = Object.assign(f, ST.hq || {}, { up: Object.assign(f.up, (ST.hq || {}).up), assets: Object.assign(f.assets, (ST.hq || {}).assets) }); if (!ST.hist) ST.hist = []; })();
+  (() => {
+    const old = ((ST.hq || {}).assets || {}).narzedzia; // stary system: poziom narzędzi w siedzibie
+    if (old > 0) { ST.inv = (ST.inv || []).concat([Alledrogo.makeItem({ tier: Math.min(3, old), brand: 'Zestaw z siedziby', cond: (ST.hq.cond == null ? 100 : ST.hq.cond), life: 30, source: 'start', sellerName: 'własne' })]); delete ST.hq.assets.narzedzia; }
+    if (ST.hq) delete ST.hq.cond;
+    const f = Siedziba.fresh(); ST.hq = Object.assign(f, ST.hq || {}, { up: Object.assign(f.up, (ST.hq || {}).up), assets: Object.assign(f.assets, (ST.hq || {}).assets) }); if (!ST.hist) ST.hist = []; })();
   const save = () => { try { localStorage.setItem('zlecenia_v1', JSON.stringify(ST)); } catch (e) {} };
   const reputation = () => { const r = ST.ratings.slice(-10); return r.length ? r.reduce((a, b) => a + b, 0) / r.length : null; };
 
@@ -27,7 +31,7 @@
   // ---------- poziomy ----------
   let cur = null; // bieżące zlecenie
   const ALL = ['menu', 'job', 'result', 'crew', 'payday', 'hq', 'fin', 'os', 'story', 'alle'];
-  const co = () => Siedziba.rating(ST.hq, ST.hist, ST.ratings, ST.claims.length);
+  const co = () => Siedziba.rating(ST.hq, ST.hist, ST.ratings, ST.claims.length, Alledrogo.toolScore(ST.inv));
   function renderTop() {
     $('money').textContent = zl(ST.money);
     $('rep').textContent = co().stars.toFixed(1).replace('.', ',') + ' ★';
@@ -180,10 +184,6 @@
     const tb = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id]));
     if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + tb.acc));
     cur.timeAdj -= Math.round(opt.time * tb.time * 10) / 10;
-    const eff = Siedziba.effects(ST.hq);
-    if (rnd() < Siedziba.breakChance(ST.hq)) { cur.extraDefects.push({ label: 'zużyte narzędzie złamało się w trakcie', sev: 2, vis: 0.5 }); cur.notes.push('🔧 Zużyte narzędzie złamało się w trakcie roboty. Czas na serwis.'); }
-    if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + eff.accBonus));
-    cur.timeAdj -= Math.round(opt.time * eff.timeBonus * 10) / 10;
     cur.picks.push({ stepId: cur.job.steps[cur.step].id, optionId: opt.id, accuracy });
     cur.time += opt.time; cur.cost += opt.cost;
     // wystawienie na robotę: po połowie kroków wkurzony pomocnik znika
@@ -254,9 +254,8 @@
     if (th) {
       ST.hq = th.hq; ST.money = Math.max(0, ST.money - th.net);
       if (th.itemStolen && ST.inv.length) { const top = ST.inv.slice().sort((a, b) => Alledrogo.value(b) - Alledrogo.value(a))[0]; ST.inv = ST.inv.filter(x => x.id !== top.id); cur.notes.push('🕵️ Złodziej zabrał też „' + top.brand + '”.'); }
-      cur.notes.push('🕵️ W nocy ktoś włamał się do siedziby: strata ' + zl(th.loss) + (th.recovered ? ', ale kamery pomogły odzyskać ' + zl(th.recovered) : '') + (th.toolLost ? '. Zniknął też sprzęt (narzędzia −1 poziom).' : '.') + (th.cameras ? '' : ' Kamery i mocniejsze drzwi by pomogły.'));
+      cur.notes.push('🕵️ W nocy ktoś włamał się do siedziby: strata ' + zl(th.loss) + (th.recovered ? ', ale kamery pomogły odzyskać ' + zl(th.recovered) : '') + '.' + (th.cameras ? '' : ' Kamery i mocniejsze drzwi by pomogły.'));
     }
-    ST.hq = Siedziba.wear(ST.hq, 5 + (r.index >= 40 ? 3 : 0));
     ST.crew = Swiat.tickWorkers(ST.crew); Swiat.tickWorld(ST.world, 0);
     const prev = ST.best[cur.i];
     if (!prev || r.stars > prev.stars || (r.stars === prev.stars && r.index < prev.index)) ST.best[cur.i] = { stars: r.stars, index: r.index };
@@ -308,13 +307,16 @@
     } else if (alleTab === 'zam') {
       body = ST.orders.length ? ST.orders.map(o => '<div class="prow"><div class="hd"><span class="nm">' + Alledrogo.TYPES[o.type].name + ' „' + o.brand + '”</span><span>' + zl(o.paid) + '</span></div><div class="hint">od: ' + o.sellerName + ' · status: ' + o.status + ' · dotrze za ok. ' + o.eta + ' zlec. (paczkomat ma 80 km do ciebie)</div></div>').join('') : '<div class="hint">Nic nie jest w drodze.</div>';
     } else {
-      body = ST.inv.length ? ST.inv.map(it => {
+      const cov = Alledrogo.coverage(ST.inv), nm = { kran: 'kran', sciana: 'ściana', gniazdko: 'gniazdko', polka: 'półka' };
+      const covHtml = '<div class="prow"><div class="hd"><span class="nm">Pokrycie zleceń</span><span>jakość ekwipunku ' + Math.round(Alledrogo.toolScore(ST.inv) * 100) + '%</span></div><div class="hint">' + Object.keys(nm).map(k => nm[k] + ': +' + Math.round(cov[k].acc * 100) + ' pkt celności, −' + Math.round(cov[k].time * 100) + '% czasu').join(' · ') + '</div><div class="hint">To jedyny system narzędzi w grze. Premia zależy od poziomu i stanu, zepsute narzędzia nie liczą się wcale.</div></div>';
+      body = covHtml + (ST.inv.length ? ST.inv.map(it => {
         const T = Alledrogo.TYPES[it.type], ok = it.status === 'sprawny', jobs = T.jobs.map(x => ({ kran: 'kran', sciana: 'ściana', gniazdko: 'gniazdko', polka: 'półka' })[x]).join(', ');
         const stan = !it.unboxed ? 'nierozpakowane' : (ok ? 'sprawne, stan ' + Math.round(it.cond) + '%' : '<span class="warn">zepsute</span>');
         const acts = (!it.unboxed ? '<button data-unbox="' + it.id + '" class="primary" style="min-height:44px">Rozpakuj</button>' : '') +
           (it.unboxed ? '<div class="row2"><button data-sell="' + it.id + ':honest" style="min-height:44px">Sprzedaj uczciwie · ' + zl(Alledrogo.sell(it, 'honest', () => 1).price) + '</button><button data-sell="' + it.id + ':lie" style="min-height:44px">Naciągnij · ' + zl(Alledrogo.sell(it, 'lie', () => 1).price) + '</button></div>' : '') +
-          (!ok && it.unboxed ? '<button data-dispute="' + it.id + '" style="min-height:44px">Otwórz spór (' + (it.source === 'sklep' ? 'sklep zwykle zwraca' : 'prywatny rzadko zwraca') + ')</button>' : '');
-        return '<div class="prow"><div class="hd"><span class="nm">' + T.name + ' „' + it.brand + '”</span><span>' + stan + '</span></div><div class="hint">poziom: ' + Alledrogo.TIER_NAME[it.tier - 1] + ' · pomaga przy: ' + jobs + ' · użyć: ' + it.uses + ' · od: ' + it.sellerName + ' · wartość ok. ' + zl(Alledrogo.value(it)) + '</div>' + acts + '</div>'; }).join('') : '<div class="hint">Nie masz jeszcze narzędzi z Alledrogo. Siedziba ma swój podstawowy sprzęt, a to są dodatki do konkretnych zleceń.</div>';
+          (it.unboxed && (!ok || it.cond < 100) ? '<button data-repair="' + it.id + '" style="min-height:44px" ' + (ST.money >= Alledrogo.repairCost(it) ? '' : 'disabled') + '>Serwis · ' + zl(Alledrogo.repairCost(it)) + (ok ? '' : ' (60% szans)') + '</button>' : '') +
+          (!ok && it.unboxed && it.source !== 'start' && it.source !== 'spadek' ? '<button data-dispute="' + it.id + '" style="min-height:44px">Otwórz spór (' + (it.source === 'sklep' ? 'sklep zwykle zwraca' : 'prywatny rzadko zwraca') + ')</button>' : '');
+        return '<div class="prow"><div class="hd"><span class="nm">' + T.name + ' „' + it.brand + '”</span><span>' + stan + '</span></div>' + (it.unboxed ? '<div class="mbar ' + (ok ? moodCls(it.cond) : 'low') + '"><i style="width:' + (ok ? Math.round(it.cond) : 0) + '%"></i></div>' : '') + '<div class="hint">poziom: ' + Alledrogo.TIER_NAME[it.tier - 1] + ' · pomaga przy: ' + jobs + ' · użyć: ' + it.uses + ' · od: ' + it.sellerName + ' · wartość ok. ' + zl(Alledrogo.value(it)) + '</div>' + acts + '</div>'; }).join('') : '<div class="hint">Nie masz jeszcze żadnych narzędzi. Kup zestaw ręczny (pasuje do wszystkich zleceń) albo narzędzia specjalistyczne.</div>');
     }
     $('alle').innerHTML = '<div class="alle-h"><b>Alledrogo</b><span>Okazje, których nie powstydzi się Janusz</span></div>' +
       '<div class="seg">' + tabs.map(t => '<button data-tab="' + t[0] + '" class="' + (alleTab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('') + '</div>' +
@@ -322,7 +324,7 @@
       '<div class="note">Alledrogo to fikcyjny serwis na potrzeby gry, każda zbieżność z prawdziwymi serwisami jest przypadkowa. Kupujesz na własne ryzyko.</div><button class="primary" id="alleBack">Wróć</button>';
     $('alleBack').onclick = () => { alleMsg = ''; renderMenu(); };
     $('alle').onclick = e => {
-      const q = sel => e.target.closest(sel), tab = q('[data-tab]'), ask = q('[data-ask]'), buy = q('[data-buy]'), bid = q('[data-bid]'), ub = q('[data-unbox]'), sell = q('[data-sell]'), dp = q('[data-dispute]');
+      const q = sel => e.target.closest(sel), tab = q('[data-tab]'), ask = q('[data-ask]'), buy = q('[data-buy]'), bid = q('[data-bid]'), ub = q('[data-unbox]'), sell = q('[data-sell]'), dp = q('[data-dispute]'), rp = q('[data-repair]');
       if (tab) { alleTab = tab.dataset.tab; alleMsg = ''; renderAlle(); return; }
       const find = id => ST.market.listings.find(l => l.id === +id);
       if (ask) { const l = find(ask.dataset.ask), r = Alledrogo.ask(l, rnd); alleAsk[l.id] = r.text; ST.market.listings = ST.market.listings.map(x => x.id === l.id ? r.listing : x); renderAlle(); return; }
@@ -333,6 +335,7 @@
         save(); renderTop(); renderAlle(); return; }
       if (ub) { const it = ST.inv.find(x => x.id === +ub.dataset.unbox), r = Alledrogo.unbox(it); ST.inv = ST.inv.map(x => x.id === it.id ? r.item : x); alleMsg = '📦 ' + itemName(it) + ': ' + r.text; save(); renderAlle(); return; }
       if (sell) { const [id, mode] = sell.dataset.sell.split(':'), it = ST.inv.find(x => x.id === +id), r = Alledrogo.sell(it, mode, rnd); ST.inv = ST.inv.filter(x => x.id !== it.id); ST.money += r.price; ST.os.gossip = Math.max(0, Math.min(100, ST.os.gossip + r.gossip)); alleMsg = r.text + ' (' + zl(r.price) + (r.gossip ? ', plotki ' + r.gossip : '') + ')'; save(); renderTop(); renderAlle(); return; }
+      if (rp) { const it = ST.inv.find(x => x.id === +rp.dataset.repair), r = Alledrogo.repair(it, ST.money, rnd); if (!r.ok) alleMsg = r.reason; else { ST.money -= r.cost; ST.inv = ST.inv.map(x => x.id === it.id ? r.item : x); alleMsg = r.text + ' (−' + zl(r.cost) + ')'; } save(); renderTop(); renderAlle(); return; }
       if (dp) { const it = ST.inv.find(x => x.id === +dp.dataset.dispute), r = Alledrogo.dispute(it, rnd); if (!r.ok) alleMsg = r.reason; else { alleMsg = r.text; if (r.success) { ST.money += r.refund; ST.inv = ST.inv.filter(x => x.id !== it.id); } else ST.inv = ST.inv.map(x => x.id === it.id ? Object.assign({}, x, { uses: x.protectUses + 1 }) : x); } save(); renderTop(); renderAlle(); }
     };
   }
@@ -368,6 +371,7 @@
     if (e.crewPatch) ST.crew = ST.crew.map(w => w.id === e.crewPatch.id ? Object.assign({}, w, e.crewPatch.patch) : w);
     if (e.contact) { const k = ST.os.contacts[e.contact] || (ST.os.contacts[e.contact] = { trust: 20, owes: 0 }); k.owes++; }
     if (e.repayContact) { const id = Osiedle.owedContact(ST.os) || ctx.owedContact; if (id && ST.os.contacts[id]) { ST.os.contacts[id].owes = Math.max(0, ST.os.contacts[id].owes - 1); ST.os.contacts[id].trust = Math.min(100, ST.os.contacts[id].trust + 10); } }
+    if (e.giveItem) ST.inv.push(Alledrogo.makeItem(e.giveItem));
     if (e.note) ST.flash.push(e.note);
   }
   function showEnding() {
@@ -437,7 +441,7 @@
   }
 
   // ---------- siedziba ----------
-  function hqSVG(hq) {
+  function hqSVG(hq, tools) {
     const t = hq.tier, u = hq.up, a = hq.assets;
     const wall = ['#8a8f94', '#a9b4bb', '#b9a98e', '#d3cbb9', '#b7c1c8', '#a7bfd1'][t];
     const roof = ['#7a3b24', '#2b2b2b', '#b5472f', '#34495e'][u.dach];
@@ -464,7 +468,7 @@
     // alarm / kamera
     if (u.alarm >= 2) b += '<circle cx="' + (x1 - 6) + '" cy="' + (top + 8) + '" r="4" fill="#e53935"/>';
     // narzędzia
-    if (a.narzedzia > 0) b += '<rect x="' + (dx - 30) + '" y="160" width="20" height="10" fill="#c62828" stroke="#6a1b1b"/>';
+    if (tools > 0) b += '<rect x="' + (dx - 30) + '" y="160" width="20" height="10" fill="#c62828" stroke="#6a1b1b"/>';
     // auto / bus
     const van = a.bus === 0 ? '<rect x="238" y="152" width="48" height="20" rx="6" fill="#8d99a3"/><circle cx="252" cy="173" r="5" fill="#222"/><circle cx="274" cy="173" r="5" fill="#222"/>'
       : '<rect x="228" y="140" width="68" height="32" rx="6" fill="' + (a.bus === 3 ? '#ffc300' : '#f4f4f4') + '" stroke="#555" stroke-width="2"/><rect x="274" y="146" width="18" height="12" fill="#8ecae6"/>' + (a.bus >= 2 ? '<path d="M232 164h40" stroke="#1565c0" stroke-width="4"/>' : '') + (a.bus === 3 ? '<circle cx="250" cy="154" r="6" fill="#1b1e22"/>' : '') + '<circle cx="244" cy="173" r="6" fill="#222"/><circle cx="282" cy="173" r="6" fill="#222"/>';
@@ -477,6 +481,10 @@
     if (l.accMult) c.push('wypadki ×' + String(l.accMult).replace('.', ',')); if (l.upkeep) c.push('utrzymanie +' + l.upkeep + ' zł');
     return c.map(x => '<span class="chip">' + x + '</span>').join('');
   }
+  function toolSummary() {
+    const c = Alledrogo.coverage(ST.inv), names = { kran: 'kran', sciana: 'ściana', gniazdko: 'gniazdko', polka: 'półka' };
+    return Object.keys(names).map(k => names[k] + ' +' + Math.round(c[k].acc * 100) + ' pkt, −' + Math.round(c[k].time * 100) + '% czasu').join('; ');
+  }
   function renderHq() {
     ALL.forEach(x => $(x).hidden = true); $('hq').hidden = false;
     const rt = co(), e = rt.effects, hq = ST.hq, nt = Siedziba.nextTier(hq), t = e.tier, pct = x => Math.round(x * 100);
@@ -488,8 +496,8 @@
     const asCards = Object.keys(Siedziba.ASSETS).map(k => { const def = Siedziba.ASSETS[k], cur = hq.assets[k], nl = Siedziba.nextLevel('assets', k, hq);
       return card(def.name, cur ? 'obecnie: ' + def.levels[cur - 1].name : 'obecnie: ' + (def.base || 'brak'), nl ? chipsFor(nl) : '', nl ? 'assets:' + k : '', nl ? nl.cost : 0, nl ? nl.name : ''); }).join('');
     const eff = ['Klienci płacą ×' + rt.payMult.toFixed(2).replace('.', ','), '+' + rt.satBonus + ' pkt zadowolenia klientów', 'komfort ekipy: +' + Math.round(e.comfort * 0.5) + ' do bazowego nastroju',
-      'ochrona ' + e.security + '%: mniej kradzieży', 'narzędzia: −' + pct(e.timeBonus) + '% czasu, +' + pct(e.accBonus) + ' pkt celności', 'flota: wypadki ×' + String(e.accMult).replace('.', ','), 'utrzymanie: ' + zl(e.upkeep) + ' co dzień wypłaty'];
-    $('hq').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Siedziba firmy</h2>' + hqSVG(hq) +
+      'ochrona ' + e.security + '%: mniej kradzieży', 'narzędzia: ' + toolSummary() + '', 'flota: wypadki ×' + String(e.accMult).replace('.', ','), 'utrzymanie: ' + zl(e.upkeep) + ' co dzień wypłaty'];
+    $('hq').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Siedziba firmy</h2>' + hqSVG(hq, ST.inv.length) +
       '<div class="hd" style="display:flex;justify-content:space-between;align-items:baseline"><span class="nm" style="font-family:var(--display);font-size:1.4rem">' + t.name + '</span><span class="bignum" style="font-size:2rem;color:var(--hi)">' + rt.stars.toFixed(1).replace('.', ',') + ' ★</span></div>' +
       '<div class="hint">' + t.desc + '</div>' +
       '<div class="break">' + parts.map(p => '<div class="brow"><span>' + p[0] + '</span><span class="b"><i style="width:' + pct(p[1]) + '%"></i></span><b>' + pct(p[1]) + '%</b></div>').join('') + '</div>' +
@@ -498,13 +506,13 @@
       (nt ? card('Następny: ' + nt.name, '', '<span class="chip">' + nt.desc + '</span><span class="chip">utrzymanie ' + zl(nt.upkeep) + '</span><span class="chip">remonty budynku zaczynasz od zera</span>', 'tier', nt.cost, 'Kup i przeprowadź się') : '<div class="hint">Masz najlepszą siedzibę.</div>') +
       '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Remont budynku</h3>' + upCards +
       '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Sprzęt i flota (zostaje po przeprowadzce)</h3>' + asCards +
-      (hq.assets.narzedzia ? '<div class="prow"><div class="hd"><span class="nm">Stan narzędzi</span><span>' + Math.round(hq.cond) + '%</span></div><div class="mbar ' + moodCls(hq.cond) + '"><i style="width:' + hq.cond + '%"></i></div><div class="hint">Zużyte narzędzia tracą premię do szybkości i celności, a poniżej 30% potrafią się złamać w trakcie roboty. Im lepszy sprzęt, tym bardziej opłaca się go ukraść.</div><button data-buy="repair:x" style="min-height:44px" ' + (hq.cond < 100 && ST.money >= Siedziba.repairCost(hq) ? '' : 'disabled') + '>Serwis · ' + zl(Siedziba.repairCost(hq)) + '</button></div>' : '') +
+      '<div class="hint">Narzędzia (kupno, serwis, stan) są w aplikacji Alledrogo. Ocena firmy uwzględnia ich jakość i pokrycie zleceń.</div>' +
       '<div class="hint">Ocena firmy zależy od siedziby, sprzętu, opinii klientów i rzetelności (średnia fuszerka z ostatnich zleceń, minus otwarte reklamacje).</div>' +
       '<button class="primary" id="hqBack">Wróć</button>';
     $('hqBack').onclick = renderMenu;
     $('hq').onclick = ev => {
       const bt = ev.target.closest('[data-buy]'); if (!bt) return;
-      const [g, k] = bt.dataset.buy.split(':'); const r = g === 'tier' ? Siedziba.buyTier(ST.hq, ST.money) : g === 'repair' ? Siedziba.repair(ST.hq, ST.money) : Siedziba.buy(ST.hq, g, k, ST.money);
+      const [g, k] = bt.dataset.buy.split(':'); const r = g === 'tier' ? Siedziba.buyTier(ST.hq, ST.money) : Siedziba.buy(ST.hq, g, k, ST.money);
       if (r.ok) { ST.hq = r.hq; ST.money -= r.cost; save(); renderTop(); renderHq(); }
     };
   }

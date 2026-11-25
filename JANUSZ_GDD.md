@@ -115,15 +115,14 @@ sezonowość i pogoda, reputacja w osiedlu i plotki, konkurencja, bałagan i spr
 ## Siedziba firmy (`prototypes/janusz/siedziba.js`, testy: `node tests/siedziba.test.js`)
 
 Lokale: Garaż u teścia → Blaszak → Rudera po dziadku → Biuro z placem → Hala z biurem → Siedziba przy obwodnicy.
-Przeprowadzka zeruje remonty budynku (okna, drzwi, dach, ogrzewanie, szyld, alarm, kamery, ochrona fizyczna), ale narzędzia i bus zostają.
+Przeprowadzka zeruje remonty budynku (okna, drzwi, dach, ogrzewanie, szyld, alarm, kamery, ochrona fizyczna), ale bus i narzędzia z ekwipunku zostają.
 
 **Ocena firmy (1–5 ★)** = siedziba 30% + sprzęt 15% + opinie klientów 30% + rzetelność (średnia fuszerka z ostatnich zleceń minus otwarte reklamacje) 25%.
 Skutki: mnożnik wypłat 0,85–1,25 (plus popyt z szyldu), bonus do zadowolenia klientów do +8, komfort podnosi bazowy nastrój ekipy,
-narzędzia skracają czas i poprawiają celność, bus zmniejsza liczbę wypadków, utrzymanie lokalu rozlicza się w dniu wypłaty.
+bus zmniejsza liczbę wypadków, utrzymanie lokalu rozlicza się w dniu wypłaty. Narzędzia nie są częścią siedziby (patrz Alledrogo).
 
-**Kradzieże:** szansa = 8% · atrakcyjność łupu · (1 − zabezpieczenia). Im droższy sprzęt i bus, tym bardziej opłaca się włamanie.
-Alarm, kamery (odzyskują część strat), pies, siatka i ochroniarz zmniejszają szansę (nigdy do zera, maks. 95%). Włamanie może zabrać poziom narzędzi.
-**Zużycie narzędzi:** stan spada po każdym zleceniu, a poniżej 30% narzędzie potrafi się złamać w trakcie roboty. Serwis przywraca stan.
+**Kradzieże:** szansa = 8% · atrakcyjność łupu · (1 − zabezpieczenia). Im droższy bus i ekwipunek narzędzi, tym bardziej opłaca się włamanie.
+Alarm, kamery (odzyskują część strat), pies, siatka i ochroniarz zmniejszają szansę (nigdy do zera, maks. 95%). Włamanie może zabrać najcenniejsze narzędzie z ekwipunku.
 
 ## Moduły fabularne i ekonomiczne
 
@@ -135,7 +134,7 @@ Alarm, kamery (odzyskują część strat), pies, siatka i ochroniarz zmniejszaj�
 | 4 | Znajomości | `osiedle.js` | Szwagier w urzędzie, Waldek z hurtowni, dzielnicowy, sąsiad: przysługi budują dług wdzięczności |
 | 5 | Plotki | `osiedle.js` | Renoma na osiedlu zmienia wypłaty, gadatliwi klienci (Karyna, Grażyna) wzmacniają efekt |
 | 6 | Konkurencja | `osiedle.js` | Bogdan-Bud rośnie, zbija ceny, podkupuje niezadowolonych, mści się za rozdrażnienie |
-| 7 | Zużycie narzędzi | `siedziba.js` | Stan narzędzi, serwis, awarie w trakcie zlecenia |
+| 7 | Zużycie i serwis narzędzi | `alledrogo.js` | Stan każdego narzędzia, serwis, awarie w trakcie zlecenia |
 | 8 | Umowa i kosztorys | `umowa.js` | Faktura, kosztorys uczciwy/zawyżony/zaniżony, termin „na wczoraj” |
 | 9 | Tajemniczy klient | `fabula.js` | Inspektor jakości pod przykrywką: kara za fuszerkę albo premia za rzetelność |
 | 10 | Fabuła „Spadek po dziadku” | `fabula.js` | 9 scen z warunkami i wyborami, flagi zmieniają kolejne sceny, 4 zakończenia |
@@ -165,3 +164,11 @@ krótkiej żywotności i niskim stanie. Awaria kosztuje 4 minuty i dokłada wad�
 ale wadliwy towar daje skargę, zwrot i spadek plotek).
 
 **Spięcia z resztą:** ekwipunek podnosi atrakcyjność i szansę kradzieży siedziby, a złodziej może zabrać najcenniejszy przedmiot. Kamery i alarm chronią też narzędzia z Alledrogo.
+
+### Jeden system narzędzi (po unifikacji)
+Narzędzia istnieją wyłącznie jako **przedmioty w ekwipunku** (`alledrogo.js`). Siedziba trzyma już tylko budynek i bus.
+- Zestaw ręczny pasuje do wszystkich zleceń, narzędzia specjalistyczne do wybranych. Premia zależy od poziomu i stanu, zepsute nie liczą się wcale.
+- **Pokrycie zleceń** (premia do celności i skrócenie czasu dla każdego rodzaju zlecenia) oraz **jakość ekwipunku** (0–100%) są widoczne w Alledrogo, a jakość wchodzi do oceny firmy (połowa składnika „sprzęt”, druga połowa to bus).
+- **Serwis** w Alledrogo: sprawne narzędzie wraca do 100% stanu, zepsute naprawia się z 60% szansą (usuwa też ukrytą wadę), a nieudana naprawa kosztuje.
+- **Walizka dziadka** ze sceny „Spadek” trafia do ekwipunku jako zestaw ręczny.
+- Stare zapisy z poziomem narzędzi w siedzibie zamieniają się w przedmiot „Zestaw z siedziby”.
