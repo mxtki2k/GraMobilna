@@ -211,3 +211,9 @@ Bot gra 60 dni gry, 150 przebiegów na scenariusz. Po strojeniu: sen przy 60–8
 - Trzy nowe roboty ze scenami: **Zimny grzejnik** (5 kroków: diagnoza, spuszczenie wody, zawór termostatyczny, napełnienie, próba), **Nieszczelne okno** (5: znalezienie nieszczelności, okucia, uszczelki, parapet, próba przeciągu), **Malowanie pokoju** (6: zabezpieczenie, ściana, grunt, dwie warstwy, sprzątanie). Razem 10 rodzajów robót i 32 poziomy.
 - Łańcuchy: wybór „skrót” albo „fusz” w niespodziance potrafi wywołać następstwo (75%) po kolejnym kroku: np. zawór pęka i woda tryska, kabel iskrzy, pleśń przebija przez hydroizolację. Solidne rozwiązanie nigdy nie ma skutków ubocznych.
 - Symulacje (`tools/balans.js`, `tools/balans2.js`) uwzględniają niespodzianki (`--bez-niespodzianek` je wyłącza, `--style-table` pokazuje stawki wg stylu). Z niespodziankami solidna praca przewyższa mieszaną w większości robót, a zarobek dnia spada ok. 40%.
+
+## Tempo progresji (`node tools/tempo.js`, wyniki w `tools/tempo_wyniki.txt`)
+- Jedno pokrętło: `PAY_SCALE = 1.25` w `jobs.js` mnoży wszystkie stawki robót. Po dodaniu niespodzianek zarobek spadł o ok. 40%, więc podniosłem stawki o 25%.
+- Bot (mieszany styl, kursy najpierw, potem siedziba i bus), mediany dnia gry: pierwszy kurs dzień 1, wszystkie kursy ok. dzień 9, 1000 zł dzień 8, Blaszak (1200 zł) dzień 9, bus 1 dzień 12, Rudera dzień 15, bus 2 dzień 23, Biuro z placem dzień 35, bus 3 dzień 58, Hala z biurem dzień 95, Siedziba przy obwodnicy dzień ok. 200.
+- Solidny styl wychodzi tak samo szybko jak mieszany (dzień 9 / 14 / 36 / 99), więc uczciwość nie spowalnia progresji.
+- Bot nie modeluje ekipy, długów ani efektów wyższych poziomów siedziby poza +4% wypłaty na poziom, więc prawdziwy gracz może iść szybciej.

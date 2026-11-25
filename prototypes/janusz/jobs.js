@@ -309,6 +309,10 @@
     },
   };
 
+  /* Skala wypłat: jedno pokrętło tempa progresji. Wszystkie stawki bazowe robót są mnożone przez nią przy wczytaniu. */
+  const PAY_SCALE = 1.25;
+  for (const j of Object.values(JOBS)) j.base = Math.round(j.base * PAY_SCALE);
+
   /* Niespodzianki w trakcie roboty: po ukończeniu kroku `after` (od 0) z szansą `chance` wychodzi problem, który trzeba rozwiązać.
    * Opcje mają czas, koszt, wady (jak w krokach) i opcjonalny token sceny. */
   const SURPRISES = {

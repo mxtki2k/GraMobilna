@@ -1,32 +1,32 @@
 Symulacja 60 dni gry, 150 przebiegów na scenariusz (zarobek netto po wszystkich kosztach)
 
 — zmęczenie (próg snu)
-sen przy zmęczeniu nigdy              418 zł/d    38 zł/h·prac  prac.zlec 195  ★ 3.86  zmęcz  90 % awar 31.7  zaśn 26.0  spóźn 73.5  reklam 25856  wypal  91 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-sen przy zmęczeniu 40                 499 zł/d    61 zł/h·prac  prac.zlec 171  ★ 4.14  zmęcz  30 % awar 27.9  zaśn  0.0  spóźn 45.8  reklam 22916  wypal  77 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-sen przy zmęczeniu 60                 523 zł/d    59 zł/h·prac  prac.zlec 184  ★ 4.11  zmęcz  40 % awar 30.0  zaśn  0.0  spóźn 51.4  reklam 24361  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-sen przy zmęczeniu 80                 511 zł/d    56 zł/h·prac  prac.zlec 186  ★ 4.09  zmęcz  52 % awar 30.2  zaśn  0.1  spóźn 54.5  reklam 25053  wypal  88 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+sen przy zmęczeniu nigdy              586 zł/d    54 zł/h·prac  prac.zlec 195  ★ 3.86  zmęcz  90 % awar 31.7  zaśn 26.0  spóźn 73.5  reklam 32340  wypal  91 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+sen przy zmęczeniu 40                 680 zł/d    84 zł/h·prac  prac.zlec 171  ★ 4.14  zmęcz  30 % awar 27.9  zaśn  0.0  spóźn 45.8  reklam 28663  wypal  77 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+sen przy zmęczeniu 60                 714 zł/d    81 zł/h·prac  prac.zlec 184  ★ 4.11  zmęcz  40 % awar 30.0  zaśn  0.0  spóźn 51.4  reklam 30470  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+sen przy zmęczeniu 80                 699 zł/d    77 zł/h·prac  prac.zlec 186  ★ 4.09  zmęcz  52 % awar 30.2  zaśn  0.1  spóźn 54.5  reklam 31336  wypal  88 % wolne 0.0 /urlopy 0.0  OC + 0/-0
 
 — serwis busa
-przegląd poniżej nigdy%               523 zł/d    59 zł/h·prac  prac.zlec 184  ★ 4.11  zmęcz  40 % awar 30.0  zaśn  0.0  spóźn 51.4  reklam 24361  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-przegląd poniżej 40%                  582 zł/d    67 zł/h·prac  prac.zlec 186  ★ 4.14  zmęcz  39 % awar 14.2  zaśn  0.0  spóźn 48.3  reklam 24733  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-przegląd poniżej 60%                  610 zł/d    71 zł/h·prac  prac.zlec 187  ★ 4.16  zmęcz  39 % awar  5.5  zaśn  0.0  spóźn 47.0  reklam 25360  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-przegląd poniżej 80%                  590 zł/d    69 zł/h·prac  prac.zlec 186  ★ 4.16  zmęcz  39 % awar  4.2  zaśn  0.0  spóźn 46.0  reklam 25104  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+przegląd poniżej nigdy%               714 zł/d    81 zł/h·prac  prac.zlec 184  ★ 4.11  zmęcz  40 % awar 30.0  zaśn  0.0  spóźn 51.4  reklam 30470  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+przegląd poniżej 40%                  779 zł/d    89 zł/h·prac  prac.zlec 186  ★ 4.14  zmęcz  39 % awar 14.2  zaśn  0.0  spóźn 48.3  reklam 30935  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+przegląd poniżej 60%                  810 zł/d    94 zł/h·prac  prac.zlec 187  ★ 4.16  zmęcz  39 % awar  5.5  zaśn  0.0  spóźn 47.0  reklam 31719  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+przegląd poniżej 80%                  787 zł/d    92 zł/h·prac  prac.zlec 186  ★ 4.16  zmęcz  39 % awar  4.2  zaśn  0.0  spóźn 46.0  reklam 31427  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
 
 — szkolenia, OC, rywal, styl
-bez dodatków                          610 zł/d    71 zł/h·prac  prac.zlec 187  ★ 4.16  zmęcz  39 % awar  5.5  zaśn  0.0  spóźn 47.0  reklam 25360  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-+ szkolenia                           611 zł/d    76 zł/h·prac  prac.zlec 174  ★ 4.19  zmęcz  40 % awar  5.0  zaśn  0.1  spóźn 43.9  reklam 23590  wypal  86 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-+ OC                                  696 zł/d    81 zł/h·prac  prac.zlec 187  ★ 4.16  zmęcz  39 % awar  5.5  zaśn  0.0  spóźn 47.0  reklam 13259  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 12100/-6937
-bez efektów zaufania klientów         483 zł/d    59 zł/h·prac  prac.zlec 178  ★ 3.86  zmęcz  37 % awar  5.0  zaśn  0.0  spóźn 44.1  reklam 20947  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-rywal: zawsze zbij cenę               598 zł/d    69 zł/h·prac  prac.zlec 188  ★ 4.15  zmęcz  40 % awar  5.8  zaśn  0.0  spóźn 47.9  reklam 25238  wypal  85 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-styl solidny (nie skraca)             606 zł/d    65 zł/h·prac  prac.zlec 150  ★ 4.13  zmęcz  47 % awar  4.3  zaśn  0.0  spóźn 70.2  reklam 3329  wypal  85 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-styl fuszerka                         247 zł/d    71 zł/h·prac  prac.zlec 308  ★ 4.02  zmęcz   5 % awar  8.8  zaśn  0.0  spóźn  0.0  reklam 122515  wypal  79 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-wszystko razem (solid+skraca ostre)    616 zł/d    71 zł/h·prac  prac.zlec 145  ★ 4.20  zmęcz  46 % awar  4.1  zaśn  0.1  spóźn 67.9  reklam 3806  wypal  86 % wolne 0.0 /urlopy 0.0  OC + 3343/-3296
+bez dodatków                          810 zł/d    94 zł/h·prac  prac.zlec 187  ★ 4.16  zmęcz  39 % awar  5.5  zaśn  0.0  spóźn 47.0  reklam 31719  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
++ szkolenia                           828 zł/d   102 zł/h·prac  prac.zlec 174  ★ 4.19  zmęcz  40 % awar  5.2  zaśn  0.1  spóźn 44.3  reklam 29198  wypal  86 % wolne 0.0 /urlopy 0.0  OC + 0/-0
++ OC                                  959 zł/d   111 zł/h·prac  prac.zlec 187  ★ 4.16  zmęcz  39 % awar  5.5  zaśn  0.0  spóźn 47.0  reklam 15803  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 15916/-6937
+bez efektów zaufania klientów         649 zł/d    79 zł/h·prac  prac.zlec 178  ★ 3.86  zmęcz  37 % awar  5.0  zaśn  0.0  spóźn 44.1  reklam 26201  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+rywal: zawsze zbij cenę               795 zł/d    91 zł/h·prac  prac.zlec 188  ★ 4.15  zmęcz  40 % awar  5.8  zaśn  0.0  spóźn 47.9  reklam 31566  wypal  85 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+styl solidny (nie skraca)             806 zł/d    86 zł/h·prac  prac.zlec 150  ★ 4.13  zmęcz  47 % awar  4.3  zaśn  0.0  spóźn 70.2  reklam 4164  wypal  85 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+styl fuszerka                         341 zł/d    98 zł/h·prac  prac.zlec 308  ★ 4.02  zmęcz   5 % awar  8.7  zaśn  0.0  spóźn  0.0  reklam 152964  wypal  79 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+wszystko razem (solid+skraca ostre)    846 zł/d    98 zł/h·prac  prac.zlec 145  ★ 4.20  zmęcz  47 % awar  4.3  zaśn  0.1  spóźn 68.6  reklam 4736  wypal  86 % wolne 0.0 /urlopy 0.0  OC + 4655/-3428
 
 — wypalenie (dzień wolny / urlop)
-dzień wolny przy wypaleniu nigdy      610 zł/d    71 zł/h·prac  prac.zlec 187  ★ 4.16  zmęcz  39 % awar  5.5  zaśn  0.0  spóźn 47.0  reklam 25360  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-dzień wolny przy wypaleniu 40         657 zł/d    91 zł/h·prac  prac.zlec 178  ★ 4.26  zmęcz  35 % awar  5.3  zaśn  0.0  spóźn 25.8  reklam 24085  wypal  27 % wolne 10.9 /urlopy 0.0  OC + 0/-0
-dzień wolny przy wypaleniu 60         641 zł/d    87 zł/h·prac  prac.zlec 177  ★ 4.25  zmęcz  36 % awar  5.2  zaśn  0.0  spóźn 29.4  reklam 24321  wypal  44 % wolne 10.4 /urlopy 0.0  OC + 0/-0
-dzień wolny przy wypaleniu 80         604 zł/d    81 zł/h·prac  prac.zlec 173  ★ 4.22  zmęcz  37 % awar  5.2  zaśn  0.0  spóźn 33.4  reklam 23423  wypal  60 % wolne 9.8 /urlopy 0.0  OC + 0/-0
-urlop 4 dni przy wypaleniu 60         548 zł/d    86 zł/h·prac  prac.zlec 155  ★ 4.26  zmęcz  37 % awar  4.7  zaśn  0.0  spóźn 23.8  reklam 21200  wypal  28 % wolne 0.0 /urlopy 4.0  OC + 0/-0
-urlop 4 dni przy wypaleniu 80         590 zł/d    85 zł/h·prac  prac.zlec 166  ★ 4.25  zmęcz  37 % awar  4.9  zaśn  0.0  spóźn 27.2  reklam 22605  wypal  37 % wolne 0.0 /urlopy 3.1  OC + 0/-0
-wolne 60 + urlop 85                   641 zł/d    87 zł/h·prac  prac.zlec 177  ★ 4.25  zmęcz  36 % awar  5.2  zaśn  0.0  spóźn 29.4  reklam 24321  wypal  44 % wolne 10.4 /urlopy 0.0  OC + 0/-0
+dzień wolny przy wypaleniu nigdy      810 zł/d    94 zł/h·prac  prac.zlec 187  ★ 4.16  zmęcz  39 % awar  5.5  zaśn  0.0  spóźn 47.0  reklam 31719  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+dzień wolny przy wypaleniu 40         867 zł/d   120 zł/h·prac  prac.zlec 178  ★ 4.26  zmęcz  35 % awar  5.3  zaśn  0.0  spóźn 25.8  reklam 30126  wypal  27 % wolne 10.9 /urlopy 0.0  OC + 0/-0
+dzień wolny przy wypaleniu 60         846 zł/d   115 zł/h·prac  prac.zlec 177  ★ 4.25  zmęcz  36 % awar  5.2  zaśn  0.0  spóźn 29.4  reklam 30421  wypal  44 % wolne 10.4 /urlopy 0.0  OC + 0/-0
+dzień wolny przy wypaleniu 80         800 zł/d   107 zł/h·prac  prac.zlec 173  ★ 4.22  zmęcz  37 % awar  5.2  zaśn  0.0  spóźn 33.4  reklam 29296  wypal  60 % wolne 9.8 /urlopy 0.0  OC + 0/-0
+urlop 4 dni przy wypaleniu 60         728 zł/d   114 zł/h·prac  prac.zlec 155  ★ 4.26  zmęcz  37 % awar  4.7  zaśn  0.0  spóźn 23.8  reklam 26516  wypal  28 % wolne 0.0 /urlopy 4.0  OC + 0/-0
+urlop 4 dni przy wypaleniu 80         783 zł/d   113 zł/h·prac  prac.zlec 166  ★ 4.25  zmęcz  37 % awar  4.9  zaśn  0.0  spóźn 27.2  reklam 28274  wypal  37 % wolne 0.0 /urlopy 3.1  OC + 0/-0
+wolne 60 + urlop 85                   846 zł/d   115 zł/h·prac  prac.zlec 177  ★ 4.25  zmęcz  36 % awar  5.2  zaśn  0.0  spóźn 29.4  reklam 30421  wypal  44 % wolne 10.4 /urlopy 0.0  OC + 0/-0
