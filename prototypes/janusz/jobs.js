@@ -156,7 +156,31 @@
     { job: 'sciana', client: 'tesciowa', mult: 1.7, slot: 'dzien', time: '10:00' },
     { job: 'gniazdko', client: 'grazyna', mult: 2, slot: 'noc', time: '22:30', intro: 'Pani Grażyna po zmroku: „Wyłączyło prąd w całym mieszkaniu, a w kuchni coś bzyczy. Czy może pan przyjechać dziś?”' },
     { job: 'polka', client: 'heniek', mult: 2.2, slot: 'dzien', time: '14:00' },
+    { job: 'kran', client: 'sebix', mult: 1.6, slot: 'dzien', time: '07:30' },
+    { job: 'gniazdko', client: 'tesciowa', mult: 1.8, slot: 'dzien', time: '11:00' },
+    { job: 'polka', client: 'grazyna', mult: 1.8, slot: 'noc', time: '22:15', intro: 'Pani Grażyna po zmroku: „Półka spadła i obudziła wnuka. Może pan od razu, zanim zasnę?”' },
+    { job: 'sciana', client: 'heniek', mult: 2.4, slot: 'dzien', time: '09:30' },
+    { job: 'kran', client: 'heniek', mult: 2.6, slot: 'noc', time: '00:30', intro: 'Pan Heniek o wpół do pierwszej: „Ja tego nie robię po nocach, ale ten kran robi mi wannę w piwnicy.”' },
+    { job: 'gniazdko', client: 'karyna', mult: 2.4, slot: 'dzien', time: '15:30' },
+    { job: 'sciana', client: 'karyna', mult: 2.2, slot: 'noc', time: '23:30', intro: 'Karyna pisze o 23:30: „Jutro robię relację z remontu, a w ścianie dziura. Przyjedziesz dziś?”' },
+    { job: 'polka', client: 'tesciowa', mult: 2.8, slot: 'dzien', time: '12:00' },
   ];
 
-  return { CLIENTS, JOBS, LEVELS };
+  /* Telefony „z ulicy”: gdy skończą się zlecenia z listy, gracz może przesuwać zegar o godzinę. Co godzinę jest szansa na telefon. */
+  const CALL_BASE = { dzien: 0.22, noc: 0.08 };
+  /* Szansa na telefon po godzinie czekania. Dobra ocena firmy pomaga, a każda kolejna godzina bez telefonu dodaje 4 pkt (max +20). */
+  function callChance(night, stars, waited) {
+    const p = CALL_BASE[night ? 'noc' : 'dzien'] + ((stars || 2.5) - 2.5) * 0.03 + Math.min(5, waited || 0) * 0.04;
+    return Math.max(0.03, Math.min(0.6, p));
+  }
+  /* Losuje zlecenie z telefonu: rodzaj, klient i mnożnik (wyższa ocena firmy to lepsze zlecenia). */
+  function rollCall(rng, stars, night) {
+    const jobIds = Object.keys(JOBS), clIds = Object.keys(CLIENTS);
+    const job = jobIds[Math.floor(rng() * jobIds.length)], client = clIds[Math.floor(rng() * clIds.length)];
+    const mult = Math.round((0.9 + rng() * 0.7) * (0.8 + (stars || 2.5) * 0.1) * 10) / 10;
+    return { job, client, mult, slot: night ? 'noc' : 'dzien', call: true };
+  }
+
+
+  return { callChance, rollCall, CLIENTS, JOBS, LEVELS };
 });

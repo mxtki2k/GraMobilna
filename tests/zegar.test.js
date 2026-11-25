@@ -131,4 +131,22 @@ t('spięcie: godziny i wypłata tej samej roboty w nocy dają wyższy zarobek br
   assert(nn.payout > d.payout && eN.grossPerHour > eD.grossPerHour);
 });
 
+
+const Jb = require('../prototypes/janusz/jobs.js');
+t('telefony: szansa zależy od pory, oceny i czasu czekania; zlecenie z telefonu jest poprawne', () => {
+  assert(Jb.callChance(false, 2.5, 0) > Jb.callChance(true, 2.5, 0), 'w dzień dzwonią częściej niż w nocy');
+  assert(Jb.callChance(false, 4.5, 0) > Jb.callChance(false, 1.5, 0), 'lepsza ocena, więcej telefonów');
+  assert(Jb.callChance(false, 2.5, 5) > Jb.callChance(false, 2.5, 0), 'kolejne godziny bez telefonu zwiększają szansę');
+  for (const st of [0, 1.5, 2.5, 5, 9]) for (const n of [false, true]) for (const w of [0, 3, 50]) { const p = Jb.callChance(n, st, w); assert(p >= 0.03 && p <= 0.6); }
+  const r = lcg(5);
+  for (let i = 0; i < 200; i++) { const c = Jb.rollCall(r, 2 + (i % 4), i % 2 === 0); assert(Jb.JOBS[c.job] && Jb.CLIENTS[c.client] && c.mult >= 0.7 && c.mult <= 2.4 && (c.slot === 'noc') === (i % 2 === 0)); }
+  const hits = rate(rr => rr() < Jb.callChance(false, 2.5, 0)); assert(Math.abs(hits - 0.22) < 0.03);
+  // czekanie w dzień: z „litością” (kolejne godziny zwiększają szansę) telefon przychodzi najpóźniej po kilkunastu godzinach
+  const rr = lcg(3); let worst = 0, sum = 0;
+  for (let k = 0; k < 500; k++) { let w = 0, h = 0; while (rr() >= Jb.callChance(false, 2.5, w)) { w++; h++; } sum += h + 1; worst = Math.max(worst, h + 1); }
+  assert(sum / 500 < 5 && worst < 25, 'średnio ' + sum / 500 + ', najdłużej ' + worst);
+});
+t('lista zleceń ma 16 poziomów, a nocnych jest co najmniej 5', () => {
+  assert(Jb.LEVELS.length >= 16 && Jb.LEVELS.filter(l => l.slot === 'noc').length >= 5);
+});
 console.log('\n' + n + ' testów przeszło');

@@ -176,7 +176,7 @@ Narzędzia istnieją wyłącznie jako **przedmioty w ekwipunku** (`alledrogo.js`
 
 
 ## Zegar, noc, księga i stawka godzinowa
-- `czas.js`: kalendarz od 1 marca 2027, 08:00. Jednostka czasu naprawy = 5 min. Noc 22:00–06:00: wypłata ×1,35, celność −6 pkt, klient zauważa 25% mniej, praca o 10% dłuższa, więcej wypadków i policji, ekipa częściej nie przychodzi, nastrój −3 po nocce.
+- `czas.js`: kalendarz od 1 marca 2027, 08:00. Jednostka czasu naprawy = 5 min. Noc 22:00–06:00: wypłata ×1,25, celność −6 pkt, klient zauważa 25% mniej, praca o 10% dłuższa, więcej wypadków i policji, ekipa częściej nie przychodzi, nastrój −3 po nocce.
 - `ksiega.js`: księga miesiąca po kategoriach; „Plus w miesiącu” = przychody + koszty (inwestycje i dług osobno). Raport pojawia się na zmianę miesiąca i w Finansach.
 - `stawka.js`: „zostaje” = wypłata − materiały − transport − pomocnik (pensja/3, w nocy ×1,5) − zużycie narzędzi − podatek − udział w utrzymaniu; podzielone przez godziny pracy.
 - UI: pasek daty i godziny, koszt wzięcia pomocnika i stawka z nim/bez, dylemat transportu tylko dla jadących, lista etapów naprawy, animacja narzędzia przed zmianą sceny.

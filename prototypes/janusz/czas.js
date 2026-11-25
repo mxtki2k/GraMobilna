@@ -50,7 +50,7 @@
   const fmtUnits = (units, night) => fmtMin(minutes(units, night));
 
   /* Reguły nocy. Dzień jest neutralny. */
-  const NIGHT = { payMult: 1.35, accPenalty: 0.06, attention: 0.75, accident: 1.5, police: 1.25, drink: 0.15, absent: 0.1, moodHit: 3, hazard: 1.15 };
+  const NIGHT = { payMult: 1.25, accPenalty: 0.08, attention: 0.75, accident: 1.8, police: 1.25, drink: 0.15, absent: 0.1, moodHit: 3, hazard: 1.3 };
   const DAY = { payMult: 1, accPenalty: 0, attention: 1, accident: 1, police: 1, drink: 0, absent: 0, moodHit: 0, hazard: 1 };
   const mods = night => (night ? NIGHT : DAY);
   const daysBetween = (a, b) => Math.floor(b / 1440) - Math.floor(a / 1440);
