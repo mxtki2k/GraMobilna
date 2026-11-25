@@ -145,3 +145,23 @@ Fabuła odpala sceny z warunków: liczba zleceń, ocena firmy, plotki, długi, r
 (np. Kacper zdobywa prawo jazdy, donos do skarbówki, Pani Basia, oferta „pana z Warszawy”).
 
 Zakończenia: Holding Bogdana (sprzedałeś ziemię), Uczciwy majster (ocena ≥ 4 i mała fuszerka), Król fuszerki (duża siedziba i niska ocena), Janusz Biznesu klasyczny.
+
+## Alledrogo: giełda narzędzi (`prototypes/janusz/alledrogo.js`, testy: `node tests/alledrogo.test.js`)
+
+Aplikacja w grze (parodia serwisu ogłoszeniowego, nazwa fikcyjna). Kupujesz narzędzia nowe i używane, a każde pomaga przy konkretnych zleceniach:
+wiertarka (półka, ściana), poziomica (półka), klucze do rur (kran), szlifierka i szpachle (ściana), miernik napięcia (gniazdko, zmniejsza zagrożenie wad).
+
+**Oferty:** klasy nowe / jak nowe / używane / po przejściach / na części, trzy poziomy jakości, siedmiu sprzedawców o różnej uczciwości.
+Gracz widzi opis, deklarowaną klasę, cenę, ocenę sprzedawcy (kłamcy mają niewiele gorszą, bo opinie „się kupuje”) i cenę nowego. Prawda jest ukryta:
+prawdziwy stan, żywotność w zleceniach, ukryta wada, podróbka. Kłamcy zaniżają cenę o kilkanaście procent, co jest słabym sygnałem. Można zadać pytanie sprzedawcy
+(uczciwy ujawni wadę, nieuczciwy się wymiga) albo licytować (konkurent ma ukryty limit).
+
+**Dostawa:** paczka idzie 1–3 zleceń, może zaginąć (zwrot 90%) albo przyjść pognieciona. Rozpakowanie pokazuje stan widoczny na oko, ale nie ukrytą wadę ani podróbkę.
+
+**Zużycie i awarie:** każde użycie zmniejsza stan i żywotność. Szansa awarii w trakcie roboty rośnie przy ukrytej wadzie (w pierwszym użyciu),
+krótkiej żywotności i niskim stanie. Awaria kosztuje 4 minuty i dokłada wadę do oceny zlecenia. Premia narzędzia maleje ze stanem, podróbka obniża poziom.
+
+**Spór i sprzedaż:** sklep zwykle oddaje pieniądze w okresie ochrony, prywatny rzadko. Sprzedając, możesz opisać uczciwie albo naciągnąć kupca (więcej kasy,
+ale wadliwy towar daje skargę, zwrot i spadek plotek).
+
+**Spięcia z resztą:** ekwipunek podnosi atrakcyjność i szansę kradzieży siedziby, a złodziej może zabrać najcenniejszy przedmiot. Kamery i alarm chronią też narzędzia z Alledrogo.

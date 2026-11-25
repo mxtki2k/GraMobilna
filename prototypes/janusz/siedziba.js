@@ -151,18 +151,19 @@
     for (let i = 0; i < hq.assets.bus; i++) v += ASSETS.bus.levels[i].cost;
     return v;
   }
-  function attractiveness(hq) { return clamp(0.5 + lootValue(hq) / 8000, 0.5, 2.5); }
+  function attractiveness(hq, extra) { return clamp(0.5 + (lootValue(hq) + (extra || 0)) / 8000, 0.5, 2.5); }
   /* Szansa kradzieży = 8% · atrakcyjność · (1 − zabezpieczenia). Zabezpieczenia nie dają 100%. */
-  function theftChance(hq) { return 0.08 * attractiveness(hq) * (1 - effects(hq).security / 100); }
+  function theftChance(hq, extra) { return 0.08 * attractiveness(hq, extra) * (1 - effects(hq).security / 100); }
   /* Przebieg kradzieży: strata zależy od wartości sprzętu, kamery odzyskują część. */
-  function resolveTheft(hq, rng) {
-    if (rng() >= theftChance(hq)) return null;
-    const e = effects(hq), loot = lootValue(hq);
+  function resolveTheft(hq, rng, extra) {
+    if (rng() >= theftChance(hq, extra)) return null;
+    const e = effects(hq), loot = lootValue(hq) + (extra || 0);
     const loss = Math.round(Math.max(40, Math.min(1500, 60 + loot * (0.04 + rng() * 0.08))));
     const recovered = Math.round(loss * e.recover * (rng() < 0.7 ? 1 : 0));
     let toolLost = false, next = clone(hq);
     if (hq.assets.narzedzia > 0 && rng() < (1 - e.security / 100) * 0.25) { next.assets.narzedzia--; toolLost = true; }
-    return { loss, recovered, net: loss - recovered, toolLost, hq: next, cameras: e.recover > 0 };
+    const itemStolen = (extra || 0) > 0 && rng() < (1 - e.security / 100) * 0.4;
+    return { loss, recovered, net: loss - recovered, toolLost, itemStolen, hq: next, cameras: e.recover > 0 };
   }
 
   return { TIERS, UPGRADES, ASSETS, fresh, clone, nextTier, nextLevel, buyTier, buy, effects, rating, payoutMult, theftChance, lootValue, attractiveness, resolveTheft, wear, repair, repairCost, breakChance, condFactor };

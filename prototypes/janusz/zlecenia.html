@@ -100,6 +100,8 @@
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } .grid3 .tabbtn { font-size: .95rem; padding: 0 6px; min-height: 48px; }
   .seg { display: flex; gap: 6px; flex-wrap: wrap; } .seg button { flex: 1 1 30%; min-height: 48px; font-size: .88rem; line-height: 1.15; padding: 4px 8px; }
   .seg button.on { background: var(--hi); color: var(--hi-ink); border-color: #b98f00; }
+  .alle-h { background: #ff5a00; color: #fff; border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; } .alle-h b { font-family: var(--display); font-size: 1.7rem; letter-spacing: .02em; } .alle-h span { font-size: .85rem; opacity: .9; }
+  .prow.alle { border: 1px solid #5a3a28; }
   .note { color: var(--muted); font-size: .78rem; text-align: center; }
   [hidden] { display: none !important; }
   @media (prefers-reduced-motion: reduce) { .drip, .spark { animation: none; } }
@@ -120,6 +122,7 @@
   <section id="fin" hidden class="card"></section>
   <section id="os" hidden class="card"></section>
   <section id="story" hidden class="card"></section>
+  <section id="alle" hidden class="card"></section>
   <section id="payday" hidden class="card"></section>
   <div class="note">Prototyp do testów. Postacie i sytuacje są fikcyjne, humor to satyra. Nie zachęcamy do prawdziwych fuszerek: w prawdziwym życiu prąd, gaz i konstrukcja wymagają fachowca.</div>
 </main>
@@ -135,4 +138,5 @@
 <script src="finanse.js"></script>
 <script src="osiedle.js"></script>
 <script src="fabula.js"></script>
+<script src="alledrogo.js"></script>
 <script src="zlecenia.js"></script>

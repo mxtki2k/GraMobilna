@@ -6,7 +6,7 @@
   const rnd = Math.random;
 
   // ---------- stan ----------
-  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, fav: {}, flash: [], forceAudit: false });
+  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, fav: {}, flash: [], forceAudit: false, inv: [], orders: [], market: null });
   let ST = fresh();
   try { const r = localStorage.getItem('zlecenia_v1'); if (r) ST = Object.assign(fresh(), JSON.parse(r)); } catch (e) {}
   (() => { const f = Siedziba.fresh(); ST.hq = Object.assign(f, ST.hq || {}, { up: Object.assign(f.up, (ST.hq || {}).up), assets: Object.assign(f.assets, (ST.hq || {}).assets) }); if (!ST.hist) ST.hist = []; })();
@@ -26,7 +26,7 @@
 
   // ---------- poziomy ----------
   let cur = null; // bieżące zlecenie
-  const ALL = ['menu', 'job', 'result', 'crew', 'payday', 'hq', 'fin', 'os', 'story'];
+  const ALL = ['menu', 'job', 'result', 'crew', 'payday', 'hq', 'fin', 'os', 'story', 'alle'];
   const co = () => Siedziba.rating(ST.hq, ST.hist, ST.ratings, ST.claims.length);
   function renderTop() {
     $('money').textContent = zl(ST.money);
@@ -39,14 +39,14 @@
     const toPay = Math.max(0, ST.nextPay - ST.done);
     const sea = Kalendarz.seasonOf(ST.day);
     const flash = ST.flash.length ? '<div class="banner">' + ST.flash.join('<br>') + '</div>' : ''; ST.flash = [];
-    $('menu').innerHTML = flash + '<div class="grid3"><button class="tabbtn' + (ST.crew.some(w => Ekipa.demand(w)) ? ' alert' : '') + '" id="goCrew">👷 Ekipa (' + ST.crew.length + ')</button><button class="tabbtn" id="goHq">🏢 Siedziba</button><button class="tabbtn' + (Finanse.debt(ST.fin) > 0 ? ' alert' : '') + '" id="goFin">💼 Finanse</button><button class="tabbtn" id="goOs">🏘️ Osiedle</button><button class="tabbtn" id="goStory">📖 Fabuła</button></div>' +
+    $('menu').innerHTML = flash + '<div class="grid3"><button class="tabbtn' + (ST.crew.some(w => Ekipa.demand(w)) ? ' alert' : '') + '" id="goCrew">👷 Ekipa (' + ST.crew.length + ')</button><button class="tabbtn" id="goHq">🏢 Siedziba</button><button class="tabbtn' + (Finanse.debt(ST.fin) > 0 ? ' alert' : '') + '" id="goFin">💼 Finanse</button><button class="tabbtn" id="goOs">🏘️ Osiedle</button><button class="tabbtn" id="goStory">📖 Fabuła</button><button class="tabbtn' + (ST.orders.length ? ' alert' : '') + '" id="goAlle">🛒 Alledrogo</button></div>' +
       '<div class="hint" style="text-align:center">Dzień ' + ST.day + ' · ' + sea.name + ' · dzień wypłaty za ' + toPay + ' zlec. · utrzymanie ' + zl(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)) + ' · ' + Siedziba.TIERS[ST.hq.tier].name + '</div>' +
       '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Zlecenia</h3>' + LEVELS.map((l, i) => {
       const job = JOBS[l.job], cl = CLIENTS[l.client], locked = i + 1 > ST.unlocked, b = ST.best[i];
       return '<button class="lvl" data-i="' + i + '" ' + (locked ? 'disabled' : '') + '><span class="av">' + (locked ? '🔒' : cl.em) + '</span><span><b>' + (i + 1) + '. ' + job.title + '</b><small>' + job.place + ' · ' + cl.name + ' · ok. ' + zl(job.base * l.mult) + '</small></span><span class="res">' +
         (b ? '<span class="stars">' + stars(b.stars) + '</span><br>fuszerka ' + b.index + '%' : (locked ? '' : 'nowe')) + '</span></button>';
     }).join('');
-    $('goCrew').onclick = renderCrew; $('goHq').onclick = renderHq; $('goFin').onclick = renderFin; $('goOs').onclick = renderOs; $('goStory').onclick = renderStory;
+    $('goCrew').onclick = renderCrew; $('goHq').onclick = renderHq; $('goFin').onclick = renderFin; $('goOs').onclick = renderOs; $('goStory').onclick = renderStory; $('goAlle').onclick = renderAlle;
     nextEvent();
   }
   $('menu').addEventListener('click', e => { const b = e.target.closest('.lvl'); if (b && !b.disabled) startJob(+b.dataset.i); });
@@ -59,6 +59,9 @@
     ST.crew.forEach(w => { cur.states[w.id] = Swiat.rollState(w, { paydayEve: ST.lastPayDone === ST.done }, rnd); });
     cur.season = Kalendarz.seasonOf(ST.day).name; cur.deadline = cur.job.deadline; cur.umowa = null; cur.terms = Object.assign({}, Umowa.DEFAULT);
     cur.mystery = Fabula.rollMystery({ done: ST.done }, rnd);
+    cur.tools = Alledrogo.forJob(ST.inv, cur.job.id); cur.failAt = {}; cur.brokenTools = {};
+    cur.tools.forEach(tl => { cur.failAt[tl.id] = rnd() < Alledrogo.failChance(tl) ? Math.floor(rnd() * cur.job.steps.length) : -1; });
+    if (cur.tools.length) cur.notes.push('🧰 Bierzesz ze sobą: ' + cur.tools.map(tl => tl.brand).join(', ') + '.');
     const wx = Kalendarz.weather(cur.season, rnd); if (wx.delay) { cur.timeAdj += wx.delay; cur.notes.push(wx.text); }
     ALL.forEach(x => $(x).hidden = true); $('job').hidden = false;
     umowa();
@@ -167,6 +170,16 @@
       if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + he.accBonus));
       cur.timeAdj -= Math.round(opt.time * (1 - he.timeFactor) * 10) / 10;
     }
+    cur.tools.forEach(tl => {
+      if (cur.failAt[tl.id] === cur.step && !cur.brokenTools[tl.id]) {
+        cur.brokenTools[tl.id] = true; ST.inv = ST.inv.map(x => x.id === tl.id ? Alledrogo.breakItem(x) : x); cur.timeAdj += 4;
+        cur.extraDefects.push({ label: 'narzędzie „' + tl.brand + '” padło w trakcie roboty', sev: 1.5, vis: 0.5 });
+        cur.notes.push('🔧💥 „' + tl.brand + '” padło w trakcie roboty (kupione ' + (tl.source === 'sklep' ? 'w sklepie' : 'od: ' + tl.sellerName) + '). Cztery minuty w plecy.');
+      }
+    });
+    const tb = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id]));
+    if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + tb.acc));
+    cur.timeAdj -= Math.round(opt.time * tb.time * 10) / 10;
     const eff = Siedziba.effects(ST.hq);
     if (rnd() < Siedziba.breakChance(ST.hq)) { cur.extraDefects.push({ label: 'zużyte narzędzie złamało się w trakcie', sev: 2, vis: 0.5 }); cur.notes.push('🔧 Zużyte narzędzie złamało się w trakcie roboty. Czas na serwis.'); }
     if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + eff.accBonus));
@@ -216,7 +229,7 @@
     const rt = co(), um = cur.umowa || { payMult: 1, satDelta: 0 };
     const sea = Kalendarz.demandMult(cur.season, cur.job.id), gos = Osiedle.gossipMult(ST.os), cut = 1 - Osiedle.undercut(ST.os, { rating: rt.stars, tier: ST.hq.tier });
     const payMult = Math.round(rt.payMult * um.payMult * sea * gos * cut * 1000) / 1000;
-    const r = Fuszerka.evaluate(job, cur.picks, cur.client, { time: Math.round(cur.timeAdj), defects: cur.extraDefects, satBonus: rt.satBonus + um.satDelta, payMult });
+    const r = Fuszerka.evaluate(job, cur.picks, cur.client, { time: Math.round(cur.timeAdj), defects: cur.extraDefects, satBonus: rt.satBonus + um.satDelta, payMult, hazardMult: Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id])).hazardMult });
     const comment = Fuszerka.clientComment(cur.client, r, rnd);
     const claim = Fuszerka.rollClaim(r, rnd);
     ST.money += r.profit; ST.ratings.push(r.stars); ST.done++; ST.day++;
@@ -225,9 +238,22 @@
     ST.os = Osiedle.updateGossip(ST.os, { stars: r.stars, gossipy: Osiedle.GOSSIP[cur.client.id], scandal: !!cur.scandal });
     if (cur.mystery) { const my = Fabula.resolveMystery(r); ST.money = Math.max(0, ST.money + my.money); ST.os.gossip = Math.max(0, Math.min(100, ST.os.gossip + my.gossip)); cur.notes.push(my.text); }
     ST.hist.push({ index: r.index }); ST.hist = ST.hist.slice(-12);
-    const th = Siedziba.resolveTheft(ST.hq, rnd);
+    if (cur.tools.length) {
+      const ids = cur.tools.map(tl => tl.id), before = ST.inv.filter(x => x.status === 'sprawny').length;
+      ST.inv = ST.inv.map(it => ids.indexOf(it.id) >= 0 ? Alledrogo.wear(it) : it);
+      ST.inv.filter(it => ids.indexOf(it.id) >= 0 && it.status === 'zepsute' && !cur.brokenTools[it.id]).forEach(it => cur.notes.push('🔧 „' + it.brand + '” po tej robocie przestało działać. Tak to bywa z używanym sprzętem.'));
+    }
+    const dl = Alledrogo.tickOrders(ST.orders, rnd); ST.orders = dl.orders;
+    dl.arrived.forEach(a => {
+      if (a.lost) { const rf = Alledrogo.refundLost(a.order); ST.money += rf.refund; ST.flash.push('📦 Paczka z „' + a.order.brand + '” zaginęła. Sprzedawca oddał ' + zl(rf.refund) + '.'); }
+      else { ST.inv.push(a.item); ST.flash.push('📦 Dotarła paczka: „' + a.item.brand + '”. Rozpakuj w Alledrogo.'); }
+    });
+    dl.events.filter(e => e.type === 'damaged').forEach(e => ST.flash.push(e.text));
+    ST.market = Alledrogo.refresh(ST.market, ST.day);
+    const th = Siedziba.resolveTheft(ST.hq, rnd, Alledrogo.inventoryValue(ST.inv));
     if (th) {
       ST.hq = th.hq; ST.money = Math.max(0, ST.money - th.net);
+      if (th.itemStolen && ST.inv.length) { const top = ST.inv.slice().sort((a, b) => Alledrogo.value(b) - Alledrogo.value(a))[0]; ST.inv = ST.inv.filter(x => x.id !== top.id); cur.notes.push('🕵️ Złodziej zabrał też „' + top.brand + '”.'); }
       cur.notes.push('🕵️ W nocy ktoś włamał się do siedziby: strata ' + zl(th.loss) + (th.recovered ? ', ale kamery pomogły odzyskać ' + zl(th.recovered) : '') + (th.toolLost ? '. Zniknął też sprzęt (narzędzia −1 poziom).' : '.') + (th.cameras ? '' : ' Kamery i mocniejsze drzwi by pomogły.'));
     }
     ST.hq = Siedziba.wear(ST.hq, 5 + (r.index >= 40 ? 3 : 0));
@@ -259,6 +285,58 @@
   }
 
   let modalOpen = false;
+  // ---------- Alledrogo ----------
+  let alleTab = 'oferty', alleMsg = '', alleAsk = {};
+  function itemName(it) { return Alledrogo.TYPES[it.type].name + ' „' + it.brand + '”'; }
+  function renderAlle() {
+    ALL.forEach(x => $(x).hidden = true); $('alle').hidden = false;
+    ST.market = Alledrogo.refresh(ST.market, ST.day);
+    const tabs = [['oferty', 'Oferty'], ['zam', 'Zamówienia (' + ST.orders.length + ')'], ['moje', 'Moje narzędzia (' + ST.inv.length + ')']];
+    let body = '';
+    if (alleTab === 'oferty') {
+      body = '<div class="hint">Oferty odświeżają się co kilka dni (dziś: dzień ' + ST.day + '). Ocena sprzedawcy to nie wszystko, a „jak nowe” za pół ceny rzadko bywa prawdą.</div>' + ST.market.listings.map(l => {
+        const ref = Alledrogo.newPrice(l.type, l.tier), cls = Alledrogo.CLASSES.find(c => c.id === l.claimed), T = Alledrogo.TYPES[l.type];
+        const cmp = Math.round((l.price / ref - 1) * 100), sus = l.price < ref * cls.price * 0.88;
+        const buy = l.mode === 'buynow' ? '<button data-buy="' + l.id + '" class="primary" style="min-height:46px;font-size:1rem" ' + (ST.money >= l.price + l.shipping ? '' : 'disabled') + '>Kup teraz · ' + zl(l.price + l.shipping) + '</button>'
+          : '<div class="hint">Licytacja: wybierz limit (konkurent ma swój, nie wiesz jaki).</div><div class="quick">' + [0.9, 1.05, 1.25].map(m => '<button data-bid="' + l.id + ':' + Math.round(l.price * m) + '" ' + (ST.money >= Math.round(l.price * m) + l.shipping ? '' : 'disabled') + '>Do ' + zl(l.price * m) + '</button>').join('') + '</div>';
+        return '<div class="prow alle"><div class="hd"><span class="nm">' + T.name + ' „' + l.brand + '”</span><span class="chip skill">' + cls.name + '</span></div>' +
+          '<div class="hint">poziom: ' + Alledrogo.TIER_NAME[l.tier - 1] + ' · pomaga przy: ' + T.jobs.map(x => ({ kran: 'kran', sciana: 'ściana', gniazdko: 'gniazdko', polka: 'półka' })[x]).join(', ') + '</div>' +
+          '<div>„' + l.desc + '”</div>' +
+          '<div class="hint">Sprzedawca: <b>' + l.seller.name + '</b> (' + (l.seller.kind === 'sklep' ? 'sklep' : 'osoba prywatna') + ') · ' + l.seller.stars.toFixed(1).replace('.', ',') + ' ★ · ' + l.seller.reviews + ' opinii</div>' +
+          '<div class="money"><span>Cena</span><span>' + zl(l.price) + ' + ' + zl(l.shipping) + ' wysyłka</span><span>Nowe: ' + zl(ref) + '</span><span style="color:' + (sus ? 'var(--warn)' : 'var(--muted)') + '">' + (cmp > 0 ? '+' : '') + cmp + '% do nowego' + (sus ? ' ⚠ tanio jak na tę klasę' : '') + '</span></div>' +
+          '<div class="hint">Dostawa: ok. ' + l.eta + ' zlec.</div>' + (alleAsk[l.id] ? '<div class="banner">Odpowiedź: „' + alleAsk[l.id] + '”</div>' : '<button data-ask="' + l.id + '" style="min-height:40px">Zadaj pytanie sprzedawcy</button>') + buy + '</div>'; }).join('');
+    } else if (alleTab === 'zam') {
+      body = ST.orders.length ? ST.orders.map(o => '<div class="prow"><div class="hd"><span class="nm">' + Alledrogo.TYPES[o.type].name + ' „' + o.brand + '”</span><span>' + zl(o.paid) + '</span></div><div class="hint">od: ' + o.sellerName + ' · status: ' + o.status + ' · dotrze za ok. ' + o.eta + ' zlec. (paczkomat ma 80 km do ciebie)</div></div>').join('') : '<div class="hint">Nic nie jest w drodze.</div>';
+    } else {
+      body = ST.inv.length ? ST.inv.map(it => {
+        const T = Alledrogo.TYPES[it.type], ok = it.status === 'sprawny', jobs = T.jobs.map(x => ({ kran: 'kran', sciana: 'ściana', gniazdko: 'gniazdko', polka: 'półka' })[x]).join(', ');
+        const stan = !it.unboxed ? 'nierozpakowane' : (ok ? 'sprawne, stan ' + Math.round(it.cond) + '%' : '<span class="warn">zepsute</span>');
+        const acts = (!it.unboxed ? '<button data-unbox="' + it.id + '" class="primary" style="min-height:44px">Rozpakuj</button>' : '') +
+          (it.unboxed ? '<div class="row2"><button data-sell="' + it.id + ':honest" style="min-height:44px">Sprzedaj uczciwie · ' + zl(Alledrogo.sell(it, 'honest', () => 1).price) + '</button><button data-sell="' + it.id + ':lie" style="min-height:44px">Naciągnij · ' + zl(Alledrogo.sell(it, 'lie', () => 1).price) + '</button></div>' : '') +
+          (!ok && it.unboxed ? '<button data-dispute="' + it.id + '" style="min-height:44px">Otwórz spór (' + (it.source === 'sklep' ? 'sklep zwykle zwraca' : 'prywatny rzadko zwraca') + ')</button>' : '');
+        return '<div class="prow"><div class="hd"><span class="nm">' + T.name + ' „' + it.brand + '”</span><span>' + stan + '</span></div><div class="hint">poziom: ' + Alledrogo.TIER_NAME[it.tier - 1] + ' · pomaga przy: ' + jobs + ' · użyć: ' + it.uses + ' · od: ' + it.sellerName + ' · wartość ok. ' + zl(Alledrogo.value(it)) + '</div>' + acts + '</div>'; }).join('') : '<div class="hint">Nie masz jeszcze narzędzi z Alledrogo. Siedziba ma swój podstawowy sprzęt, a to są dodatki do konkretnych zleceń.</div>';
+    }
+    $('alle').innerHTML = '<div class="alle-h"><b>Alledrogo</b><span>Okazje, których nie powstydzi się Janusz</span></div>' +
+      '<div class="seg">' + tabs.map(t => '<button data-tab="' + t[0] + '" class="' + (alleTab === t[0] ? 'on' : '') + '">' + t[1] + '</button>').join('') + '</div>' +
+      (alleMsg ? '<div class="banner">' + alleMsg + '</div>' : '') + body +
+      '<div class="note">Alledrogo to fikcyjny serwis na potrzeby gry, każda zbieżność z prawdziwymi serwisami jest przypadkowa. Kupujesz na własne ryzyko.</div><button class="primary" id="alleBack">Wróć</button>';
+    $('alleBack').onclick = () => { alleMsg = ''; renderMenu(); };
+    $('alle').onclick = e => {
+      const q = sel => e.target.closest(sel), tab = q('[data-tab]'), ask = q('[data-ask]'), buy = q('[data-buy]'), bid = q('[data-bid]'), ub = q('[data-unbox]'), sell = q('[data-sell]'), dp = q('[data-dispute]');
+      if (tab) { alleTab = tab.dataset.tab; alleMsg = ''; renderAlle(); return; }
+      const find = id => ST.market.listings.find(l => l.id === +id);
+      if (ask) { const l = find(ask.dataset.ask), r = Alledrogo.ask(l, rnd); alleAsk[l.id] = r.text; ST.market.listings = ST.market.listings.map(x => x.id === l.id ? r.listing : x); renderAlle(); return; }
+      if (buy) { const l = find(buy.dataset.buy), r = Alledrogo.buyNow(l, ST.money); if (r.ok) { ST.money -= r.cost; ST.orders.push(r.order); ST.market = Alledrogo.removeListing(ST.market, l.id); alleMsg = 'Zamówiono „' + l.brand + '” za ' + zl(r.cost) + '. Dotrze za ok. ' + l.eta + ' zlec.'; save(); renderTop(); renderAlle(); } return; }
+      if (bid) { const [id, mx] = bid.dataset.bid.split(':'), l = find(id), r = Alledrogo.bid(l, +mx, ST.money, rnd);
+        if (r.ok && r.won) { ST.money -= r.cost; ST.orders.push(r.order); ST.market = Alledrogo.removeListing(ST.market, l.id); alleMsg = 'Wygrałeś licytację „' + l.brand + '” za ' + zl(r.price) + ' (+ wysyłka). Dotrze za ok. ' + l.eta + ' zlec.'; }
+        else if (r.ok) { ST.market = Alledrogo.removeListing(ST.market, l.id); alleMsg = r.text + ' Aukcja „' + l.brand + '” przepadła.'; } else alleMsg = r.reason;
+        save(); renderTop(); renderAlle(); return; }
+      if (ub) { const it = ST.inv.find(x => x.id === +ub.dataset.unbox), r = Alledrogo.unbox(it); ST.inv = ST.inv.map(x => x.id === it.id ? r.item : x); alleMsg = '📦 ' + itemName(it) + ': ' + r.text; save(); renderAlle(); return; }
+      if (sell) { const [id, mode] = sell.dataset.sell.split(':'), it = ST.inv.find(x => x.id === +id), r = Alledrogo.sell(it, mode, rnd); ST.inv = ST.inv.filter(x => x.id !== it.id); ST.money += r.price; ST.os.gossip = Math.max(0, Math.min(100, ST.os.gossip + r.gossip)); alleMsg = r.text + ' (' + zl(r.price) + (r.gossip ? ', plotki ' + r.gossip : '') + ')'; save(); renderTop(); renderAlle(); return; }
+      if (dp) { const it = ST.inv.find(x => x.id === +dp.dataset.dispute), r = Alledrogo.dispute(it, rnd); if (!r.ok) alleMsg = r.reason; else { alleMsg = r.text; if (r.success) { ST.money += r.refund; ST.inv = ST.inv.filter(x => x.id !== it.id); } else ST.inv = ST.inv.map(x => x.id === it.id ? Object.assign({}, x, { uses: x.protectUses + 1 }) : x); } save(); renderTop(); renderAlle(); }
+    };
+  }
+
   // ---------- fabuła ----------
   function storyCtx() {
     const avg = ST.hist.length ? ST.hist.reduce((a, b) => a + b.index, 0) / ST.hist.length : 30;
@@ -586,6 +664,6 @@
 
   $('reset').onclick = () => { if ($('reset').dataset.s) { ST = fresh(); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; }, 3000); } };
 
-  window.__z = { get ST() { return ST; }, get cur() { return cur; }, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
+  window.__z = { get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
   renderMenu();
 })();

@@ -59,13 +59,14 @@
     return defects;
   }
 
-  /* adj (opcjonalne): { time: korekta czasu w minutach, defects: dodatkowe wady, satBonus: punkty zadowolenia, payMult: mnożnik wypłaty }
+  /* adj (opcjonalne): { time: korekta czasu w minutach, defects: dodatkowe wady, satBonus: punkty zadowolenia, payMult: mnożnik wypłaty, hazardMult: mnożnik zagrożenia wad }
    np. od pomocnika, bałaganu albo oceny firmy i siedziby. */
   function evaluate(job, picks, client, adj) {
     if (picks.length !== job.steps.length) throw new Error('Brak wyborów dla wszystkich kroków');
     adj = adj || {};
     const defects = collectDefects(job, picks);
     (adj.defects || []).forEach(d => defects.push({ label: d.label, sev: d.sev, vis: d.vis, hazard: d.hazard || 0, step: 'ekipa', option: 'ekipa' }));
+    if (adj.hazardMult != null) defects.forEach(d => { d.hazard *= adj.hazardMult; }); // np. miernik napięcia zmniejsza zagrożenie
     let time = adj.time || 0, cost = 0;
     picks.forEach((pk, i) => {
       const opt = job.steps[i].options.find(o => o.id === pk.optionId);
