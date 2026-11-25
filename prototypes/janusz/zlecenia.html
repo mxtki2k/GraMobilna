@@ -97,6 +97,9 @@
   .tabbtn { min-height: 52px; font-family: var(--display); font-size: 1.15rem; text-transform: uppercase; }
   .tabbtn.alert { border-color: var(--hi); color: var(--hi); }
   .banner { background: #3a2b12; border: 1px solid #7a5b1f; color: #ffcc80; border-radius: 8px; padding: 8px 10px; font-size: .9rem; line-height: 1.35; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } .grid3 .tabbtn { font-size: .95rem; padding: 0 6px; min-height: 48px; }
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; } .seg button { flex: 1 1 30%; min-height: 48px; font-size: .88rem; line-height: 1.15; padding: 4px 8px; }
+  .seg button.on { background: var(--hi); color: var(--hi-ink); border-color: #b98f00; }
   .note { color: var(--muted); font-size: .78rem; text-align: center; }
   [hidden] { display: none !important; }
   @media (prefers-reduced-motion: reduce) { .drip, .spark { animation: none; } }
@@ -114,6 +117,9 @@
   <section id="result" hidden class="card"></section>
   <section id="crew" hidden class="card"></section>
   <section id="hq" hidden class="card"></section>
+  <section id="fin" hidden class="card"></section>
+  <section id="os" hidden class="card"></section>
+  <section id="story" hidden class="card"></section>
   <section id="payday" hidden class="card"></section>
   <div class="note">Prototyp do testów. Postacie i sytuacje są fikcyjne, humor to satyra. Nie zachęcamy do prawdziwych fuszerek: w prawdziwym życiu prąd, gaz i konstrukcja wymagają fachowca.</div>
 </main>
@@ -124,4 +130,9 @@
 <script src="ekipa.js"></script>
 <script src="swiat.js"></script>
 <script src="siedziba.js"></script>
+<script src="kalendarz.js"></script>
+<script src="umowa.js"></script>
+<script src="finanse.js"></script>
+<script src="osiedle.js"></script>
+<script src="fabula.js"></script>
 <script src="zlecenia.js"></script>

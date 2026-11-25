@@ -111,3 +111,37 @@ Gra przedstawia to jako satyrę z konsekwencjami, bez nagradzania jazdy po alkoh
 ### Backlog mechanik w tym duchu
 Karta kontaktów i „znajomości” (szwagier w urzędzie), pożyczki i lichwiarz, VAT/skarbówka i „na fakturę”, narzędzia i ich zużycie, magazyn i materiały,
 sezonowość i pogoda, reputacja w osiedlu i plotki, konkurencja, bałagan i sprzątanie, przekręt w kosztorysie, prowokacje „tajemniczego klienta”.
+
+## Siedziba firmy (`prototypes/janusz/siedziba.js`, testy: `node tests/siedziba.test.js`)
+
+Lokale: Garaż u teścia → Blaszak → Rudera po dziadku → Biuro z placem → Hala z biurem → Siedziba przy obwodnicy.
+Przeprowadzka zeruje remonty budynku (okna, drzwi, dach, ogrzewanie, szyld, alarm, kamery, ochrona fizyczna), ale narzędzia i bus zostają.
+
+**Ocena firmy (1–5 ★)** = siedziba 30% + sprzęt 15% + opinie klientów 30% + rzetelność (średnia fuszerka z ostatnich zleceń minus otwarte reklamacje) 25%.
+Skutki: mnożnik wypłat 0,85–1,25 (plus popyt z szyldu), bonus do zadowolenia klientów do +8, komfort podnosi bazowy nastrój ekipy,
+narzędzia skracają czas i poprawiają celność, bus zmniejsza liczbę wypadków, utrzymanie lokalu rozlicza się w dniu wypłaty.
+
+**Kradzieże:** szansa = 8% · atrakcyjność łupu · (1 − zabezpieczenia). Im droższy sprzęt i bus, tym bardziej opłaca się włamanie.
+Alarm, kamery (odzyskują część strat), pies, siatka i ochroniarz zmniejszają szansę (nigdy do zera, maks. 95%). Włamanie może zabrać poziom narzędzi.
+**Zużycie narzędzi:** stan spada po każdym zleceniu, a poniżej 30% narzędzie potrafi się złamać w trakcie roboty. Serwis przywraca stan.
+
+## Moduły fabularne i ekonomiczne
+
+| # | Moduł | Plik | Co robi |
+|---|---|---|---|
+| 1 | Kalendarz i sezony | `kalendarz.js` | 12 dni na sezon, popyt na różne roboty zależny od pory roku, opóźnienia pogodowe, zimny lokal obniża nastrój ekipy |
+| 2 | Pożyczki i lichwiarz | `finanse.js` | Bank (4%), kuzyn (8%), Pan Gienek (25%), raty co dzień wypłaty, windykacja i komornik przy zaległościach |
+| 3 | Skarbówka i faktury | `finanse.js`, `umowa.js` | Podatek 10% od faktur, ukryte przychody podnoszą ryzyko kontroli, księgowa i znajomości łagodzą karę |
+| 4 | Znajomości | `osiedle.js` | Szwagier w urzędzie, Waldek z hurtowni, dzielnicowy, sąsiad: przysługi budują dług wdzięczności |
+| 5 | Plotki | `osiedle.js` | Renoma na osiedlu zmienia wypłaty, gadatliwi klienci (Karyna, Grażyna) wzmacniają efekt |
+| 6 | Konkurencja | `osiedle.js` | Bogdan-Bud rośnie, zbija ceny, podkupuje niezadowolonych, mści się za rozdrażnienie |
+| 7 | Zużycie narzędzi | `siedziba.js` | Stan narzędzi, serwis, awarie w trakcie zlecenia |
+| 8 | Umowa i kosztorys | `umowa.js` | Faktura, kosztorys uczciwy/zawyżony/zaniżony, termin „na wczoraj” |
+| 9 | Tajemniczy klient | `fabula.js` | Inspektor jakości pod przykrywką: kara za fuszerkę albo premia za rzetelność |
+| 10 | Fabuła „Spadek po dziadku” | `fabula.js` | 9 scen z warunkami i wyborami, flagi zmieniają kolejne sceny, 4 zakończenia |
+
+Testy: `node tests/moduly.test.js` (kalendarz, umowa, finanse, osiedle, fabuła, spięcia między modułami).
+Fabuła odpala sceny z warunków: liczba zleceń, ocena firmy, plotki, długi, ryzyko skarbowe oraz wcześniejsze wybory
+(np. Kacper zdobywa prawo jazdy, donos do skarbówki, Pani Basia, oferta „pana z Warszawy”).
+
+Zakończenia: Holding Bogdana (sprzedałeś ziemię), Uczciwy majster (ocena ≥ 4 i mała fuszerka), Król fuszerki (duża siedziba i niska ocena), Janusz Biznesu klasyczny.
