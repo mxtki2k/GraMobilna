@@ -195,3 +195,8 @@ Narzędzia istnieją wyłącznie jako **przedmioty w ekwipunku** (`alledrogo.js`
 
 ### Balans nowych mechanik (`node tools/balans2.js`, wyniki w `tools/balans2_wyniki.txt`)
 Bot gra 60 dni gry, 150 przebiegów na scenariusz. Po strojeniu: sen przy 60–80% zmęczenia daje ok. +13% wobec braku snu, przegląd busa poniżej 60% ok. +13%, szkolenia ok. +13%, polisa OC ok. +9% dla ryzykownego stylu (neutralna dla solidnego), zaufanie klientów ok. +19%, fuszerka bez przerwy się nie opłaca, obniżka ceny przy rywalu jest neutralna. Bot to uproszczenie: pomija wypadki z `swiat.js`, pomocników i długi.
+
+## Wypalenie, dzień wolny i urlop
+- `wypalenie.js`: wypalenie 0–100 rośnie z każdego zlecenia (+1,5, więcej przy zmęczeniu i nocą), nie znika we śnie. Od 40%: celność do −10 pkt i do +20% czasu, od 80%: do 15% szans, że nie odbierzesz telefonu.
+- Dzień wolny (24 h): wypalenie −25, zmęczenie do zera. Urlop (4 dni, 200 zł): wypalenie do zera, nastrój ekipy +10, ale zaufanie klientów spada o 0,5 pkt dziennie, a rywal zyskuje przewagę.
+- Symulacja: dzień wolny przy 40% wypalenia daje ok. +3% wobec braku wolnego, urlop jest droższy (ok. −8%), więc to ostateczność.

@@ -52,4 +52,18 @@ t('OC: bez polisy płacisz całość, z polisą część pokrywa ubezpieczyciel,
   assert(U.cover(oc, { kind: 'reklamacja', amount: 80 }).insurer === 0, 'udział własny');
   assert(U.premium({ active: true, history: 99 }) === U.MAX && U.decay({ active: true, history: 0 }).history === 0 && U.decay({ active: true, history: 2 }).history < 2);
 });
+const W = require('../prototypes/janusz/wypalenie.js');
+t('wypalenie: rośnie przy pracy zmęczonej i w nocy, maleje przy wypoczęciu, dzień wolny leczy, urlop zeruje', () => {
+  assert(W.afterJob(10, 80, false) === 14.5 && W.afterJob(10, 55, false) === 13 && W.afterJob(10, 40, false) === 11.5 && W.afterJob(10, 10, false) === 10.5 && W.afterJob(10, 80, true) === 15.5);
+  assert(W.afterJob(99, 90, true) === 100 && W.afterJob(0, 5, false) === 0.5);
+  assert(W.dayOff(60) === 35 && W.dayOff(10) === 0 && W.vacation(90) === 0);
+});
+t('wypalenie: skutki zaczynają się od 40 (celność, tempo) i 80 (nieodebrany telefon)', () => {
+  assert(W.accMod(40) === 0 && W.accMod(100) === -0.1 && W.timeMult(40) === 1 && W.timeMult(100) === 1.2 && W.missCall(79) === 0 && W.missCall(100) === 0.15);
+  assert.deepStrictEqual([10, 30, 50, 70, 90].map(W.label), ['chce się pracować', 'w porządku', 'ma dość', 'wypalony', 'wszystko wkurza']);
+});
+t('klienci zapominają: zaufanie zbliża się do zera w obie strony i nie przeskakuje go', () => {
+  const d = K.decay({ a: { trust: 20, jobs: 3 }, b: { trust: -20, jobs: 1 }, c: { trust: 2, jobs: 1 } }, 8);
+  assert(d.a.trust === 16 && d.b.trust === -16 && d.c.trust === 0 && d.a.jobs === 3);
+});
 console.log('\n' + n + ' testów przeszło');

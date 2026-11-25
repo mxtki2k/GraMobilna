@@ -6,7 +6,7 @@
   const rnd = Math.random;
 
   // ---------- stan ----------
-  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), waited: 0, bus: Bus.fresh(), fatigue: 10, rel: Klienci.fresh(), certs: {}, oc: Ubezp.fresh(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
+  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), waited: 0, bus: Bus.fresh(), fatigue: 10, burnout: 0, rel: Klienci.fresh(), certs: {}, oc: Ubezp.fresh(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
   let ST = fresh();
   try { const r = localStorage.getItem('zlecenia_v1'); if (r) { const saved = JSON.parse(r); ST = Object.assign(fresh(), saved); if (saved.starterGiven === undefined) ST.starterGiven = false; if (saved.clock === undefined) { ST.clock = Czas.startClock() + (saved.done || 0) * 2 * 1440; ST.ledgerMoney = ST.money; } } } catch (e) {}
   (() => {
@@ -63,7 +63,7 @@
     const ms = monthSummary(), pl = $('plus'); pl.textContent = signed(ms.plus); pl.className = ms.plus >= 0 ? 'pos' : 'neg';
     $('plusl').textContent = 'Plus: ' + Czas.monthName(bookKey());
     const vc = viewClock(), n = Czas.isNight(vc);
-    $('clock').innerHTML = (n ? '🌙' : '☀️') + ' ' + Czas.label(vc) + ' · ' + (n ? 'noc' : 'dzień') + '<br><small>zmęczenie: ' + Zmeczenie.label(ST.fatigue) + ' (' + Math.round(ST.fatigue) + '%)</small>';
+    $('clock').innerHTML = (n ? '🌙' : '☀️') + ' ' + Czas.label(vc) + ' · ' + (n ? 'noc' : 'dzień') + '<br><small>zmęczenie: ' + Zmeczenie.label(ST.fatigue) + ' (' + Math.round(ST.fatigue) + '%) · wypalenie: ' + Wypalenie.label(ST.burnout) + ' (' + Math.round(ST.burnout) + '%)</small>';
     $('clockbar').className = 'clockbar' + (n ? ' night' : '');
   }
   function stars(n) { return '★'.repeat(n) + '☆'.repeat(5 - n); }
@@ -80,7 +80,7 @@
         (b ? '<span class="stars">' + stars(b.stars) + '</span><br>fuszerka ' + b.index + '%' : (locked ? '' : 'nowe')) + '</span></button>';
     }).join('');
     $('menu').insertAdjacentHTML('beforeend', waitHTML());
-    $('wait').onclick = waitHour; $('sleep').onclick = sleepNow;
+    $('wait').onclick = waitHour; $('sleep').onclick = sleepNow; $('dayoff').onclick = dayOffNow; $('vac').onclick = vacationNow;
     $('goCrew').onclick = renderCrew; $('goHq').onclick = renderHq; $('goFin').onclick = renderFin; $('goOs').onclick = renderOs; $('goStory').onclick = renderStory; $('goAlle').onclick = renderAlle;
     nextEvent();
   }
@@ -88,16 +88,27 @@
   const waitHTML = () => '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Czekanie na telefon</h3>' +
     '<div class="hint">' + (allDone() ? 'Zrobiłeś wszystkie zlecenia z listy. Teraz zostaje czekać, aż ktoś zadzwoni.' : 'Nie chcesz brać żadnego z listy? Możesz poczekać, może ktoś zadzwoni.') + ' Szansa na telefon w tej godzinie (' + Czas.hm(ST.clock) + '→' + Czas.hm(ST.clock + 60) + '): ' +
     Math.round(callP(Czas.isNight(ST.clock + 60)) * 100) + '%. Lepsza ocena firmy i kolejne godziny bez telefonu zwiększają szansę.</div>' +
-    '<div class="row2"><button id="wait" class="primary">⏳ Poczekaj godzinę</button><button id="sleep" style="min-height:56px">😴 Prześpij się (8 h)</button></div><div class="hint">Czekanie odpoczywa tylko trochę. Sen: ' + (Czas.isNight(ST.clock + 240) ? 'w nocy regeneruje dużo' : 'w dzień regeneruje mało') + '. Telefony od stałych klientów zwiększają szansę (+' + Math.round(refBonus() * 100) + ' pkt).</div>';
+    '<div class="row2"><button id="wait" class="primary">⏳ Poczekaj godzinę</button><button id="sleep" style="min-height:56px">😴 Prześpij się (8 h)</button></div><div class="row2"><button id="dayoff" style="min-height:48px">🛋️ Dzień wolny (24 h)</button><button id="vac" style="min-height:48px" ' + (ST.money >= Wypalenie.VACATION.cost ? '' : 'disabled') + '>🏖️ Urlop (' + Wypalenie.VACATION.days + ' dni, ' + zl(Wypalenie.VACATION.cost) + ')</button></div><div class="hint">Wypalenie narasta z pracy, nie znika we śnie. Dzień wolny: −' + Wypalenie.DAY_OFF.relief + ' pkt. Urlop zeruje wypalenie i podnosi nastrój ekipy, ale klienci cię zapominają, a ' + (ST.os.rival.name) + ' zyskuje przewagę.</div><div class="hint">Czekanie odpoczywa tylko trochę. Sen: ' + (Czas.isNight(ST.clock + 240) ? 'w nocy regeneruje dużo' : 'w dzień regeneruje mało') + '. Telefony od stałych klientów zwiększają szansę (+' + Math.round(refBonus() * 100) + ' pkt).</div>';
   const refBonus = () => Math.min(0.06, Object.values(ST.rel).filter(r => r.trust >= 50).length * 0.02);
   const callP = night => Math.min(0.6, Jobs.callChance(night, co().stars, ST.waited) + refBonus());
   function sleepNow() {
     advanceClock(ST.clock + 480); ST.fatigue = Zmeczenie.rest(ST.fatigue, 480, true, Czas.isNight(ST.clock - 240));
     ST.waited = 0; ST.flash.push('😴 Spałeś 8 godzin. Zmęczenie: ' + Zmeczenie.label(ST.fatigue) + ' (' + Math.round(ST.fatigue) + '%).'); save(); renderMenu();
   }
+  function dayOffNow() {
+    advanceClock(ST.clock + Wypalenie.DAY_OFF.hours * 60); ST.fatigue = Zmeczenie.rest(ST.fatigue, 24 * 60, true, true); ST.burnout = Wypalenie.dayOff(ST.burnout); ST.waited = 0;
+    ST.flash.push('🛋️ Dzień wolny. Zmęczenie ' + Math.round(ST.fatigue) + '%, wypalenie ' + Math.round(ST.burnout) + '%. Nikt nie dzwonił, bo nikt cię nie szukał.'); save(); renderMenu();
+  }
+  function vacationNow() {
+    const V = Wypalenie.VACATION; if (ST.money < V.cost) return;
+    cash('urlop', -V.cost); advanceClock(ST.clock + V.days * 1440); ST.fatigue = 0; ST.burnout = Wypalenie.vacation(ST.burnout); ST.waited = 0;
+    ST.rel = Klienci.decay(ST.rel, V.days, V.trustDecay); ST.os.rival.power += V.rivalGain; ST.crew = ST.crew.map(w => Object.assign({}, w, { mood: Math.min(100, w.mood + V.crewMood) }));
+    ST.flash.push('🏖️ Urlop: ' + V.days + ' dni nad jeziorem. Wypoczęty, ale klienci trochę zapomnieli o tobie, a ' + ST.os.rival.name + ' zbierał zlecenia.'); save(); renderMenu();
+  }
   function waitHour() {
     advanceClock(ST.clock + 60); ST.fatigue = Zmeczenie.rest(ST.fatigue, 60, false);
     const night = Czas.isNight(ST.clock), hit = rnd() < callP(night);
+    if (hit && rnd() < Wypalenie.missCall(ST.burnout)) { ST.flash.push('📵 Telefon dzwonił, ale nie miałeś siły odbierać (wypalenie ' + Math.round(ST.burnout) + '%).'); ST.waited++; save(); renderMenu(); return; }
     if (!hit) { ST.waited++; save(); renderMenu(); return; }
     ST.waited = 0;
     const call = Jobs.rollCall(rnd, co().stars, Czas.isNight(ST.clock + 20)); call.client = Klienci.pick(rnd, Object.keys(CLIENTS), ST.rel); const cl = CLIENTS[call.client], jb = JOBS[call.job];
@@ -309,12 +320,12 @@
       }
     });
     const tb = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id]));
-    if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + tb.acc - mods.accPenalty + Zmeczenie.accMod(ST.fatigue) + Szkolenia.modsFor(ST.certs, cur.job.id).acc));
+    if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + tb.acc - mods.accPenalty + Zmeczenie.accMod(ST.fatigue) + Wypalenie.accMod(ST.burnout) + Szkolenia.modsFor(ST.certs, cur.job.id).acc));
     if (rnd() < Zmeczenie.nodChance(ST.fatigue)) { cur.extraDefects.push({ label: 'przysnąłeś przy robocie i coś ci umknęło', sev: 2, vis: 0.5 }); cur.notes.push('😴 Zasnąłeś na stojąco. Zmęczenie ' + Math.round(ST.fatigue) + '%. Czas na sen.'); }
     cur.timeAdj -= Math.round(opt.time * tb.time * 10) / 10;
     cur.picks.push({ stepId: cur.job.steps[cur.step].id, optionId: opt.id, accuracy });
     cur.time += opt.time; cur.cost += opt.cost;
-    cur.timeAdj += Math.round(opt.time * (Zmeczenie.timeMult(ST.fatigue) - 1) * 10) / 10; // zmęczony pracuje wolniej
+    cur.timeAdj += Math.round(opt.time * (Zmeczenie.timeMult(ST.fatigue) * Wypalenie.timeMult(ST.burnout) - 1) * 10) / 10; // zmęczony i wypalony pracuje wolniej
     // wystawienie na robotę: po połowie kroków wkurzony pomocnik znika
     if (cur.helperOn && cur.helper && cur.step + 1 === Math.floor(cur.job.steps.length / 2) && Ekipa.walksOut(cur.helper, rnd)) {
       cur.helperOn = false; cur.timeAdj += 6;
@@ -404,7 +415,7 @@
     ST.waited = 0;
     { const before = Klienci.level(Klienci.get(ST.rel, cur.client.id).trust); ST.rel = Klienci.afterJob(ST.rel, cur.client.id, r.stars, Osiedle.GOSSIP[cur.client.id]); const after = Klienci.level(Klienci.get(ST.rel, cur.client.id).trust);
       if (before !== after) cur.notes.push('🤝 ' + cur.client.name + ': teraz „' + after + '” (zaufanie ' + Klienci.get(ST.rel, cur.client.id).trust + ').'); }
-    ST.fatigue = Zmeczenie.gain(ST.fatigue, minutes, night);
+    ST.fatigue = Zmeczenie.gain(ST.fatigue, minutes, night); ST.burnout = Wypalenie.afterJob(ST.burnout, ST.fatigue, night);
     if (claim) ST.claims.push(Object.assign({ client: cur.client.name, due: ST.done + 1 }, claim));
     // ile zostaje po wszystkich kosztach i stawka godzinowa
     const eco = Stawka.jobEconomics({ payout: r.payout + te.bonus, penalty: te.penalty, materials: r.cost, transport: cur.transportCost, helper: cur.helperPaid, tools: toolWearCost, tax: cur.terms.invoice ? r.payout * Umowa.TAX_RATE : 0,

@@ -32,5 +32,10 @@
     if (choice === 'normal') return { won: rng() < clamp(0.5 + trust / 200, 0.2, 0.8), priceMult: 1 };
     throw new Error('Nieznana decyzja ' + choice);
   }
-  return { fresh, get, afterJob, level, payMult, weight, pick, contestChance, contest };
+  /* Klienci zapominają: zaufanie wraca do zera o rate pkt dziennie (dodatnie i ujemne). */
+  function decay(rel, days, rate) {
+    const n = {}; for (const [id, c] of Object.entries(rel)) { const d = days * (rate == null ? 0.5 : rate), t = c.trust > 0 ? Math.max(0, c.trust - d) : Math.min(0, c.trust + d); n[id] = { trust: Math.round(t), jobs: c.jobs }; }
+    return n;
+  }
+  return { fresh, get, decay, afterJob, level, payMult, weight, pick, contestChance, contest };
 });
