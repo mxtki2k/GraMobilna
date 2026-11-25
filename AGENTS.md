@@ -18,7 +18,7 @@ GODOT=/ścieżka/do/godot ./tests/run.sh
 ```
 Godot 4.4.1 headless wystarcza (bez edytora). Testy muszą przechodzić przed każdym commitem.
 Dodatkowo test dymny prototypu: `godot --headless --path . --script tests/smoke_game.gd`.
-Moduły prototypu Janusza: `node tests/fuszerka.test.js` (ocena fuszerki) i `node tests/ekipa.test.js` (ekipa i płace).
+Moduły prototypu Janusza: `node tests/fuszerka.test.js` (ocena fuszerki) i `node tests/ekipa.test.js` (ekipa i płace) i `node tests/swiat.test.js` (ryzyko, kierowcy, pamięć).
 
 ## Workflow
 1. Mała zmiana → test → zielone → commit.

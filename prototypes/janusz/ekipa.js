@@ -23,19 +23,21 @@
   const PAYDAY_EVERY = 3; // co tyle zleceń jest dzień wypłaty
 
   const CANDIDATES = [
-    { id: 'kacper', name: 'Kacper', role: 'praktykant', em: '🧑‍🎓', skill: 0.25, reliab: 0.6, greed: 0.6, wage: 60, patience: 55,
+    { id: 'kacper', name: 'Kacper', role: 'praktykant', em: '🧑‍🎓', skill: 0.25, reliab: 0.6, greed: 0.6, wage: 60, patience: 55, diligence: 0.5, alcohol: 0.1, license: false, driving: 0.3,
       quirk: 'Szybko się uczy, mało umie. Wystarczy mu „doświadczenie”.' },
-    { id: 'zbyszek', name: 'Szwagier Zbyszek', role: 'rodzina', em: '🧔', skill: 0.45, reliab: 0.45, greed: 0.8, wage: 90, patience: 65,
+    { id: 'zbyszek', name: 'Szwagier Zbyszek', role: 'rodzina', em: '🧔', skill: 0.45, reliab: 0.45, greed: 0.8, wage: 90, patience: 65, diligence: 0.35, alcohol: 0.55, license: true, driving: 0.5,
       quirk: 'Rodzina, więc nie wypada nie zapłacić. Lubi zaliczki, nie lubi poniedziałków.' },
-    { id: 'zdzisiek', name: 'Zdzisiek', role: 'złota rączka', em: '🛠️', skill: 0.6, reliab: 0.5, greed: 1.0, wage: 110, patience: 50,
+    { id: 'zdzisiek', name: 'Zdzisiek', role: 'złota rączka', em: '🛠️', skill: 0.6, reliab: 0.5, greed: 1.0, wage: 110, patience: 50, diligence: 0.55, alcohol: 0.75, license: true, driving: 0.75,
       quirk: 'Zdolny, ale co środę „coś mu wypadło”.' },
-    { id: 'staszek', name: 'Mistrz Staszek', role: 'fachowiec', em: '👷', skill: 0.9, reliab: 0.9, greed: 1.3, wage: 200, patience: 40,
+    { id: 'staszek', name: 'Mistrz Staszek', role: 'fachowiec', em: '👷', skill: 0.9, reliab: 0.9, greed: 1.3, wage: 200, patience: 40, diligence: 0.9, alcohol: 0.2, license: true, driving: 0.8,
       quirk: 'Najlepszy w branży. Nie znosi, kiedy ktoś gorszy dostaje więcej.' },
   ];
 
   function newWorker(c) {
     return { id: c.id, name: c.name, role: c.role, em: c.em, skill: c.skill, reliab: c.reliab, greed: c.greed,
-      wage: c.wage, patience: c.patience, quirk: c.quirk, mood: 70, owed: 0, strikes: 0 };
+      wage: c.wage, patience: c.patience, quirk: c.quirk, mood: 70, owed: 0, strikes: 0,
+      diligence: c.diligence, alcohol: c.alcohol, license: c.license, driving: c.driving,
+      gratitude: 0, grudge: 0, outJobs: 0 };
   }
 
   function moodLabel(m) {
@@ -70,7 +72,8 @@
       const mood = clamp(Math.round(after + parts.drift), 0, 100);
       const owedNow = Math.round(r.owed);
       const strikes = (mood < 15 && owedNow >= w.wage) ? (w.strikes || 0) + 1 : 0;
-      return { worker: Object.assign({}, w, { mood, owed: owedNow, strikes }), row: r, parts, delta: mood - w.mood };
+      const grudge = clamp((w.grudge || 0) + (envyHits ? 4 * envyHits : 0) + (r.shortfall > 0 ? 3 : 0) - (r.bonus > 0 ? 3 : 0), 0, 100);
+      return { worker: Object.assign({}, w, { mood, owed: owedNow, strikes, grudge }), row: r, parts, delta: mood - w.mood };
     });
     return {
       workers: out.map(o => o.worker),
@@ -82,9 +85,11 @@
 
   /* Prawdopodobieństwa: nie przyjdzie / wystawi na robotę w trakcie. */
   function risk(w) {
-    const absent = clamp((1 - w.reliab) * 0.45 + Math.max(0, 50 - w.mood) / 100 * 0.7, 0, 0.85);
+    const grudge = w.grudge || 0, grat = w.gratitude || 0;
+    const absent = clamp((1 - w.reliab) * 0.45 + Math.max(0, 50 - w.mood) / 100 * 0.7 + grudge / 250 - grat / 400, 0, 0.85);
     let walkout = w.mood < 35 ? (35 - w.mood) / 35 * 0.6 : 0;
     if (w.owed > w.wage * 2) walkout += 0.1;
+    walkout += grudge / 300 - grat / 400;
     return { absent, walkout: clamp(walkout, 0, 0.9) };
   }
   /* 'absent' | 'present'; wystawienie w trakcie losuje osobno walkoutRoll. */
@@ -92,9 +97,25 @@
   function walksOut(w, rng) { return rng() < risk(w).walkout; }
 
   /* Wpływ pomocnika na robotę: bonus celności w krokach „na wyczucie” i mnożnik czasu. */
-  function helperEffect(w) {
+  const ALC = { trzezwy: 0, kac: 0.35, 'po-piwie': 0.6, pijany: 1 };
+  function helperEffect(w, state) {
     const moodK = w.mood >= 60 ? 1 : 0.5 + w.mood / 120;
-    return { accBonus: (w.skill - 0.4) * 0.5 * moodK, timeFactor: 1 - 0.12 * w.skill * (w.mood >= 80 ? 1.25 : 1) };
+    const dil = w.diligence == null ? 0.5 : w.diligence, alc = ALC[state || 'trzezwy'] || 0;
+    return {
+      accBonus: (w.skill - 0.4) * 0.5 * moodK + (dil - 0.5) * 0.15 - alc * 0.4,
+      timeFactor: 1 - 0.12 * w.skill * (w.mood >= 80 ? 1.25 : 1) - 0.1 * (dil - 0.5) + alc * 0.1,
+    };
+  }
+  /* Niepracowity (albo pijany) pomocnik czasem po cichu zrobi coś po swojemu. Zwraca wadę albo null. */
+  function sloppy(w, state, rng) {
+    const dil = w.diligence == null ? 0.5 : w.diligence, alc = ALC[state || 'trzezwy'] || 0;
+    const p = clamp((1 - dil) * 0.25 + alc * 0.2, 0, 0.6);
+    return rng() < p ? { label: w.name + ' zrobił to „po swojemu”', sev: 2 + alc * 2, vis: 0.2 } : null;
+  }
+  /* Pracowity nie lubi, gdy szef każe robić fuszerkę. Zwraca spadek nastroju (0 gdy nie przeszkadza). */
+  function moralFriction(w, optionId) {
+    const dil = w.diligence == null ? 0.5 : w.diligence;
+    return optionId === 'fusz' && dil >= 0.75 ? 6 : 0;
   }
 
   /* Upominanie się o pieniądze. Zwraca null albo { kind, amount, text }. */
@@ -108,8 +129,8 @@
   /* Reakcja na odpowiedź szefa. */
   function answerDemand(w, accepted, amount) {
     const k = clamp(w.greed, 0.6, 1.4);
-    if (accepted) return Object.assign({}, w, { mood: clamp(w.mood + 12, 0, 100), owed: Math.max(0, w.owed - amount) });
-    return Object.assign({}, w, { mood: clamp(w.mood - Math.round(12 * k), 0, 100) });
+    if (accepted) return Object.assign({}, w, { mood: clamp(w.mood + 12, 0, 100), owed: Math.max(0, w.owed - amount), gratitude: clamp((w.gratitude || 0) + 4, 0, 100) });
+    return Object.assign({}, w, { mood: clamp(w.mood - Math.round(12 * k), 0, 100), grudge: clamp((w.grudge || 0) + 6, 0, 100) });
   }
 
   /* Odejście: po dwóch wypłatach z rzędu ze skrajnym nastrojem i zaległościami (strikes). */
@@ -136,5 +157,5 @@
   }
 
   return { PAYDAY_EVERY, CANDIDATES, newWorker, moodLabel, moodEmoji, applyPay, risk, attendance, walksOut,
-    helperEffect, demand, answerDemand, quits, sideGigs, defaultPay };
+    helperEffect, sloppy, moralFriction, ALC, demand, answerDemand, quits, sideGigs, defaultPay };
 });

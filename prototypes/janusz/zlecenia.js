@@ -6,7 +6,7 @@
   const rnd = Math.random;
 
   // ---------- stan ----------
-  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {} });
+  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1 });
   let ST = fresh();
   try { const r = localStorage.getItem('zlecenia_v1'); if (r) ST = Object.assign(fresh(), JSON.parse(r)); } catch (e) {}
   const save = () => { try { localStorage.setItem('zlecenia_v1', JSON.stringify(ST)); } catch (e) {} };
@@ -49,23 +49,61 @@
   function startJob(i) {
     const l = LEVELS[i];
     cur = { i, job: JOBS[l.job], client: CLIENTS[l.client], mult: l.mult, step: 0, picks: [], tokens: new Set(['broken']), time: 0, cost: 0,
-      helper: null, helperOn: false, timeAdj: 0, extraDefects: [], notes: [] };
+      helper: null, helperOn: false, timeAdj: 0, extraDefects: [], notes: [], states: {} };
+    ST.crew.forEach(w => { cur.states[w.id] = Swiat.rollState(w, { paydayEve: ST.lastPayDone === ST.done }, rnd); });
     $('menu').hidden = true; $('result').hidden = true; $('job').hidden = false;
     if (ST.crew.length) pickHelper(); else renderJob();
   }
   function pickHelper() {
     $('job').innerHTML = '<div class="bubble"><span class="av">' + cur.client.em + '</span><div><b>' + cur.job.title + '</b> · ' + cur.client.name + '<br><small style="color:var(--muted)">' + cur.job.intro + '</small></div></div>' +
       '<h2 style="font-size:1.4rem;text-transform:uppercase">Kogo bierzesz do pomocy?</h2><div class="hint">Dobry pomocnik poprawia celność i skraca robotę. Wkurzony może nie przyjść albo zostawić cię w połowie zlecenia.</div>' +
-      '<div class="opts">' + ST.crew.map(w => { const r = Ekipa.risk(w);
-        return '<button class="opt" data-w="' + w.id + '"><b>' + w.em + ' ' + w.name + ' · ' + Ekipa.moodEmoji(w.mood) + ' ' + Ekipa.moodLabel(w.mood) + '</b><span>' + w.role + ' · umiejętności ' + Math.round(w.skill * 100) + '%</span><span class="chips"><span class="chip">nie przyjdzie: ' + Math.round(r.absent * 100) + '%</span><span class="chip">zostawi w połowie: ' + Math.round(r.walkout * 100) + '%</span></span></button>'; }).join('') +
+      '<div class="opts">' + ST.crew.map(w => { const r = Ekipa.risk(w), stt = cur.states[w.id], out = w.outJobs > 0;
+        return '<button class="opt" data-w="' + w.id + '" ' + (out ? 'disabled' : '') + '><b>' + w.em + ' ' + w.name + ' · ' + Ekipa.moodEmoji(w.mood) + ' ' + Ekipa.moodLabel(w.mood) + (out ? ' · na zwolnieniu (' + w.outJobs + ' zlec.)' : '') + '</b><span>dziś: ' + Swiat.LABEL[stt] + (stt !== 'trzezwy' ? ' ⚠' : '') + ' · pracowitość ' + Math.round((w.diligence == null ? 0.5 : w.diligence) * 100) + '%</span><span>' + w.role + ' · umiejętności ' + Math.round(w.skill * 100) + '%</span><span class="chips"><span class="chip">nie przyjdzie: ' + Math.round(r.absent * 100) + '%</span><span class="chip">zostawi w połowie: ' + Math.round(r.walkout * 100) + '%</span></span></button>'; }).join('') +
       '<button class="opt" data-w=""><b>Sam, bez pomocnika</b><span>Spokojniej. Wolniej.</span></button></div>' +
       '<button id="back" style="background:transparent;min-height:40px;color:var(--muted)">Wróć do listy</button>';
     $('back').onclick = renderMenu;
     $('job').querySelector('.opts').onclick = e => { const b = e.target.closest('.opt'); if (!b) return;
       const w = ST.crew.find(x => x.id === b.dataset.w) || null; cur.helper = w;
       if (w) { if (Ekipa.attendance(w, rnd) === 'absent') { cur.helperOn = false; cur.timeAdj += 4; cur.notes.push(w.em + ' ' + w.name + ' nie przyszedł do roboty. Poczekałeś na niego 4 minuty i robisz sam.'); }
-        else { cur.helperOn = true; cur.notes.push(w.em + ' ' + w.name + ' jest na miejscu.'); } }
-      renderJob(); };
+        else { cur.helperOn = true; const stt = cur.states[w.id]; cur.notes.push(w.em + ' ' + w.name + ' jest na miejscu' + (stt !== 'trzezwy' ? ', ale jest ' + Swiat.LABEL[stt] + '.' : '.')); } }
+      transport(); };
+  }
+
+  // ---------- dylemat: kto zawozi materiały ----------
+  function transport() {
+    const drivers = ST.crew.filter(w => !(w.outJobs > 0) && !(cur.helper && w.id === cur.helper.id && !cur.helperOn));
+    const riskTxt = (w, mode) => { const stt = cur.states[w.id] || 'trzezwy', r = Swiat.driveRisk(w, stt, ST.world, mode); return '<span class="chip">wypadek: ' + Swiat.band(r.accident) + '</span><span class="chip">policja: ' + Swiat.band(r.police) + '</span>'; };
+    $('job').innerHTML = '<div class="bubble"><span class="av">' + cur.client.em + '</span><div><b>' + cur.job.title + '</b> · ' + cur.client.name + '<br><small style="color:var(--muted)">Materiały i narzędzia trzeba dowieźć na miejsce.</small></div></div>' +
+      '<h2 style="font-size:1.4rem;text-transform:uppercase">Kto zawozi?</h2><div class="hint">Ryzyko jest przybliżone. Policja częściej zatrzymuje, kiedy w okolicy były już kontrole.</div>' +
+      '<div class="opts">' +
+      '<button class="opt" data-d="owner"><b>🚗 Ty, sam</b><span>Masz prawo jazdy i trzeźwą głowę. Tracisz trochę czasu.</span><span class="chips"><span class="chip">⏱ +3 min</span><span class="chip">wypadek: niskie</span></span></button>' +
+      '<button class="opt" data-d="courier"><b>🚚 Kurier</b><span>Płacisz, nie myślisz.</span><span class="chips"><span class="chip">💰 70 zł</span><span class="chip">⏱ +2 min</span><span class="chip">bez ryzyka</span></span></button>' +
+      drivers.map(w => { const stt = cur.states[w.id] || 'trzezwy';
+        return '<button class="opt" data-d="' + w.id + '"><b>' + w.em + ' ' + w.name + ' · ' + Swiat.LABEL[stt] + (stt !== 'trzezwy' ? ' ⚠' : '') + '</b><span>prawo jazdy: ' + (w.license ? 'ma' : 'nie ma') + ' · jazda ' + Math.round((w.driving == null ? 0.5 : w.driving) * 100) + '%' + (ST.world.heat > 0.4 ? ' · uwaga: dużo patroli' : '') + '</span><span class="chips"><span class="chip">💰 za darmo</span>' + riskTxt(w, 'worker') + '</span></button>'; }).join('') + '</div>';
+    $('job').querySelector('.opts').onclick = e => { const b = e.target.closest('.opt'); if (!b) return; doDrive(b.dataset.d); };
+  }
+  function doDrive(id) {
+    const mode = id === 'owner' || id === 'courier' ? id : 'worker', w = mode === 'worker' ? ST.crew.find(x => x.id === id) : null;
+    const res = Swiat.resolveDrive(w, w ? (cur.states[w.id] || 'trzezwy') : 'trzezwy', ST.world, mode, rnd);
+    ST.money = Math.max(0, ST.money - res.cost); cur.timeAdj += res.timeAdj; cur.notes.push(...res.notes);
+    if (res.cost) cur.costExtra = (cur.costExtra || 0) + res.cost;
+    if (res.claim) ST.claims.push(Object.assign({ client: cur.client.name, due: ST.done + 1 }, res.claim));
+    Swiat.tickWorld(ST.world, res.heatDelta);
+    if (w && Object.keys(res.driverPatch).length) ST.crew = ST.crew.map(x => x.id === w.id ? Object.assign({}, x, res.driverPatch) : x);
+    if (w && cur.helper && w.id === cur.helper.id && res.driverPatch.outJobs) { cur.helperOn = false; cur.notes.push(w.name + ' nie pomoże w robocie.'); }
+    save(); renderTop();
+    const opts = w ? Swiat.aftermathOptions(w, res) : [];
+    if (!opts.length) { renderJob(); return; }
+    modalOpen = true;
+    $('mtitle').textContent = 'Co z ' + w.name + '?'; $('mtext').textContent = res.notes[res.notes.length - 1] + ' Rachunek: ' + zl(res.cost) + '. Decyzja szefa kształtuje, jak ekipa cię traktuje.';
+    $('mchoices').innerHTML = opts.map(o => '<button data-a="' + o.id + '">' + o.label + '<small>' + o.sub + '</small></button>').join('');
+    $('modal').hidden = false;
+    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return;
+      const out = Swiat.applyAftermath(ST.crew.find(x => x.id === w.id), b.dataset.a, res);
+      ST.money += out.money; cur.notes.push(out.note);
+      if (out.fired) { ST.crew = ST.crew.filter(x => x.id !== w.id); if (out.rep) ST.ratings.push(out.rep); if (cur.helper && cur.helper.id === w.id) cur.helperOn = false; }
+      else ST.crew = ST.crew.map(x => x.id === w.id ? out.worker : x);
+      save(); renderTop(); $('modal').hidden = true; modalOpen = false; renderJob(); };
   }
   function renderJob() {
     const { job, client, step } = cur, s = job.steps[step];
@@ -86,7 +124,11 @@
   function choose(opt) { if (opt.skill) timing(opt); else apply(opt, 0.6); }
   function apply(opt, accuracy) {
     if (cur.helperOn && cur.helper) {
-      const he = Ekipa.helperEffect(cur.helper);
+      const he = Ekipa.helperEffect(cur.helper, cur.states[cur.helper.id]);
+      const sl = Ekipa.sloppy(cur.helper, cur.states[cur.helper.id], rnd);
+      if (sl) { cur.extraDefects.push(sl); cur.notes.push('🙄 ' + sl.label + '.'); }
+      const fr = Ekipa.moralFriction(cur.helper, opt.id);
+      if (fr) { cur.helper = Object.assign({}, cur.helper, { mood: Math.max(0, cur.helper.mood - fr), grudge: Math.min(100, (cur.helper.grudge || 0) + 3) }); ST.crew = ST.crew.map(x => x.id === cur.helper.id ? cur.helper : x); cur.notes.push('😒 ' + cur.helper.name + ' krzywi się na fuszerkę: „Ja tak nie robię.”'); }
       if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + he.accBonus));
       cur.timeAdj -= Math.round(opt.time * (1 - he.timeFactor) * 10) / 10;
     }
@@ -136,6 +178,7 @@
     const comment = Fuszerka.clientComment(cur.client, r, rnd);
     const claim = Fuszerka.rollClaim(r, rnd);
     ST.money += r.profit; ST.ratings.push(r.stars); ST.done++;
+    ST.crew = Swiat.tickWorkers(ST.crew); Swiat.tickWorld(ST.world, 0);
     const prev = ST.best[cur.i];
     if (!prev || r.stars > prev.stars || (r.stars === prev.stars && r.index < prev.index)) ST.best[cur.i] = { stars: r.stars, index: r.index };
     ST.unlocked = Math.max(ST.unlocked, cur.i + 2);
@@ -168,7 +211,7 @@
   function crewCard(w, extra) {
     return '<div class="prow"><div class="hd"><span class="nm">' + w.em + ' ' + w.name + '</span><span>' + Ekipa.moodEmoji(w.mood) + ' ' + Ekipa.moodLabel(w.mood) + '</span></div>' +
       '<div class="mbar ' + moodCls(w.mood) + '"><i style="width:' + w.mood + '%"></i></div>' +
-      '<div class="hint">' + w.role + ' · umiejętności ' + Math.round(w.skill * 100) + '% · solidność ' + Math.round(w.reliab * 100) + '% · pensja ' + zl(w.wage) + (w.owed ? ' · <span class="warn">zaległości ' + zl(w.owed) + '</span>' : '') + '</div>' + (extra || '') + '</div>';
+      '<div class="hint">' + w.role + ' · umiejętności ' + Math.round(w.skill * 100) + '% · solidność ' + Math.round(w.reliab * 100) + '% · pracowitość ' + Math.round((w.diligence == null ? 0.5 : w.diligence) * 100) + '% · prawo jazdy: ' + (w.license ? 'tak' : 'nie') + ' · pensja ' + zl(w.wage) + (w.outJobs > 0 ? ' · <span class="warn">na zwolnieniu (' + w.outJobs + ')</span>' : '') + ((w.grudge || 0) >= 30 ? ' · <span class="warn">pamięta krzywdy</span>' : '') + ((w.gratitude || 0) >= 30 ? ' · czuje wdzięczność' : '') + (w.owed ? ' · <span class="warn">zaległości ' + zl(w.owed) + '</span>' : '') + '</div>' + (extra || '') + '</div>';
   }
   function renderCrew() {
     ['menu', 'job', 'result', 'payday'].forEach(x => $(x).hidden = true); $('crew').hidden = false;
@@ -233,7 +276,7 @@
     const left = ST.crew.filter(Ekipa.quits);
     left.forEach(w => { lines.push('<div class="banner">🚪 ' + w.name + ' odchodzi i opowiada po osiedlu, że jesteś kombinatorem. Reputacja spada.</div>'); ST.ratings.push(2); });
     ST.crew = ST.crew.filter(w => !Ekipa.quits(w));
-    ST.nextPay = ST.done + Ekipa.PAYDAY_EVERY; save(); renderTop();
+    ST.nextPay = ST.done + Ekipa.PAYDAY_EVERY; ST.lastPayDone = ST.done; save(); renderTop();
     $('payday').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Po wypłacie</h2><div class="defs">' + lines.join('') + '</div><button class="primary" id="payOk">Dalej</button>';
     $('payOk').onclick = renderMenu;
   }
@@ -289,6 +332,6 @@
 
   $('reset').onclick = () => { if ($('reset').dataset.s) { ST = fresh(); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; }, 3000); } };
 
-  window.__z = { get ST() { return ST; }, startJob, renderMenu, renderCrew, startPayday };
+  window.__z = { get ST() { return ST; }, get cur() { return cur; }, startJob, renderMenu, renderCrew, startPayday };
   renderMenu();
 })();

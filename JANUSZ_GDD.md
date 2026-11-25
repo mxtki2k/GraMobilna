@@ -89,3 +89,25 @@ i powolny powrót do cierpliwości. Niedopłata zostaje jako zaległość.
 Dylemat gracza: oszczędzanie na płacach poprawia kasę dziś, ale kosztuje jakość, terminy i ludzi jutro. Wyróżnianie jednych budzi zazdrość u pozostałych.
 
 Do strojenia: wysokość pensji względem zleceń, częstotliwość wypłat, siła zazdrości i fuch.
+
+## Zasada projektowa: gra systemowa, nie skryptowana
+
+Zamiast wpisywać „zdarzenie → reakcja”, opisujemy **cechy** (ludzie, klienci, świat), **reguły** (jak cechy zamieniają się w szanse) i **pamięć**
+(ślady zostające po zdarzeniach). Skutki wynikają z kombinacji, więc każda partia układa się inaczej.
+
+Przykładowe pętle, które działają już w prototypie:
+- **Wypłata → kac → kierowca po piwie:** po dniu wypłaty ludzie piją więcej, a zły nastrój też zwiększa szansę picia.
+- **Kryjesz kierowcę → wdzięczność rośnie, ale i picie:** „kryj” poprawia relację, a jednocześnie karmi problem. Potrącenie z pensji daje kasę i uraz.
+- **Zazdrość → uraz → nieobecności:** niesprawiedliwa wypłata zostawia ślad, który podnosi szansę, że ktoś nie przyjdzie lub cię wystawi.
+- **Wpadka → patrole:** po zatrzymaniu rośnie ryzyko kolejnych kontroli, potem powoli wygasa.
+- **Pracowitość:** pracowity pomocnik pomaga, ale nie lubi fuszerki. Leniwy częściej psuje po cichu, a pijany jeszcze częściej.
+
+### Dylemat „kto zawozi” (`prototypes/janusz/swiat.js`, testy: `node tests/swiat.test.js`)
+Przed każdym zleceniem z ekipą wybierasz kierowcę: ty, kurier (70 zł, bez ryzyka) albo pracownik (za darmo, z ryzykiem zależnym od jego stanu).
+Pracownik może być trzeźwy, na kacu, po piwie albo pijany, ma prawo jazdy lub nie. Szanse wypadku i policji są pokazane tylko orientacyjnie.
+Skutki: mandat, utrata prawa jazdy, auto na parkingu, wypadek (z reklamacją i urlopem zdrowotnym), a potem decyzja szefa: kryj / potrąć / ostrzeż / zwolnij.
+Gra przedstawia to jako satyrę z konsekwencjami, bez nagradzania jazdy po alkoholu.
+
+### Backlog mechanik w tym duchu
+Karta kontaktów i „znajomości” (szwagier w urzędzie), pożyczki i lichwiarz, VAT/skarbówka i „na fakturę”, narzędzia i ich zużycie, magazyn i materiały,
+sezonowość i pogoda, reputacja w osiedlu i plotki, konkurencja, bałagan i sprzątanie, przekręt w kosztorysie, prowokacje „tajemniczego klienta”.
