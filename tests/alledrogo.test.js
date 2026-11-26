@@ -167,11 +167,11 @@ t('opłacalność: używane po przejściach bywają okazją albo pułapką, stat
 });
 
 t('jeden system narzędzi: zestaw ręczny pasuje do wszystkich zleceń, makeItem tworzy sprawny przedmiot', () => {
-  assert.deepStrictEqual(A.TYPES.zestaw.jobs, ['kran', 'sciana', 'gniazdko', 'polka']);
+  assert.deepStrictEqual(A.TYPES.zestaw.jobs, A.ALL_JOBS); assert(A.ALL_JOBS.length >= 10);
   const it = A.makeItem({ brand: 'Walizka dziadka', tier: 2, cond: 65 });
   assert(it.status === 'sprawny' && it.unboxed && it.uses === 0 && it.cond === 65 && it.id > 100000);
   assert(A.makeItem({}).id !== A.makeItem({}).id);
-  for (const j of ['kran', 'sciana', 'gniazdko', 'polka']) assert.strictEqual(A.forJob([it], j).length, 1, j);
+  for (const j of A.ALL_JOBS) assert.strictEqual(A.forJob([it], j).length, 1, j);
 });
 
 t('pokrycie i jakość ekwipunku: więcej i lepsze narzędzia dają wyższy wynik, zepsute nie liczą się', () => {
@@ -194,7 +194,7 @@ t('serwis: sprawne wraca do 100%, zepsute naprawia się z 60% szansą i traci uk
 
 t('zestaw startowy: tani, pasuje do wszystkich zleceń, daje małą premię i szybko się zużywa; walizka dziadka jest lepsza', () => {
   const kit = A.starterKit(), suitcase = A.makeItem({ tier: 2, cond: 65, brand: 'Walizka dziadka', life: 25 });
-  for (const j of ['kran', 'sciana', 'gniazdko', 'polka']) assert.strictEqual(A.forJob([kit], j).length, 1, j);
+  for (const j of A.ALL_JOBS) assert.strictEqual(A.forJob([kit], j).length, 1, j);
   assert(kit.status === 'sprawny' && kit.unboxed && kit.tier === 1);
   assert(A.toolScore([kit]) > 0 && A.toolScore([kit]) < A.toolScore([suitcase]));
   assert(A.value(kit) < 100, 'wartość ' + A.value(kit));
@@ -204,4 +204,9 @@ t('zestaw startowy: tani, pasuje do wszystkich zleceń, daje małą premię i sz
   assert(A.starterKit().id !== A.starterKit().id);
 });
 
+t('narzędzia pokrywają wszystkie roboty z jobs.js, a każda specjalistyczna robota ma swoje narzędzie', () => {
+  const { JOBS } = require('../prototypes/janusz/jobs.js');
+  assert.deepStrictEqual(A.ALL_JOBS.slice().sort(), Object.keys(JOBS).sort());
+  for (const id of Object.keys(JOBS)) assert(Object.values(A.TYPES).filter(T => T.id !== 'zestaw' && T.jobs.indexOf(id) >= 0).length >= 1, 'brak narzędzia dla ' + id);
+});
 console.log('\n' + n + ' testów przeszło');

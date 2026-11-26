@@ -4,7 +4,7 @@ const F = require('../prototypes/janusz/fuszerka.js'), C = require('../prototype
 const T = require('../prototypes/janusz/terminy.js'), B = require('../prototypes/janusz/bus.js'), Z = require('../prototypes/janusz/zmeczenie.js');
 const W = require('../prototypes/janusz/wypalenie.js'), K = require('../prototypes/janusz/klienci.js'), Sz = require('../prototypes/janusz/szkolenia.js'), U = require('../prototypes/janusz/ubezpieczenie.js'), O = require('../prototypes/janusz/osiedle.js');
 const J = require('../prototypes/janusz/jobs.js'), { JOBS, CLIENTS } = J, Sur = require('./niespodzianki.js');
-const E = require('../prototypes/janusz/ekipa.js'), Sw = require('../prototypes/janusz/swiat.js'), Fin = require('../prototypes/janusz/finanse.js');
+const Al = require('../prototypes/janusz/alledrogo.js'), E = require('../prototypes/janusz/ekipa.js'), Sw = require('../prototypes/janusz/swiat.js'), Fin = require('../prototypes/janusz/finanse.js');
 const lcg = s => () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
 const DAYS = 60;
 
@@ -15,9 +15,9 @@ function run(pol, seed) {
   let clock = start, money = pol.start != null ? pol.start : 500, fat = 10, burn = 0, bus = B.fresh(), rel = {}, certs = {}, oc = U.toggle(U.fresh(), !!pol.oc), stars = [], rival = 25, jobsDone = 0, hoursWorked = 0, waited = 0;
   const m = { jobs: 0, income: 0, costs: 0, claims: 0, breakdowns: 0, naps: 0, late: 0, lost: 0, sleeps: 0, cutsGiven: 0, certCost: 0, ocPaid: 0, ocRecv: 0, starsSum: 0, fatSum: 0 };
   const hq = () => Object.assign(SIT.fresh(), { tier, assets: { bus: busLvl } });
-  const rt = () => SIT.rating(hq(), hist, stars, 0, 0.3);
+  const rt = () => SIT.rating(hq(), hist, stars, 0, Al.toolScore(inv));
   const rating = () => rt().stars;
-  let pendingClaim = null, hist = [], crew = [], fin = Fin.fresh(), hired = 0, loanTried = 0; Object.assign(m, { wages: 0, interest: 0, quits: 0, loan: 0 });
+  let pendingClaim = null, hist = [], crew = [], fin = Fin.fresh(), hired = 0, loanTried = 0, inv = pol.tools === 'none' ? [] : [Al.starterKit()], market = null, orders = [], world = Sw.newWorld(); Object.assign(m, { toolBreaks: 0, toolSpend: 0, accidents: 0, accCost: 0, fines: 0, outJobs: 0, wages: 0, interest: 0, quits: 0, loan: 0 });
   const spend = (cat, v) => { money -= v; m.costs += v; };
   while (clock - start < DAYS * 1440) {
     // sen
@@ -41,6 +41,13 @@ function run(pol, seed) {
     }
     if (pol.crew && crew.length < (pol.crewMax || 2) && hired < E.CANDIDATES.length) { const c = E.CANDIDATES[hired]; if (money >= c.wage * 4 + 300) { money -= c.wage; m.costs += c.wage; crew.push(E.newWorker(c)); hired++; ev['ekipa: ' + c.name] = dayNow(); } }
     if (pol.loan && !loanTried) { const L = Fin.LENDERS[pol.loan], amt = Math.min(pol.loanAmt || L.max, L.max), t = Fin.takeLoan(fin, pol.loan, amt, rating()); if (t.ok) { fin = t.fin; money += t.cash; m.loan = t.cash; loanTried = 1; ev['pożyczka ' + L.id] = dayNow(); } }
+    if (pol.tools === 'buy' || pol.tools === 'shop') {
+      market = Al.refresh(market, Math.floor((clock - start) / 1440));
+      for (const it of inv.slice()) if (it.status !== 'sprawny' && money > Al.repairCost(it) * 2 + 150) { const rp = Al.repair(it, money, r); if (rp.ok) { money -= rp.cost; m.toolSpend += rp.cost; m.costs += rp.cost; inv = inv.map(x => x.id === it.id ? rp.item : x); } }
+      const have = new Set(inv.filter(x => x.status === 'sprawny').map(x => x.type).concat(orders.map(o => o.type)));
+      const cand = market.listings.filter(l => l.mode === 'buynow' && (pol.tools !== 'shop' || l.seller.kind === 'sklep') && !have.has(l.type) && money >= l.price + l.shipping + 250).sort((a, b) => (Al.TYPES[b.type].jobs.length * Al.TYPES[b.type].acc) / (b.price + b.shipping) - (Al.TYPES[a.type].jobs.length * Al.TYPES[a.type].acc) / (a.price + a.shipping))[0];
+      if (cand) { const bn = Al.buyNow(cand, money); if (bn.ok) { money -= bn.cost; m.toolSpend += bn.cost; m.costs += bn.cost; orders.push(bn.order); market = Al.removeListing(market, cand.id); } }
+    }
     // czekanie na telefon
     for (;;) { const night = C.isNight(clock + 60); const p = Math.min(0.6, J.callChance(night, rating(), waited) + (pol.noTrust ? 0 : Math.min(0.06, Object.values(rel).filter(x => x.trust >= 50).length * 0.02))); clock += 60; fat = Z.rest(fat, 60, false); if (r() < p && r() >= W.missCall(burn)) { waited = 0; break; } waited++; if (clock - start >= DAYS * 1440) break; }
     if (clock - start >= DAYS * 1440) break;
@@ -50,23 +57,39 @@ function run(pol, seed) {
     let price = 1;
     if (r() < K.contestChance(rival, O.strength({ rating: rating(), tier: 0 }), trust)) { const res = K.contest(pol.contest, trust, r); if (!res.won) { m.lost++; rival += 1.5; continue; } price = res.priceMult; if (price < 1) m.cutsGiven++; }
     const job = JOBS[call.job], cl = CLIENTS[call.client], md = C.mods(night), cm = Sz.modsFor(certs, job.id), dueSpec = due ? T.make(job.deadline, jobStart, due, night) : null;
-    // dojazd
+    // dojazd: bus + kierowca (właściciel, pomocnik albo kurier) z wypadkami i mandatami ze swiat.js
     let timeAdj = 3, transport = 0; const tm = Z.timeMult(fat) * W.timeMult(burn);
-    if (!bus.broken && B.rollBreakdown(bus, busLvl, night, r)) { m.breakdowns++; const res = B.resolve('laweta', bus, night, r); transport += res.cost; timeAdj += res.timeAdj; bus = res.bus; }
-    if (!bus.broken) bus = B.drive(bus, busLvl, night); else { transport += 70; timeAdj += 2; }
-    // robota
+    const drv = pol.driver || 'owner';
     let helper = null, hs = 'trzezwy', he = null;
     if (crew.length) { const w = crew.find(x => !(x.outJobs > 0)); if (w) { hs = Sw.rollState(w, { night, paydayEve: jobsDone % 3 === 2 }, r); if (E.attendance(w, r, { night }) === 'present') { helper = w; he = E.helperEffect(w, hs); } } }
+    world.night = night; world.accMult = SIT.effects(hq()).accMult;
+    const mode = drv === 'courier' ? 'courier' : drv === 'worker' && helper ? 'worker' : 'owner';
+    if (mode !== 'courier') {
+      if (!bus.broken && B.rollBreakdown(bus, busLvl, night, r)) { m.breakdowns++; const res = B.resolve('laweta', bus, night, r); transport += res.cost; timeAdj += res.timeAdj; bus = res.bus; }
+      if (!bus.broken) bus = B.drive(bus, busLvl, night); else { transport += 70; timeAdj += 2; }
+    }
+    if (!(mode !== 'courier' && bus.broken)) {
+      const dr = Sw.resolveDrive(mode === 'worker' ? helper : null, mode === 'worker' ? hs : 'trzezwy', world, mode, r);
+      transport += dr.cost; timeAdj += dr.timeAdj; Sw.tickWorld(world, dr.heatDelta);
+      if (dr.accident) { m.accidents++; m.accCost += dr.cost; } else if (dr.police) { m.fines += dr.cost; }
+      if (dr.claim) pendingClaim = dr.claim;
+      if (mode === 'worker' && dr.incident) { const out = Sw.applyAftermath(helper, 'ostrzez', dr); transport -= out.money || 0; if (out.worker) crew = crew.map(w => w.id === helper.id ? out.worker : w); }
+      if (mode === 'worker' && Object.keys(dr.driverPatch).length) { crew = crew.map(w => w.id === helper.id ? Object.assign({}, w, dr.driverPatch) : w); if (dr.driverPatch.outJobs) { m.outJobs++; helper = null; he = null; } }
+    }
+    // robota
     const style = dueSpec && dueSpec.kind === 'ostry' && pol.rushSkips ? 'mieszanie' : pol.style;
     const pick = i => style === 'solid' ? 'dobrze' : style === 'mieszanie' ? (i % 2 ? 'skrot' : 'dobrze') : 'fusz';
-    let defects = []; const tmH = he ? he.timeFactor : 1;
+    const tools = Al.forJob(inv, job.id); let working = tools.slice(), toolDefects = [];
+    for (const t of tools) if (r() < Al.failChance(t)) { working = working.filter(x => x.id !== t.id); inv = inv.map(x => x.id === t.id ? Al.breakItem(x) : x); m.toolBreaks++; timeAdj += 4; toolDefects.push({ label: 'narzędzie padło w trakcie roboty', sev: 1.5, vis: 0.5 }); }
+    const tb = Al.totalBonus(working);
+    let defects = toolDefects.slice(); const tmH = he ? he.timeFactor : 1;
     if (helper) { const sl = E.sloppy(helper, hs, r); if (sl) defects.push(sl); if (E.walksOut(helper, r)) { defects.push({ label: 'bałagan po ekipie', sev: 1.5, vis: 0.6 }); timeAdj += 6; crew = crew.map(w => w.id === helper.id ? Object.assign({}, w, { mood: Math.max(0, w.mood - 10) }) : w); } }
     if (r() < Z.nodChance(fat)) { defects.push({ label: 'zasnął', sev: 2, vis: 0.5 }); m.naps++; }
-    const picks = job.steps.map((s, i) => ({ stepId: s.id, optionId: pick(i), accuracy: Math.max(0, Math.min(1, 0.7 + W.accMod(burn) + (r() - 0.5) * 0.3 - (night ? md.accPenalty : 0) + Z.accMod(fat) + cm.acc + (he ? he.accBonus : 0))) }));
+    const picks = job.steps.map((s, i) => ({ stepId: s.id, optionId: pick(i), accuracy: Math.max(0, Math.min(1, 0.7 + W.accMod(burn) + (r() - 0.5) * 0.3 - (night ? md.accPenalty : 0) + Z.accMod(fat) + cm.acc + (he ? he.accBonus : 0) + tb.acc)) }));
     const rtNow = rt(), payMult = rtNow.payMult * md.payMult * (dueSpec ? dueSpec.pay : 1) * (pol.noTrust ? 1 : K.payMult(trust)) * cm.pay * price;
     const sur = pol.noSur ? { time: 0, cost: 0, defects: [] } : Sur.roll(job.id, style === 'mieszanie' ? 'mieszanie' : style === 'solid' ? 'solid' : 'fusz', r, tm);
     defects = defects.concat(sur.defects);
-    const res = F.evaluate(Object.assign({}, job, { base: Math.round(job.base * call.mult) }), picks, cl, { payMult, satBonus: rtNow.satBonus, attentionMult: md.attention, hazardMult: md.hazard * cm.hazard, time: sur.time + timeAdj + Math.round(job.steps.reduce((a, st, i) => a + st.options.find(o => o.id === pick(i)).time, 0) * (tm * tmH - 1) * 10) / 10, defects });
+    const res = F.evaluate(Object.assign({}, job, { base: Math.round(job.base * call.mult) }), picks, cl, { payMult, satBonus: rtNow.satBonus, attentionMult: md.attention, hazardMult: md.hazard * cm.hazard * tb.hazardMult, time: sur.time + timeAdj + Math.round(job.steps.reduce((a, st, i) => a + st.options.find(o => o.id === pick(i)).time, 0) * (tm * tmH * (1 - tb.time) - 1) * 10) / 10, defects });
     const minutes = C.minutes(Math.max(1, res.time), night), te = T.evaluate(dueSpec, minutes, res.payout);
     if (te.penalty) m.late++;
     const tax = res.payout * 0.1, income = res.payout + te.bonus;
@@ -76,7 +99,9 @@ function run(pol, seed) {
     if (pendingClaim && r() < 0.5) { const cv = U.cover(oc, pendingClaim); oc = cv.oc; money -= cv.you; m.costs += cv.you; m.claims += cv.you; m.ocRecv += cv.insurer; pendingClaim = null; }
     // koniec zlecenia
     clock = jobStart + minutes; fat = Z.gain(fat, minutes, night); burn = W.afterJob(burn, fat, night); m.burnSum = (m.burnSum || 0) + burn; hoursWorked += minutes / 60;
-    rel = K.afterJob(rel, call.client, res.stars, O.GOSSIP[call.client]); stars.push(res.stars); hist.push({ index: res.index }); hist = hist.slice(-12); crew = Sw.tickWorkers(crew); m.jobs++; m.starsSum += res.stars; m.fatSum += fat; jobsDone++;
+    rel = K.afterJob(rel, call.client, res.stars, O.GOSSIP[call.client]); for (const t of working) inv = inv.map(x => x.id === t.id ? Al.wear(x) : x);
+    { const dl = Al.tickOrders(orders, r); orders = dl.orders; for (const a of dl.arrived) { if (a.lost) money += Al.refundLost(a.order).refund; else inv.push(a.item); } }
+    stars.push(res.stars); hist.push({ index: res.index }); hist = hist.slice(-12); crew = Sw.tickWorkers(crew); m.jobs++; m.starsSum += res.stars; m.fatSum += fat; jobsDone++;
     if (jobsDone % 3 === 0) {
       if (crew.length) { const sg = E.sideGigs(crew, r); money += sg.total; m.income += sg.total; m.gigs = (m.gigs || 0) + sg.total; }
       if (crew.length) { const pay = pol.crew === 'skimp' ? Object.fromEntries(crew.map(w => [w.id, Math.round(w.wage * 0.6)])) : E.defaultPay(crew, Math.floor(money)); const ap = E.applyPay(crew, pay, { patienceBonus: 0 }); money -= ap.spent; m.costs += ap.spent; m.wages += ap.spent; crew = ap.workers; const before = crew.length; crew = crew.filter(w => (w.strikes || 0) < 2); m.quits += before - crew.length; }
@@ -84,7 +109,7 @@ function run(pol, seed) {
         if (money > Fin.debt(fin) * 1.5 + 600 && fin.loans.length) for (const l of fin.loans.slice()) { const rp = Fin.repay(fin, l.id, l.principal, Math.floor(money)); if (rp.ok) { fin = rp.fin; money -= rp.paid; } } } if (pol.progress) { const up = SIT.TIERS[tier].upkeep + busLvl * 0 + (busLvl ? SIT.ASSETS.bus.levels[busLvl - 1].upkeep : 0); money -= up; m.costs += up; } if (oc.active) { const pr = U.premium(oc); money -= pr; m.costs += pr; m.ocPaid += pr; } oc = U.decay(oc); rival += 1.2; }
     if (money < 0) money = 0;
   }
-  return { ev, crewN: crew.length, debt: Fin.debt(fin), net: money - Fin.debt(fin), rating: rt().stars, perDay: (money - (pol.start != null ? pol.start : 500)) / DAYS, perHour: m.income - m.costs > -1e9 ? (money - (pol.start != null ? pol.start : 500)) / Math.max(1, hoursWorked) : 0, m, money };
+  return { ev, inv: inv.length, crewN: crew.length, debt: Fin.debt(fin), net: money - Fin.debt(fin), rating: rt().stars, perDay: (money - (pol.start != null ? pol.start : 500)) / DAYS, perHour: m.income - m.costs > -1e9 ? (money - (pol.start != null ? pol.start : 500)) / Math.max(1, hoursWorked) : 0, m, money };
 }
 const avg = (a, f) => a.reduce((s, x) => s + f(x), 0) / a.length;
 function scenario(name, pol, N = 150) {
@@ -125,6 +150,13 @@ console.log('\n— pożyczki (start od zera, 60 dni; zysk netto = kasa minus dł
 sc2('bez pożyczki', base2); for (const [l, a] of [['kuzyn', 1500], ['bank', 5000], ['gienek', 3000]]) sc2('pożyczka: ' + l + ' ' + a + ' zł', Object.assign({}, base2, { loan: l, loanAmt: a }));
 console.log('\n— reputacja i fuszerka (prawdziwa ocena firmy z siedziby.js)');
 for (const [n2, st] of [['mieszany', 'mieszanie'], ['solidny', 'solid'], ['fuszerka', 'fusz']]) sc2('styl ' + n2, Object.assign({}, base2, { style: st, rushSkips: st !== 'solid' }));
+
+console.log('\n— kierowcy (wypadki i mandaty ze swiat.js) i narzędzia z Alledrogo');
+const sc3 = (name, pol, N = 100) => { const res = []; for (let i = 0; i < N; i++) res.push(run(pol, 1300 + i)); const g = f => avg(res, f);
+  console.log(name.padEnd(38), String(Math.round(g(x => x.perDay))).padStart(5), 'zł/d  ★', g(x => x.rating).toFixed(2), ' wypadki', g(x => x.m.accidents).toFixed(1).padStart(5), '(', Math.round(g(x => x.m.accCost)), 'zł) mandaty', Math.round(g(x => x.m.fines)).toString().padStart(5), ' wyp.ekipy', g(x => x.m.outJobs).toFixed(1), ' narzędzia: awarie', g(x => x.m.toolBreaks).toFixed(1), 'wydano', Math.round(g(x => x.m.toolSpend)), ' netto', Math.round(g(x => x.net))); };
+const crew2 = Object.assign({}, base2, { crew: 'fair', crewMax: 2 });
+sc3('kierowca: ty sam', Object.assign({}, crew2, { driver: 'owner' })); sc3('kierowca: pomocnik', Object.assign({}, crew2, { driver: 'worker' })); sc3('kierowca: kurier (70 zł)', Object.assign({}, crew2, { driver: 'courier' }));
+sc3('narzędzia: brak', Object.assign({}, base2, { tools: 'none' })); sc3('narzędzia: tylko zestaw startowy', Object.assign({}, base2, { tools: 'starter' })); sc3('narzędzia: kupuje wszędzie (okazje)', Object.assign({}, base2, { tools: 'buy' })); sc3('narzędzia: tylko ze sklepu (bezpiecznie)', Object.assign({}, base2, { tools: 'shop' }));
 
 }
 module.exports = { run, avg };

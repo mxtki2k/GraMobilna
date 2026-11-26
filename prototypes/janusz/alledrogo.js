@@ -18,19 +18,22 @@
   const between = (lo, hi, rng) => Math.round(lo + (hi - lo) * rng());
 
   /* Co wolno kupić. jobs = na jakie zlecenia pomaga. hazardMult = redukcja zagrożenia wad (np. miernik prądu). */
-  const ALL_JOBS = ['kran', 'sciana', 'gniazdko', 'polka'];
+  const ALL_JOBS = ['kran', 'sciana', 'gniazdko', 'polka', 'syfon', 'drzwi', 'plytki', 'grzejnik', 'okno', 'malowanie'];
   const TYPES = {
-    zestaw: { id: 'zestaw', name: 'Zestaw narzędzi ręcznych', jobs: ALL_JOBS, base: 150, acc: 0.05, time: 0.04, brands: ['Walizka majstra', 'Zestaw 100 elementów', 'Skrzynka „Złota rączka”'] },
-    wiertarka: { id: 'wiertarka', name: 'Wiertarka udarowa', jobs: ['polka', 'sciana'], base: 180, acc: 0.07, time: 0.05, brands: ['Turbo-Wiert 3000', 'Hammer-Max', 'Ryś Pro'] },
-    poziomica: { id: 'poziomica', name: 'Poziomica laserowa', jobs: ['polka'], base: 120, acc: 0.10, time: 0.04, brands: ['Laser-Prosto', 'Libelka X', 'Równo.pl'] },
-    klucze: { id: 'klucze', name: 'Klucze do rur', jobs: ['kran'], base: 90, acc: 0.08, time: 0.06, brands: ['Hydro-Klucz', 'Rurman', 'Zestaw „Złota rączka”'] },
-    szlifierka: { id: 'szlifierka', name: 'Szlifierka do gipsu', jobs: ['sciana'], base: 220, acc: 0.08, time: 0.06, brands: ['Gładź-Max', 'Szlif-Turbo', 'Pyłomat'] },
-    probnik: { id: 'probnik', name: 'Miernik napięcia', jobs: ['gniazdko'], base: 110, acc: 0.08, time: 0.04, hazardMult: 0.6, brands: ['Volt-Test', 'Prąd-Stop', 'Mierzymy.pl'] },
-    szpachle: { id: 'szpachle', name: 'Zestaw szpachli', jobs: ['sciana'], base: 40, acc: 0.05, time: 0.03, brands: ['Szpachlarz', 'Gładko', 'Zestaw 12w1'] },
+    zestaw: { id: 'zestaw', name: 'Zestaw narzędzi ręcznych', jobs: ALL_JOBS, base: 150, acc: 0.075, time: 0.06, brands: ['Walizka majstra', 'Zestaw 100 elementów', 'Skrzynka „Złota rączka”'] },
+    wiertarka: { id: 'wiertarka', name: 'Wiertarka udarowa', jobs: ['polka', 'sciana', 'drzwi', 'okno'], base: 180, acc: 0.105, time: 0.075, brands: ['Turbo-Wiert 3000', 'Hammer-Max', 'Ryś Pro'] },
+    poziomica: { id: 'poziomica', name: 'Poziomica laserowa', jobs: ['polka', 'plytki', 'drzwi'], base: 120, acc: 0.15, time: 0.06, brands: ['Laser-Prosto', 'Libelka X', 'Równo.pl'] },
+    klucze: { id: 'klucze', name: 'Klucze do rur', jobs: ['kran', 'syfon', 'grzejnik'], base: 90, acc: 0.12, time: 0.09, brands: ['Hydro-Klucz', 'Rurman', 'Zestaw „Złota rączka”'] },
+    szlifierka: { id: 'szlifierka', name: 'Szlifierka do gipsu', jobs: ['sciana', 'drzwi', 'malowanie'], base: 220, acc: 0.12, time: 0.09, brands: ['Gładź-Max', 'Szlif-Turbo', 'Pyłomat'] },
+    probnik: { id: 'probnik', name: 'Miernik napięcia', jobs: ['gniazdko'], base: 110, acc: 0.12, time: 0.06, hazardMult: 0.6, brands: ['Volt-Test', 'Prąd-Stop', 'Mierzymy.pl'] },
+    przecinarka: { id: 'przecinarka', name: 'Przecinarka do płytek', jobs: ['plytki'], base: 260, acc: 0.135, time: 0.09, brands: ['Tnij-Prosto', 'Glazur-Max', 'Płytkomat'] },
+    pistolet: { id: 'pistolet', name: 'Pistolet do silikonu', jobs: ['okno', 'syfon', 'plytki'], base: 60, acc: 0.09, time: 0.06, brands: ['Silikon-Strzał', 'Fuga-Pro', 'Uszczelniacz 3000'] },
+    walki: { id: 'walki', name: 'Wałki i pędzle', jobs: ['malowanie'], base: 70, acc: 0.12, time: 0.075, brands: ['Malarz Pro', 'Zestaw „Pędzel i wałek”', 'Kolor-Max'] },
+    szpachle: { id: 'szpachle', name: 'Zestaw szpachli', jobs: ['sciana', 'malowanie', 'plytki'], base: 40, acc: 0.075, time: 0.045, brands: ['Szpachlarz', 'Gładko', 'Zestaw 12w1'] },
   };
   const CLASSES = [
-    { id: 'nowe', name: 'nowe', price: 1.0, cond: [100, 100], life: [40, 60] },
-    { id: 'jak_nowe', name: 'jak nowe', price: 0.8, cond: [88, 100], life: [20, 40] },
+    { id: 'nowe', name: 'nowe', price: 1.0, cond: [100, 100], life: [80, 120] },
+    { id: 'jak_nowe', name: 'jak nowe', price: 0.8, cond: [88, 100], life: [40, 80] },
     { id: 'uzywane', name: 'używane', price: 0.55, cond: [55, 90], life: [8, 20] },
     { id: 'po_przejsciach', name: 'po przejściach', price: 0.3, cond: [25, 60], life: [2, 9] },
     { id: 'na_czesci', name: 'na części', price: 0.12, cond: [0, 20], life: [0, 1] },
@@ -154,7 +157,7 @@
   const effTier = item => (item.fake ? Math.max(1, item.tier - 1) : item.tier);
   /* Premia narzędzia do zlecenia. */
   function bonus(item) {
-    if (item.status !== 'sprawny') return { acc: 0, time: 0, hazardMult: 1 };
+    if (item.status !== 'sprawny') return { acc: 0.0, time: 0.0, hazardMult: 1 };
     const T = TYPES[item.type], f = TIER_MULT[effTier(item) - 1] * (0.5 + 0.5 * clamp(item.cond, 0, 100) / 100);
     return { acc: T.acc * f, time: T.time * f, hazardMult: T.hazardMult || 1 };
   }

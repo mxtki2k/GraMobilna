@@ -213,7 +213,7 @@ Bot gra 60 dni gry, 150 przebiegów na scenariusz. Po strojeniu: sen przy 60–8
 - Symulacje (`tools/balans.js`, `tools/balans2.js`) uwzględniają niespodzianki (`--bez-niespodzianek` je wyłącza, `--style-table` pokazuje stawki wg stylu). Z niespodziankami solidna praca przewyższa mieszaną w większości robót, a zarobek dnia spada ok. 40%.
 
 ## Tempo progresji (`node tools/tempo.js`, wyniki w `tools/tempo_wyniki.txt`)
-- Jedno pokrętło: `PAY_SCALE = 1.25` w `jobs.js` mnoży wszystkie stawki robót. Po dodaniu niespodzianek zarobek spadł o ok. 40%, więc podniosłem stawki o 25%.
+- Jedno pokrętło: `PAY_SCALE = 1.4` (było 1.25, po dodaniu wypadków kierowców i narzędzi do symulacji) w `jobs.js` mnoży wszystkie stawki robót. Po dodaniu niespodzianek zarobek spadł o ok. 40%, więc podniosłem stawki o 25%.
 - Bot (mieszany styl, kursy najpierw, potem siedziba i bus), mediany dnia gry: pierwszy kurs dzień 1, wszystkie kursy ok. dzień 9, 1000 zł dzień 8, Blaszak (1200 zł) dzień 9, bus 1 dzień 12, Rudera dzień 15, bus 2 dzień 23, Biuro z placem dzień 35, bus 3 dzień 58, Hala z biurem dzień 95, Siedziba przy obwodnicy dzień ok. 200.
 - Solidny styl wychodzi tak samo szybko jak mieszany (dzień 9 / 14 / 36 / 99), więc uczciwość nie spowalnia progresji.
 - Bot nie modeluje ekipy, długów ani efektów wyższych poziomów siedziby poza +4% wypłaty na poziom, więc prawdziwy gracz może iść szybciej.
@@ -223,3 +223,9 @@ Bot gra 60 dni gry, 150 przebiegów na scenariusz. Po strojeniu: sen przy 60–8
 - **Ekipa:** pomocnik skraca robotę (współczynnik czasu 0,17 · umiejętności, było 0,12), a fuchy ekipy płacą (100 + 200 · umiejętności) · nastrój. Zysk wobec pracy solo: 1 pomocnik +6%, 2 pomocników +13%, 4 pomocników +15% (malejące korzyści). Pensje wypłacane w 60% kończą się odejściem całej ekipy i stratą ok. 3%.
 - **Pożyczki:** oprocentowanie na dzień wypłaty: bank 3% (od oceny 2,5 ★, limit 5000), kuzyn 5% (1500), pan Gienek 18% (3000). Dług rośnie najwyżej do dwukrotności limitu. W symulacji pożyczki nie przyspieszają progresji: inwestycje (kursy ok. +15%, siedziba +4% na poziom) zwracają się wolniej niż odsetki, więc pożyczka to ratunek, nie droga do bogactwa. Gienek to pułapka: 39 z 60 przebiegów dociera do 2. poziomu siedziby, a do 3. tylko 6.
 - Wyniki: `tools/tempo_ekipa_wyniki.txt` (EKIPA=fair:2), `tools/tempo_pozyczka_wyniki.txt` (POZYCZKA=bank:5000).
+
+## Wypadki kierowców i narzędzia w symulacji
+- Symulacja (`tools/balans2.js`) używa teraz `swiat.js` (wypadki, mandaty, pijany kierowca, wypadnięcie ekipy z gry) i `alledrogo.js` (zakupy, zużycie, awarie, serwis). Kierowca: sam +0%, pomocnik −21% (ok. 10 wypadków i 3 tys. zł mandatów na 60 dni), kurier −15%. Kierowanie samemu jest najlepsze, pomocnik opłaca się tylko trzeźwy.
+- Odkrycie: narzędzia z Alledrogo obejmowały tylko 4 pierwsze roboty. Dodano pokrycie dla wszystkich 10 (`ALL_JOBS`) oraz trzy nowe narzędzia: przecinarka do płytek, pistolet do silikonu, wałki i pędzle (z ikonami).
+- Narzędzia były nieopłacalne (zakup przynosił −3,6% netto). Premie ×1,5, trwałość nowych i „jak nowych” ×2: teraz kupno tylko ze sklepu daje ok. +5,6% netto, kupowanie „okazji” wszędzie jest neutralne (ale daje wyższą ocenę firmy), a sam zestaw startowy ok. +0,5%.
+- Plan dłuższej rozgrywki i wskazówki, jak pracować taniej: `PLAN_ROZGRYWKI.md`.
