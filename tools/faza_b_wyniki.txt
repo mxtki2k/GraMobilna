@@ -1,15 +1,26 @@
 Ekipa pracuje sama przez 30 dni (tablica 5 ofert dziennie). Zysk netto = wypłata − podatek − materiały − paliwo − reklamacje.
 
 skład                              zlec/d  ★    zysk brutto/d  pensje/d  zysk netto/d  (po pensji)  reklamacje/d  nieobecności
-kacper                               2.5   3.3        203        40          203        163          366       0.59
-zbyszek                              2.2   3.3        184        60          184        124          341       0.74
-zdzisiek                             2.4   3.5        123        73          123         50          470       0.71
-staszek                              3.3   4.1        500       133          500        367          311       0.17
-kacper+zbyszek                       3.6   3.3        278       100          278        178          597       1.09
-zdzisiek+staszek                     4.4   3.8        379       207          379        172          786       0.66
-kacper+zbyszek+zdzisiek              4.4   3.3        144       173          144        -29         1006       1.29
-kacper+zbyszek+zdzisiek+staszek      4.9   3.5        236       307          236        -71         1079       1.18
+kacper                               2.5   3.3        223        40          223        183          340       0.59
+zbyszek                              2.2   3.4        195        60          195        135          320       0.74
+zdzisiek                             2.4   3.6        142        73          142         69          439       0.70
+staszek                              3.2   4.3        532       133          532        398          256       0.16
+kacper+zbyszek                       3.6   3.3        293       100          293        193          578       1.09
+zdzisiek+staszek                     4.4   3.9        408       207          408        201          753       0.65
+kacper+zbyszek+zdzisiek              4.4   3.4        174       173          174          0          968       1.31
+kacper+zbyszek+zdzisiek+staszek      4.9   3.6        258       307          258        -49         1063       1.18
 
 Porównanie przydziału (zdzisiek+staszek): dopasowane vs po kolei
-dopasowane   netto po pensji/d 172 ★ 3.83
-kolejno      netto po pensji/d 121 ★ 3.80
+dopasowane   netto po pensji/d 201 ★ 3.91
+kolejno      netto po pensji/d 161 ★ 3.89
+
+Rozmiar tablicy (siedziba): zdzisiek+staszek, dopasowane
+siedziba 0 (4 ofert) zlec/d 3.7  netto po pensji/d 162
+siedziba 2 (6 ofert) zlec/d 4.8  netto po pensji/d 336
+siedziba 5 (9 ofert) zlec/d 5.6  netto po pensji/d 492
+
+Doświadczenie ekipy: średnia ocena zleceń w 1. i ostatnim tygodniu (kursy firmy zdobyte)
+kacper             tydzień 1: ★ 3.33  tydzień 5: ★ 3.41
+zbyszek            tydzień 1: ★ 3.42  tydzień 5: ★ 3.48
+zdzisiek           tydzień 1: ★ 3.58  tydzień 5: ★ 3.70
+kacper+zbyszek     tydzień 1: ★ 3.31  tydzień 5: ★ 3.36

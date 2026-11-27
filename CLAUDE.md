@@ -28,3 +28,7 @@ Decyzja człowieka: robimy sklep z ubraniami. Im drożej i lepiej ubrany szef, t
 - Dane zestawów jako tabela, ikony 16x16 w `pixel.js` (test `pixel.test.js` pilnuje ikon), UI jak szafa w `zlecenia.js`.
 - Kryterium: najdroższy strój nie wygrywa wszędzie (tanio ubrany Mirek-fachowiec ma sens), a firmowe ciuchy zwracają się w przetargach.
 - Status: ZROBIONE (faza E): `ubrania.js`, `tests/ubrania.test.js`, `tools/ubrania_sim.js`, ekran „Szafa i sklep” w `zlecenia.js`. Nie ma jeszcze nowego wariantu portretu gracza (zmienia się ikona i tekst, nie postać).
+
+### Domknięte braki (faza B i C)
+Plan dnia z osią czasu, XP ekipy, wypadki w trakcie zleceń ekipy, tablica rosnąca z siedzibą i kontrakty równolegle zrobione (patrz `JANUSZ_GDD.md`, sekcja „Domknięcie braków faz B i C”).
+Nadal nie ma: portretu gracza zmieniającego się z ubraniem, dedykowanych scen pixel art dla robót z generatora, wersji na Godota.

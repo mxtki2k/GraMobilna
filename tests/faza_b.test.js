@@ -42,4 +42,18 @@ t('uprawnienia do robót: praktykant nie dostanie gniazdka ani płytek, mistrz w
   assert(Z.canDo(k, 'kran') && !Z.canDo(k, 'gniazdko') && !Z.canDo(k, 'plytki') && Z.canDo(z, 'plytki') && !Z.canDo(z, 'gniazdko') && Z.canDo(d, 'gniazdko'));
   for (const id of Object.keys(JOBS)) assert(Z.canDo(st, id), id);
 });
+t('tablica rośnie z siedzibą: 4 oferty + 1 na poziom, max 9', () => { assert.deepStrictEqual([0, 1, 3, 5, 9].map(Z.boardSize), [4, 5, 7, 9, 9]); });
+t('doświadczenie ekipy: gwiazdki, pomocnik połowa, wyższy poziom daje jakość i trudniejsze roboty (poziom ≥ 2 tylko z kursem firmy)', () => {
+  let w = worker('kacper'); w = Z.addXp(w, 'kran', 4); assert.strictEqual(w.xp.hydraulika, 4); w = Z.addXp(w, 'syfon', 4, true); assert.strictEqual(w.xp.hydraulika, 6); assert.strictEqual(Z.addXp(w, 'nie-ma', 5), w);
+  const exp = Object.assign({}, worker('kacper'), { xp: { hydraulika: 100, wykonczenia: 100 } }), nov = worker('kacper');
+  assert.strictEqual(Z.lvl(exp, 'kran', {}), 1); assert.strictEqual(Z.lvl(exp, 'kran', { hydr: true }), 3); assert.strictEqual(Z.lvl(nov, 'kran', { hydr: true }), 0);
+  assert(Z.quality(exp, 'trzezwy', { job: 'kran' }, { hydr: true }) > Z.quality(nov, 'trzezwy', { job: 'kran' }, { hydr: true }) && Z.accuracy(exp, 'trzezwy', { job: 'kran' }, { hydr: true }) > Z.accuracy(nov, 'trzezwy', { job: 'kran' }, { hydr: true }));
+  assert(!Z.canDo(nov, 'plytki', { wyk: true }) && !Z.canDo(Object.assign({}, nov, { xp: { wykonczenia: 15 } }), 'plytki', {}) && Z.canDo(Object.assign({}, nov, { xp: { wykonczenia: 100 } }), 'sciana', { wyk: true }));
+  assert(Z.canDo(Object.assign({}, worker('zbyszek'), { xp: { wykonczenia: 100 } }), 'gniazdko', {}) === false, 'gniazdko zostaje poza zasięgiem bez poziomu elektryki');
+});
+t('plan dnia: bloki przycinane do doby, procenty osi, bloki spoza doby pomijane', () => {
+  const d = 1440 * 2, items = [{ row: 'Ty', start: d + 540, end: d + 660, label: 'etap', kind: 'kontrakt' }, { row: 'Kacper', start: d - 120, end: d + 120, label: 'noc', kind: 'ekipa' }, { row: 'X', start: d + 2000, end: d + 2100, label: 'jutro', kind: 'ekipa' }, { row: 'Y', start: d + 100, end: d + 100, label: 'zero', kind: 'ekipa' }];
+  const p = Z.buildPlan(d, items); assert.strictEqual(p.length, 2); const a = p.find(x => x.row === 'Ty'), b = p.find(x => x.row === 'Kacper');
+  assert(a.left === 37.5 && a.width === 8.3 && a.from === 540 && a.to === 660); assert(b.from === 0 && b.to === 120 && b.left === 0);
+});
 console.log('\n' + n + ' testów przeszło');

@@ -23,7 +23,19 @@
       { job: 'kran', mult: 2.2, day: 0, time: '09:00' }, { job: 'sciana', mult: 2.4, day: 1, time: '09:00' }, { job: 'okno', mult: 2.3, day: 3, time: '09:00', due: 'ostry' }, { job: 'plytki', mult: 2.4, day: 4, time: '08:00' }, { job: 'drzwi', mult: 2.3, day: 6, time: '09:00' }, { job: 'malowanie', mult: 2.4, day: 8, time: '09:00', due: 'normalny' } ] },
   };
   const premiumOf = c => c.premium || PREMIUM, trancheOf = c => Math.round(premiumOf(c) * (1 - DEPOSIT) * 10000) / 10000, AUDIT_BONUS = 0.15, AUDIT_FAIL = 0.35;
-  const fresh = () => ({ active: null, done: {} });
+  const fresh = () => ({ active: null, others: [], done: {} });
+  /* Ile kontraktów naraz: 1, od siedziby 2 – dwa, od 4 – trzy. */
+  const slots = tier => (tier >= 4 ? 3 : tier >= 2 ? 2 : 1);
+  const countActive = state => (state.active ? 1 : 0) + (state.others || []).length;
+  const canAccept = (state, limit) => countActive(state) < (limit || 1);
+  /* Po zakończeniu lub rezygnacji kolejny kontrakt z kolejki staje się aktywny. */
+  const promote = state => (!state.active && (state.others || []).length ? Object.assign({}, state, { active: state.others[0], others: state.others.slice(1) }) : state);
+  /* Przełączenie aktywnego kontraktu (każdy ma własny kalendarz etapów). */
+  function switchTo(state, id) {
+    const i = (state.others || []).findIndex(a => a.id === id); if (i < 0) return state;
+    const others = state.others.slice(); others.splice(i, 1); if (state.active) others.unshift(state.active);
+    return Object.assign({}, state, { active: state.others[i], others });
+  }
   const hm = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 
   /* Wycena: nominalna suma, zaliczka (część oczekiwanej wypłaty), mnożnik transzy za etap. jobs: JOBS z jobs.js (stawki już przeskalowane). */
@@ -35,13 +47,15 @@
   const available = (done, stars) => Object.values(CONTRACTS).filter(c => !c.tender && (done || 0) >= c.minDone);
 
   /* Przyjęcie: zapisuje stan aktywnego kontraktu. startClock = chwila przyjęcia. */
-  function accept(state, id, clock, jobs, opts) {
+  function accept(state, id, clock, jobs, opts, limit) {
     opts = opts || {};
     const c = CONTRACTS[id]; if (!c) return { ok: false, reason: 'Nie ma takiego kontraktu.' };
-    if (state.active) return { ok: false, reason: 'Masz już aktywny kontrakt.' };
-    if (state.done[id] && state.done[id].open) return { ok: false, reason: 'Ten kontrakt już trwa.' };
+    if (!canAccept(state, limit)) return { ok: false, reason: 'Masz już aktywny kontrakt' + ((limit || 1) > 1 ? ' (limit: ' + limit + ')' : '') + '.' };
+    if ((state.active && state.active.id === id) || (state.others || []).some(a => a.id === id)) return { ok: false, reason: 'Ten kontrakt już trwa.' };
     const q = quote(c, jobs), pmul = opts.priceMult || 1, day0 = Math.floor(clock / 1440) * 1440; q.deposit = Math.round(q.deposit * pmul);
-    return { ok: true, deposit: q.deposit, quote: q, state: Object.assign({}, state, { active: { id, stage: 0, acceptedAt: clock, deadlineAt: day0 + c.deadline * 1440 + 1439, deposit: q.deposit, nominal: q.nominal, results: [], terms: null, priceMult: pmul, wadium: opts.wadium || 0 } }) };
+    const rec = { id, stage: 0, acceptedAt: clock, deadlineAt: day0 + c.deadline * 1440 + 1439, deposit: q.deposit, nominal: q.nominal, results: [], terms: null, priceMult: pmul, wadium: opts.wadium || 0 };
+    const st = state.active ? Object.assign({}, state, { others: (state.others || []).concat([state.active]), active: rec }) : Object.assign({}, state, { active: rec });
+    return { ok: true, deposit: q.deposit, quote: q, state: st };
   }
   /* Poziom (jak w jobs.js LEVELS) dla bieżącego etapu: godzina startu wynika z kalendarza kontraktu. */
   function stageLevel(state, clock) {
@@ -77,12 +91,12 @@
     if (lateDays) notes.push('Kontrakt spóźniony o ' + lateDays + ' dni: kara ' + latePenalty + ' zł.');
     if (bonus) notes.push('Odbiór bez poprawek i w terminie: premia ' + bonus + ' zł.');
     const net = bonus - rework - latePenalty - auditPenalty, done = Object.assign({}, state.done, { [a.id]: { stars, count: ((state.done[a.id] || {}).count || 0) + 1, best: Math.max((state.done[a.id] || {}).best || 0, stars) } });
-    return { stars, avg: Math.round(avg * 100) / 100, found, hiddenTotal: all.length, rework, lateDays, latePenalty, bonus, auditPenalty, failed, wadiumLost, wadiumBack, net, notes, state: Object.assign({}, state, { active: null, done }) };
+    return { stars, avg: Math.round(avg * 100) / 100, found, hiddenTotal: all.length, rework, lateDays, latePenalty, bonus, auditPenalty, failed, wadiumLost, wadiumBack, net, notes, state: promote(Object.assign({}, state, { active: null, done })) };
   }
   /* Rezygnacja w trakcie: oddajesz zaliczkę (gotówką, jeśli ją masz) i płacisz karę umowną. */
   function cancel(state) {
     const a = state.active, penalty = Math.round(a.deposit + a.nominal * CANCEL_PCT + (a.wadium || 0));
-    return { penalty, deposit: a.deposit, state: Object.assign({}, state, { active: null }) };
+    return { penalty, deposit: a.deposit, state: promote(Object.assign({}, state, { active: null })) };
   }
-  return { premiumOf, trancheOf, AUDIT_BONUS, AUDIT_FAIL, PREMIUM, DEPOSIT, TRANCHE, LATE_PCT, LATE_CAP, BONUS, CONTRACTS, fresh, quote, available, accept, stageLevel, recordStage, final, cancel };
+  return { slots, countActive, canAccept, promote, switchTo, premiumOf, trancheOf, AUDIT_BONUS, AUDIT_FAIL, PREMIUM, DEPOSIT, TRANCHE, LATE_PCT, LATE_CAP, BONUS, CONTRACTS, fresh, quote, available, accept, stageLevel, recordStage, final, cancel };
 });

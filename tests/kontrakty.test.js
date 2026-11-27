@@ -66,4 +66,14 @@ t('losowy odbiór: im mniej uważny klient, tym rzadziej wyłapuje ukryte wady',
   const cnt = cl => { let f = 0; for (let i = 0; i < 400; i++) f += run([5, 5, 5], hid, 0, cl, rg).found.length; return f / 400; };
   const m = cnt(CLIENTS.mirek), s = cnt(CLIENTS.sebix), k = cnt(CLIENTS.karyna), g = cnt(CLIENTS.grazyna); assert(m < s && s < k && k < g, [m, s, k, g].join());
 });
+t('wiele kontraktów: limit z poziomu siedziby, drugi kontrakt trafia do kolejki, przełączanie i awans po zakończeniu', () => {
+  assert.deepStrictEqual([0, 1, 2, 3, 4, 5].map(K.slots), [1, 1, 2, 2, 3, 3]);
+  let s = K.accept(K.fresh(), 'lazienka', 0, JOBS, {}, 2).state; assert(!K.accept(s, 'lazienka', 0, JOBS, {}, 2).ok && /już trwa/.test(K.accept(s, 'lazienka', 0, JOBS, {}, 2).reason) && !K.accept(s, 'kuchnia', 0, JOBS, {}, 1).ok);
+  const b = K.accept(s, 'kuchnia', 5, JOBS, {}, 2); assert(b.ok && b.state.active.id === 'kuchnia' && b.state.others.length === 1 && b.state.others[0].id === 'lazienka' && K.countActive(b.state) === 2 && !K.canAccept(b.state, 2) && K.canAccept(b.state, 3));
+  const sw = K.switchTo(b.state, 'lazienka'); assert(sw.active.id === 'lazienka' && sw.others[0].id === 'kuchnia' && K.switchTo(b.state, 'nie-ma') === b.state);
+  const c = K.cancel(b.state); assert(c.state.active.id === 'lazienka' && c.state.others.length === 0);
+  let t2 = sw; const cc = K.CONTRACTS.lazienka; cc.stages.forEach(() => { t2 = K.recordStage(t2, { stars: 5, index: 20, defects: [] }, 400).state; }); const f = K.final(t2, 0, CLIENTS.mirek, () => 0.5);
+  assert(f.state.active.id === 'kuchnia' && f.state.others.length === 0 && f.state.done.lazienka.count === 1);
+  assert(K.stageLevel(b.state, 0).contract.id === 'kuchnia' && K.stageLevel(sw, 0).contract.id === 'lazienka');
+});
 console.log('\n' + n + ' testów przeszło');

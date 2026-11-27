@@ -60,7 +60,7 @@
 
   // ---------- poziomy ----------
   let cur = null; // bieżące zlecenie
-  const ALL = ['menu', 'job', 'result', 'crew', 'payday', 'hq', 'fin', 'os', 'story', 'alle', 'prestige', 'wardrobe'];
+  const ALL = ['menu', 'job', 'result', 'crew', 'payday', 'hq', 'fin', 'os', 'story', 'alle', 'prestige', 'wardrobe', 'plan'];
   const co = () => { const r = Siedziba.rating(ST.hq, ST.hist, ST.ratings, ST.claims.length, Alledrogo.toolScore(ST.inv)); r.stars = Math.min(5, Math.round((r.stars + 0.15 * Ubrania.crewCred(ST.wardrobe, ST.crew, ST.hq.up.szyld || 0)) * 100) / 100); return r; };
   function renderTop() {
     $('money').textContent = zl(ST.money);
@@ -87,6 +87,7 @@
     bindContracts(); bindBoard(); bindTenders();
     { const ev = Sezon.active(ST.clock); if (ev.length) $('menu').insertAdjacentHTML('afterbegin', ev.map(e => '<div class="banner">' + e.em + ' <b>' + e.name + '</b>: ' + e.text + (e.demand ? ' Popyt: ' + Object.entries(e.demand).map(([j, m]) => (JOBS[j] ? JOBS[j].title.toLowerCase() : j) + ' ×' + String(m).replace('.', ',')).join(', ') + '.' : '') + (e.pay ? ' Wypłaty ×' + String(e.pay).replace('.', ',') + '.' : '') + (e.toolPrice ? ' Narzędzia ×' + String(e.toolPrice).replace('.', ',') + '.' : '') + '</div>').join('')); }
     $('menu').insertAdjacentHTML('beforeend', waitHTML());
+    $('menu').insertAdjacentHTML('beforeend', '<button id="goPlan" style="min-height:48px">📅 Plan dnia (kontrakty i ekipa)</button>'); $('goPlan').onclick = () => renderPlan(0);
     $('menu').insertAdjacentHTML('beforeend', '<button id="goWardrobe" style="min-height:48px">👔 Szafa i sklep z ubraniami</button>'); $('goWardrobe').onclick = renderWardrobe;
     $('menu').insertAdjacentHTML('beforeend', '<button id="goPrestige" style="min-height:48px">🏆 Prestiż: ' + META.points + ' pkt · gra nr ' + META.games + '</button>'); $('goPrestige').onclick = renderPrestige;
     $('wait').onclick = waitHour; $('sleep').onclick = sleepNow; $('dayoff').onclick = dayOffNow; $('vac').onclick = vacationNow;
@@ -98,23 +99,23 @@
   const crewDeps = () => ({ evaluate: Fuszerka.evaluate, rollClaim: Fuszerka.rollClaim, minutes: u => Czas.minutes(u, false), jobs: JOBS, clients: CLIENTS });
   function ensureBoard() {
     const day = Czas.dateOf(ST.clock).dayIndex; if (ST.board.day === day) return;
-    ST.board = { day, offers: ZlecEkipy.makeBoard(day, rnd, co().stars, Object.keys(JOBS), Object.keys(CLIENTS), 5) };
+    ST.board = { day, offers: ZlecEkipy.makeBoard(day, rnd, co().stars, Object.keys(JOBS), Object.keys(CLIENTS), ZlecEkipy.boardSize(ST.hq.tier)) };
   }
   function boardHTML() {
     if (!ST.crew.length) return '';
     ensureBoard();
     const h = '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Ekipa na zleceniach</h3>';
     const act = ST.crewJobs.slice().sort((a, b) => a.endAt - b.endAt).map(j => { const w = ST.crew.find(x => x.id === j.workerId); return '<div class="erow"><span>' + (w ? w.em + ' ' + w.name : '?') + ': ' + JOBS[j.offer.job].title + ' · ' + CLIENTS[j.offer.client].name + ' (' + ZlecEkipy.DISTRICTS[j.offer.district] + ')</span><b>' + (j.endAt > ST.clock ? 'do ' + Czas.hm(j.endAt) : 'gotowe!') + '</b></div>'; }).join('');
-    const offers = ST.board.offers.map(o => { const job = JOBS[o.job], free = ST.crew.filter(w => !crewBusy(w) && !(w.outJobs > 0) && ZlecEkipy.canDo(w, o.job));
+    const offers = ST.board.offers.map(o => { const job = JOBS[o.job], free = ST.crew.filter(w => !crewBusy(w) && !(w.outJobs > 0) && ZlecEkipy.canDo(w, o.job, ST.certs));
       return '<button class="lvl" data-offer="' + o.id + '" ' + (free.length ? '' : 'disabled') + '><span class="av">' + CLIENTS[o.client].em + '</span><span><b>' + job.title + '</b><small>' + CLIENTS[o.client].name + ' · ' + ZlecEkipy.DISTRICTS[o.district] + ' · ok. ' + zl(job.base * o.mult) + '</small><small>trudność ' + Math.round(ZlecEkipy.difficulty(o.job) * 100) + '% · ' + (free.length ? 'wolnych: ' + free.length : 'brak wolnych pracowników z uprawnieniami') + '</small></span><span class="res">zleć</span></button>'; }).join('');
     return h + '<div class="hint">Pracownicy robią proste zlecenia sami, w dzień (8–17), z dojazdem. Jakość zależy od umiejętności, trzeźwości i nastroju. Ty w tym czasie bierzesz trudniejsze roboty. Jesteś teraz: ' + ZlecEkipy.DISTRICTS[ST.where] + '.</div>' + (act ? '<div class="econ">' + act + '</div>' : '') + offers;
   }
   function bindBoard() { document.querySelectorAll('[data-offer]').forEach(b => { b.onclick = () => pickWorkerFor(+b.dataset.offer); }); }
   function pickWorkerFor(id) {
     const o = ST.board.offers.find(x => x.id === id); if (!o) return;
-    const free = ST.crew.filter(w => !crewBusy(w) && !(w.outJobs > 0) && ZlecEkipy.canDo(w, o.job)); if (!free.length) return;
+    const free = ST.crew.filter(w => !crewBusy(w) && !(w.outJobs > 0) && ZlecEkipy.canDo(w, o.job, ST.certs)); if (!free.length) return;
     modalOpen = true; $('mtitle').textContent = '👷 Kto jedzie: ' + JOBS[o.job].title; $('mtext').textContent = CLIENTS[o.client].name + ', ' + ZlecEkipy.DISTRICTS[o.district] + '. Pracownik pojedzie sam, wróci z wynikiem. Jakość to szacunek, trzeźwość sprawdzi się w drodze.';
-    $('mchoices').innerHTML = free.map(w => { const p = ZlecEkipy.preview(w, 'trzezwy', o, { from: 'baza' }); return '<button data-w="' + w.id + '">' + w.em + ' ' + w.name + ' · ' + p.label + '<small>nastrój ' + Math.round(w.mood) + '% · dojazd ' + p.travelMin + ' min · umiejętności ' + Math.round(w.skill * 100) + '%</small></button>'; }).join('') + '<button data-w="">Anuluj<small>zostaje na tablicy</small></button>';
+    $('mchoices').innerHTML = free.map(w => { const p = ZlecEkipy.preview(w, 'trzezwy', o, { from: 'baza', certs: ST.certs }); return '<button data-w="' + w.id + '">' + w.em + ' ' + w.name + ' · ' + p.label + '<small>nastrój ' + Math.round(w.mood) + '% · dojazd ' + p.travelMin + ' min · umiejętności ' + Math.round(w.skill * 100) + '% · poziom w obszarze ' + ZlecEkipy.lvl(w, o.job, ST.certs) + '</small></button>'; }).join('') + '<button data-w="">Anuluj<small>zostaje na tablicy</small></button>';
     $('modal').hidden = false;
     $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false; if (b.dataset.w) dispatchCrew(o, ST.crew.find(w => w.id === b.dataset.w)); else renderMenu(); };
   }
@@ -123,13 +124,13 @@
     const state = Swiat.rollState(w, { night: false }, rnd);
     ST.board.offers = ST.board.offers.filter(x => x.id !== o.id);
     if (Ekipa.attendance(w, rnd, {}) === 'absent') { ST.flash.push('👷 ' + w.name + ' nie odebrał telefonu i nie pojechał do ' + CLIENTS[o.client].name + '. Zlecenie przepadło.'); const c0 = Klienci.get(ST.rel, o.client); ST.rel = Object.assign({}, ST.rel, { [o.client]: { trust: Math.max(-100, c0.trust - 4), jobs: c0.jobs } }); save(); renderMenu(); return; }
-    const rt = co(), sim = ZlecEkipy.simulate(w, state, o, rnd, crewDeps(), { payMult: rt.payMult, satBonus: rt.satBonus + Ubrania.crewSat(ST.wardrobe, w.id, ST.hq.up.szyld || 0), from: 'baza', clock: start });
+    const rt = co(), sim = ZlecEkipy.simulate(w, state, o, rnd, crewDeps(), { payMult: rt.payMult, satBonus: rt.satBonus + Ubrania.crewSat(ST.wardrobe, w.id, ST.hq.up.szyld || 0), from: 'baza', clock: start, certs: ST.certs });
     let drive = 0, note = '';
     const dr = Swiat.resolveDrive(w, state, ST.world, 'worker', rnd); drive = dr.cost; if (dr.notes.length && dr.incident) note = dr.notes[dr.notes.length - 1]; if (dr.claim) ST.claims.push(Object.assign({ client: CLIENTS[o.client].name, due: ST.done + 1 }, dr.claim)); Swiat.tickWorld(ST.world, dr.heatDelta);
     if (Object.keys(dr.driverPatch).length) ST.crew = ST.crew.map(x => x.id === w.id ? Object.assign({}, x, dr.driverPatch) : x);
     ST.wardrobe = Ubrania.uniformAfterJob(ST.wardrobe, w.id, o.job);
-    const endAt = sim.endAt + Math.max(0, dr.timeAdj);
-    ST.crewJobs.push({ id: o.id, workerId: w.id, offer: o, startAt: start, endAt, stars: sim.r.stars, index: sim.r.index, payout: sim.payout, cost: sim.cost, fuel: sim.fuel + drive, claim: sim.claimInfo ? sim.claimInfo : null, defects: sim.r.defects.length, drunk: state !== 'trzezwy' ? state : null, note, finished: false });
+    const endAt = sim.endAt + Math.max(0, dr.timeAdj), failed = !!(dr.accident && dr.accident.severity === 'ciezki');
+    ST.crewJobs.push({ id: o.id, workerId: w.id, offer: o, startAt: start, endAt, stars: failed ? 1 : sim.r.stars, index: sim.r.index, payout: failed ? 0 : sim.payout, cost: failed ? 0 : sim.cost, fuel: sim.fuel + drive, trav: sim.travelMin, failed, claim: sim.claimInfo ? sim.claimInfo : null, defects: sim.r.defects.length, drunk: state !== 'trzezwy' ? state : null, note, finished: false });
     ST.flash.push('👷 ' + w.name + ' jedzie do ' + CLIENTS[o.client].name + ' (' + JOBS[o.job].title + '), wróci ok. ' + Czas.hm(endAt) + '.' + (state !== 'trzezwy' ? ' Uwaga: ' + Swiat.LABEL[state] + '.' : ''));
     save(); renderTop(); renderMenu();
   }
@@ -140,15 +141,38 @@
     const lines = []; ST.crewJobs = ST.crewJobs.filter(j => j.endAt > ST.clock);
     for (const j of due) {
       const w = ST.crew.find(x => x.id === j.workerId), cl = CLIENTS[j.offer.client];
+      if (j.failed) { cash('transport', -j.fuel); ST.ratings.push(1); const c0 = Klienci.get(ST.rel, cl.id); ST.rel = Object.assign({}, ST.rel, { [cl.id]: { trust: Math.max(-100, c0.trust - 8), jobs: c0.jobs } });
+        lines.push((w ? w.name : '?') + ': ' + JOBS[j.offer.job].title + ' u ' + cl.name + ': wypadek w drodze, zlecenie nie doszło do skutku (klient wściekły, zaufanie −8).'); continue; }
       cash('zlecenia', j.payout); cash('materialy', -j.cost); cash('transport', -j.fuel); ST.ratings.push(j.stars); ST.done++; ST.hist.push({ index: j.index }); ST.hist = ST.hist.slice(-12);
       ST.fin = Finanse.addIncome(ST.fin, j.payout, true); ST.rel = Klienci.afterJob(ST.rel, cl.id, j.stars, Osiedle.GOSSIP[cl.id]);
       if (j.claim) ST.claims.push(Object.assign({ client: cl.name, due: ST.done + 1 }, j.claim));
-      if (w) ST.crew = ST.crew.map(x => x.id === w.id ? Object.assign({}, x, { mood: Math.max(0, x.mood - 2) }) : x);
+      if (w) ST.crew = ST.crew.map(x => x.id === w.id ? Object.assign({}, ZlecEkipy.addXp(x, j.offer.job, j.stars), { mood: Math.max(0, x.mood - 2) }) : x);
       lines.push((w ? w.name : '?') + ': ' + JOBS[j.offer.job].title + ' u ' + cl.name + ' ' + stars(j.stars) + ', wpływ ' + zl(j.payout - j.cost - j.fuel) + (j.claim ? ' (grozi reklamacja)' : '') + (j.note ? ' ' + j.note : ''));
     }
     save(); renderTop(); modalOpen = true; $('mtitle').textContent = '👷 Ekipa wróciła'; $('mtext').textContent = lines.join('\n');
     $('mchoices').innerHTML = '<button data-a="ok">Dalej</button>'; $('modal').hidden = false; $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; renderMenu(); };
     return true;
+  }
+  // ---------- plan dnia (oś czasu) ----------
+  function renderPlan(offset) {
+    offset = offset || 0; ALL.forEach(x => $(x).hidden = true); $('plan').hidden = false; renderTop();
+    const day0 = Math.floor(ST.clock / 1440) * 1440 + offset * 1440, items = [];
+    [KT().active].concat(KT().others).filter(a => a && a.stage < Kontrakty.CONTRACTS[a.id].stages.length).forEach(a => { const c = Kontrakty.CONTRACTS[a.id], lv = Kontrakty.stageLevel({ active: a }, ST.clock), dur = Math.round(JOBS[lv.job].deadline * 5 * (lv.slot === 'noc' ? 1.1 : 1));
+      items.push({ row: 'Ty', start: lv.startAt, end: lv.startAt + dur, label: c.title + ' · ' + JOBS[lv.job].title, kind: 'kontrakt' }); });
+    ST.crewJobs.forEach(j => { const w = ST.crew.find(x => x.id === j.workerId), nm = w ? w.name : '?'; if (j.trav) items.push({ row: nm, start: j.startAt, end: j.startAt + j.trav, label: 'dojazd', kind: 'dojazd' });
+      items.push({ row: nm, start: j.startAt + (j.trav || 0), end: j.endAt, label: JOBS[j.offer.job].title + ' (' + ZlecEkipy.DISTRICTS[j.offer.district] + ')', kind: j.failed ? 'wypadek' : 'ekipa' }); });
+    const blocks = ZlecEkipy.buildPlan(day0, items), rows = ['Ty'].concat(ST.crew.map(w => w.name)), now = (ST.clock - day0) / 1440 * 100;
+    const ticks = [0, 3, 6, 9, 12, 15, 18, 21].map(h => '<span style="position:absolute;left:' + h / 24 * 100 + '%;top:0;font-size:.7rem;color:var(--muted)">' + String(h).padStart(2, '0') + '</span>').join('');
+    const band = 'linear-gradient(90deg,#0e1630 0%,#0e1630 25%,transparent 25%,transparent 91.6%,#0e1630 91.6%)';
+    const COL = { kontrakt: '#ffc300', ekipa: '#6ccf7f', dojazd: '#8a97a3', wypadek: '#ef5350' };
+    const lines = rows.map(r => '<div style="display:grid;grid-template-columns:70px 1fr;gap:6px;align-items:center;margin:3px 0"><span style="font-size:.85rem">' + r + '</span><div style="position:relative;height:26px;background:' + band + ',#1b1e22;box-shadow:0 0 0 2px #000">' +
+      blocks.filter(b => b.row === r).map(b => '<div title="' + b.label + '" style="position:absolute;left:' + b.left + '%;width:' + b.width + '%;top:2px;bottom:2px;background:' + COL[b.kind] + ';overflow:hidden;font-size:.62rem;line-height:22px;color:#14171a;white-space:nowrap">' + (b.kind === 'dojazd' ? '' : b.label) + '</div>').join('') +
+      (now >= 0 && now <= 100 ? '<div style="position:absolute;left:' + now + '%;top:0;bottom:0;width:2px;background:#fff"></div>' : '') + '</div></div>').join('');
+    const list = blocks.filter(b => b.kind !== 'dojazd').sort((a, b) => a.from - b.from).map(b => '<div class="erow"><span>' + b.row + ': ' + b.label + '</span><b>' + Czas.hm(day0 + b.from) + '–' + Czas.hm(day0 + b.to) + '</b></div>').join('');
+    $('plan').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Plan dnia</h2><div class="hint">' + Czas.dayLabel(day0) + '. Pasek: biała kreska to teraz, ciemne tło to noc, żółte etapy twoich kontraktów, zielone zlecenia ekipy, szare dojazdy, czerwone wypadki.</div>' +
+      '<div class="row2"><button id="pToday" ' + (offset === 0 ? 'disabled' : '') + '>Dziś</button><button id="pTom" ' + (offset === 1 ? 'disabled' : '') + '>Jutro</button></div><div style="position:relative;height:16px;margin-left:76px">' + ticks + '</div>' + lines +
+      (list ? '<div class="econ">' + list + '</div>' : '<div class="hint">Nic nie zaplanowano na ten dzień. Zleć coś ekipie z tablicy albo przyjmij kontrakt.</div>') + '<div class="hint">Jesteś: ' + ZlecEkipy.DISTRICTS[ST.where] + '. Dojazd z bazy: osiedle 8 min, centrum 18, wieś 35.</div><button class="primary" id="pBack">Wróć</button>';
+    $('pToday').onclick = () => renderPlan(0); $('pTom').onclick = () => renderPlan(1); $('pBack').onclick = renderMenu;
   }
   // ---------- szafa i sklep z ubraniami (faza E) ----------
   const clothesPrice = () => Sezon.clothesPrice(ST.clock);
@@ -215,8 +239,8 @@
   const tenderCtx = cid => ({ stars: co().stars, tier: ST.hq.tier, spec: specLevels(), trust: Klienci.get(ST.rel, cid).trust, rivalPower: ST.os.rival.power, outfit: Ubrania.effect(Ubrania.current(ST.wardrobe), cid, { formal: true }).tender });
   function tendersHTML() {
     const h = '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Przetargi publiczne</h3>', day = Czas.dateOf(ST.clock).dayIndex;
-    const rows = Object.values(Przetargi.TENDERS).map(t => { const miss = Przetargi.missing(t, tenderCtx(t.client)), cd = Przetargi.cooldownOk(ST.tenderCool, t.id, day), q = Kontrakty.quote(Kontrakty.CONTRACTS[Przetargi.cid(t.id)], JOBS), cl = CLIENTS[t.client], bhp = Ubrania.bhpOk(ST.wardrobe, ST.crew), ok = !miss.length && cd && !KT().active && bhp;
-      return '<button class="lvl" data-tender="' + t.id + '" ' + (ok ? '' : 'disabled') + '><span class="av">' + (miss.length ? '🔒' : cl.em) + '</span><span><b>' + t.title.replace('Przetarg: ', '') + '</b><small>' + t.stages.length + ' etapów · ' + t.deadline + ' dni · wartość ok. ' + zl(q.expected) + ' · wadium ' + zl(Math.round(q.nominal * Przetargi.WADIUM)) + '</small><small>' + (miss.length ? 'brakuje: ' + miss.join(', ') : !bhp ? 'ekipa bez odzieży BHP (kombinezony lub kurtki z Szafy)' : !cd ? 'rozstrzygnięty, następny za tydzień' : KT().active ? 'masz aktywny kontrakt' : t.desc) + '</small></span><span class="res">' + (ok ? 'oferta' : '') + '</span></button>'; }).join('');
+    const rows = Object.values(Przetargi.TENDERS).map(t => { const miss = Przetargi.missing(t, tenderCtx(t.client)), cd = Przetargi.cooldownOk(ST.tenderCool, t.id, day), q = Kontrakty.quote(Kontrakty.CONTRACTS[Przetargi.cid(t.id)], JOBS), cl = CLIENTS[t.client], bhp = Ubrania.bhpOk(ST.wardrobe, ST.crew), ok = !miss.length && cd && Kontrakty.canAccept(KT(), cLimit()) && bhp;
+      return '<button class="lvl" data-tender="' + t.id + '" ' + (ok ? '' : 'disabled') + '><span class="av">' + (miss.length ? '🔒' : cl.em) + '</span><span><b>' + t.title.replace('Przetarg: ', '') + '</b><small>' + t.stages.length + ' etapów · ' + t.deadline + ' dni · wartość ok. ' + zl(q.expected) + ' · wadium ' + zl(Math.round(q.nominal * Przetargi.WADIUM)) + '</small><small>' + (miss.length ? 'brakuje: ' + miss.join(', ') : !bhp ? 'ekipa bez odzieży BHP (kombinezony lub kurtki z Szafy)' : !cd ? 'rozstrzygnięty, następny za tydzień' : Kontrakty.canAccept(KT(), cLimit()) ? t.desc : 'brak wolnego miejsca na kontrakt') + '</small></span><span class="res">' + (ok ? 'oferta' : '') + '</span></button>'; }).join('');
     return h + '<div class="hint">Duże zlecenia publiczne: wysokie stawki, wadium i surowy audyt. Wady zagrażające bezpieczeństwu wykryte przy odbiorze oblewają audyt (kara ' + Math.round(Kontrakty.AUDIT_FAIL * 100) + '% wartości, wadium przepada). Wymagają oceny firmy, siedziby i specjalizacji.</div>' + rows;
   }
   function bindTenders() { document.querySelectorAll('[data-tender]').forEach(b => { b.onclick = () => askTender(b.dataset.tender); }); }
@@ -226,40 +250,48 @@
     $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false; if (!b.dataset.b) { renderMenu(); return; }
       const day = Czas.dateOf(ST.clock).dayIndex, res = Przetargi.bid(b.dataset.b, ctx, rnd); ST.tenderCool[id] = day;
       if (!res.won) { ST.os.rival.power += 1.5; ST.flash.push('🏛️ Przetarg „' + t.title.replace('Przetarg: ', '') + '” wygrał ' + ST.os.rival.name + ' (twoja szansa: ' + Math.round(res.chance * 100) + '%).'); save(); renderMenu(); return; }
-      const tm = Przetargi.terms(t, b.dataset.b, JOBS), r = Kontrakty.accept(KT(), Przetargi.cid(id), ST.clock, JOBS, { priceMult: tm.priceMult, wadium: tm.wadium });
+      const tm = Przetargi.terms(t, b.dataset.b, JOBS), r = Kontrakty.accept(KT(), Przetargi.cid(id), ST.clock, JOBS, { priceMult: tm.priceMult, wadium: tm.wadium }, cLimit());
       if (!r.ok) { ST.flash.push(r.reason); renderMenu(); return; }
       ST.contracts = r.state; cash('wadium', -tm.wadium); cash('zlecenia', r.deposit); ST.flash.push('🏛️ Wygrany przetarg „' + t.title.replace('Przetarg: ', '') + '”! Wadium ' + zl(tm.wadium) + ', zaliczka ' + zl(r.deposit) + '.'); save(); renderTop(); renderMenu(); };
   }
   // ---------- kontrakty ----------
-  const KT = () => ST.contracts;
+  const KT = () => { if (!ST.contracts.others) ST.contracts.others = []; return ST.contracts; };
+  const cLimit = () => Kontrakty.slots(ST.hq.tier);
   function contractsHTML() {
-    const a = KT().active, h = '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Kontrakty</h3>';
+    let extra = ''; const a = KT().active, h = '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Kontrakty</h3>';
     if (a) {
       const c = Kontrakty.CONTRACTS[a.id], cl = CLIENTS[c.client], pro = c.stages.map((st, i) => '<div class="stage ' + (i < a.stage ? 'done' : i === a.stage ? 'cur' : '') + '"><span class="num">' + (i < a.stage ? '✓' : i + 1) + '</span><span class="stn">' + JOBS[st.job].title + '<small>' + (i < a.stage ? stars(a.results[i].stars) + ' · ' + zl(a.results[i].payout) : 'dzień ' + (st.day + 1) + ', ' + st.time) + '</small></span></div>').join('');
       const left = Math.ceil((a.deadlineAt - ST.clock) / 1440), lv = a.stage < c.stages.length ? Kontrakty.stageLevel(KT(), ST.clock) : null;
-      return h + '<div class="card"><div class="bubble"><span class="av">' + cl.em + '</span><div><b>' + c.title + '</b> · ' + cl.name + '<br><small style="color:var(--muted)">Termin: ' + Czas.dayLabel(a.deadlineAt) + ' (' + (left >= 0 ? 'zostało ' + left + ' dni' : 'SPÓŹNIONY o ' + (-left) + ' dni') + ')</small></div></div><div class="stages">' + pro + '</div>' +
+      const activeHtml = h + '<div class="card"><div class="bubble"><span class="av">' + cl.em + '</span><div><b>' + c.title + '</b> · ' + cl.name + '<br><small style="color:var(--muted)">Termin: ' + Czas.dayLabel(a.deadlineAt) + ' (' + (left >= 0 ? 'zostało ' + left + ' dni' : 'SPÓŹNIONY o ' + (-left) + ' dni') + ')</small></div></div><div class="stages">' + pro + '</div>' +
         (lv ? '<button class="primary" id="cstage">Etap ' + (a.stage + 1) + '/' + c.stages.length + ': ' + JOBS[lv.job].title + ' (' + Czas.label(lv.startAt) + ')</button>' : '<div class="hint">Wszystkie etapy zrobione, czas na odbiór.</div>') +
-        '<button id="ccancel" style="background:transparent;min-height:40px;color:var(--muted)">Zrezygnuj (zwrot zaliczki + kara)</button></div>';
+        '<button id="ccancel" style="background:transparent;min-height:40px;color:var(--muted)">Zrezygnuj (zwrot zaliczki + kara)</button></div>' + othersHTML();
+      if (!Kontrakty.canAccept(KT(), cLimit())) return activeHtml;
+      extra = activeHtml;
     }
-    const av = Kontrakty.available(ST.done);
-    if (!av.length) return '';
-    return h + '<div class="hint">Kilka robót u jednego klienta w kolejnych dniach: zaliczka z góry, jeden dojazd, premia za czysty odbiór, ale kara za spóźnienie i ukryte wady wychodzą przy odbiorze. Jeden kontrakt naraz.</div>' + av.map(c => {
+    const av = Kontrakty.available(ST.done).filter(c => !(KT().active && KT().active.id === c.id) && !KT().others.some(o => o.id === c.id));
+    if (!av.length) return extra;
+    return extra + (extra ? '<div class="hint">Masz wolne miejsce na kolejny kontrakt (limit ' + cLimit() + ', rośnie z siedzibą).</div>' : h) + '<div class="hint">Kilka robót u jednego klienta w kolejnych dniach: zaliczka z góry, jeden dojazd, premia za czysty odbiór, ale kara za spóźnienie i ukryte wady wychodzą przy odbiorze. Liczba kontraktów naraz zależy od siedziby (1, od poziomu 2 dwa, od 4 trzy).</div>' + av.map(c => {
       const q = Kontrakty.quote(c, JOBS), cl = CLIENTS[c.client], d = KT().done[c.id];
       return '<button class="lvl" data-cacc="' + c.id + '"><span class="av">' + cl.em + '</span><span><b>' + c.title + '</b><small>' + c.stages.length + ' etapów · ' + c.deadline + ' dni · zaliczka ' + zl(q.deposit) + ' · razem ok. ' + zl(q.expected) + '</small><small>' + c.desc + '</small></span><span class="res">' + (d ? '<span class="stars">' + stars(d.best) + '</span><br>×' + d.count : 'nowy') + '</span></button>';
     }).join('');
   }
+  function othersHTML() {
+    return KT().others.map(o => { const c = Kontrakty.CONTRACTS[o.id], cl = CLIENTS[c.client], lv = o.stage < c.stages.length ? Kontrakty.stageLevel({ active: o }, ST.clock) : null;
+      return '<button class="lvl" data-cswitch="' + o.id + '"><span class="av">' + cl.em + '</span><span><b>' + c.title + ' (w kolejce)</b><small>etap ' + Math.min(o.stage + 1, c.stages.length) + '/' + c.stages.length + ' · termin ' + Czas.dayLabel(o.deadlineAt) + '</small><small>' + (lv ? 'następny: ' + JOBS[lv.job].title + ', ' + Czas.label(lv.startAt) : 'czas na odbiór') + '</small></span><span class="res">przełącz</span></button>'; }).join('');
+  }
   function bindContracts() {
+    document.querySelectorAll('[data-cswitch]').forEach(b => { b.onclick = () => { ST.contracts = Kontrakty.switchTo(KT(), b.dataset.cswitch); save(); renderMenu(); }; });
     document.querySelectorAll('[data-cacc]').forEach(b => { b.onclick = () => askContract(b.dataset.cacc); });
     const st = $('cstage'); if (st) st.onclick = () => startJob(-1, Kontrakty.stageLevel(KT(), ST.clock));
     const ca = $('ccancel'); if (ca) ca.onclick = askCancel;
   }
   function askContract(id) {
-    const c = Kontrakty.CONTRACTS[id], q = Kontrakty.quote(c, JOBS); if (KT().active) { ST.flash.push('Masz już aktywny kontrakt.'); renderMenu(); return; }
+    const c = Kontrakty.CONTRACTS[id], q = Kontrakty.quote(c, JOBS); if (!Kontrakty.canAccept(KT(), cLimit())) { ST.flash.push('Masz już aktywny kontrakt (limit ' + cLimit() + ').'); renderMenu(); return; }
     modalOpen = true; $('mtitle').textContent = '📋 ' + c.title;
     $('mtext').textContent = CLIENTS[c.client].name + ': ' + c.desc + ' Zaliczka ' + zl(q.deposit) + ' wpływa od razu. Za każdy etap dostajesz transzę (' + Math.round(Kontrakty.TRANCHE * 100) + '% zwykłej wypłaty). Termin całości: ' + c.deadline + ' dni. Spóźnienie: kara ' + Math.round(Kontrakty.LATE_PCT * 100) + '% wartości za dzień. Czysty odbiór w terminie: premia ' + Math.round(Kontrakty.BONUS * 100) + '%. Ukryte wady z każdego etapu mogą wyjść dopiero przy odbiorze.';
     $('mchoices').innerHTML = '<button data-a="yes">Przyjmij kontrakt<small>zaliczka ' + zl(q.deposit) + '</small></button><button data-a="no">Nie teraz<small>wracasz do listy</small></button>'; $('modal').hidden = false;
     $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false;
-      if (b.dataset.a === 'yes') { const r = Kontrakty.accept(KT(), id, ST.clock, JOBS); if (r.ok) { ST.contracts = r.state; cash('zlecenia', r.deposit); ST.flash.push('📋 Przyjęty kontrakt „' + c.title + '”. Zaliczka ' + zl(r.deposit) + '.'); save(); renderTop(); } } renderMenu(); };
+      if (b.dataset.a === 'yes') { const r = Kontrakty.accept(KT(), id, ST.clock, JOBS, {}, cLimit()); if (r.ok) { ST.contracts = r.state; cash('zlecenia', r.deposit); ST.flash.push('📋 Przyjęty kontrakt „' + c.title + '”. Zaliczka ' + zl(r.deposit) + '.'); save(); renderTop(); } } renderMenu(); };
   }
   function askCancel() {
     const a = KT().active, pen = Math.round(a.deposit + a.nominal * 0.1 + (a.wadium || 0)); modalOpen = true; $('mtitle').textContent = 'Zrezygnować z kontraktu?';
@@ -642,6 +674,7 @@
     ST.waited = 0;
     { const a0 = specM(cur.job.id).level; ST.xp = Spec.addXp(ST.xp, cur.job.id, r.stars, !!cur.level.contract); const a1 = specM(cur.job.id).level;
       if (a1 > a0) cur.notes.push('🎓 Specjalizacja „' + Spec.AREAS[Spec.areaOf(cur.job.id)].name + '”: poziom ' + a1 + '!'); }
+    if (cur.helperOn && cur.helper) ST.crew = ST.crew.map(x => x.id === cur.helper.id ? ZlecEkipy.addXp(x, cur.job.id, r.stars, true) : x);
     { const aj = Ubrania.afterJob(ST.wardrobe, cur.job.id, rnd); ST.wardrobe = aj.w; cur.notes.push(...aj.notes); if (cur.helperOn && cur.helper) ST.wardrobe = Ubrania.uniformAfterJob(ST.wardrobe, cur.helper.id, cur.job.id); }
     if (cur.level.contract) { const rs = Kontrakty.recordStage(KT(), r, r.payout); ST.contracts = rs.state; cur.notes.push('📋 Kontrakt „' + cur.level.contract.title + '”: etap ' + (cur.level.contract.stage + 1) + '/' + cur.level.contract.of + ' zakończony (' + stars(r.stars) + ', transza ' + zl(r.payout) + ').' + (rs.last ? ' To był ostatni etap, czas na odbiór.' : '')); }
     { const before = Klienci.level(Klienci.get(ST.rel, cur.client.id).trust); ST.rel = Klienci.afterJob(ST.rel, cur.client.id, r.stars, Osiedle.GOSSIP[cur.client.id]); const after = Klienci.level(Klienci.get(ST.rel, cur.client.id).trust);
@@ -1099,6 +1132,6 @@
     new MutationObserver(() => requestAnimationFrame(run)).observe(document.body, { childList: true, subtree: true });
     run();
   })();
-  window.__z = { Ubrania, renderWardrobe, get META() { return META; }, renderPrestige, checkYear, Spec, Przetargi, ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
+  window.__z = { renderPlan, Ubrania, renderWardrobe, get META() { return META; }, renderPrestige, checkYear, Spec, Przetargi, ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
   renderMenu();
 })();
