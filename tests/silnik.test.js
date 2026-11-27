@@ -103,7 +103,7 @@ function playJob(E, i, o) {
 }
 { // pełne zlecenie dzienne
   const E = game(31); const m0 = E.ST.money, done0 = E.ST.done;
-  const { cur, out } = playJob(E, 0); assert.strictEqual(E.ST.done, done0 + 1); assert(out.r.stars >= 1 && out.r.stars <= 5); assert(typeof out.eco.net === 'number');
+  const { cur, out } = playJob(E, 0); assert.strictEqual(E.ST.done, done0 + 1); assert(out.r.stars >= 1 && out.r.stars <= 5); assert(typeof out.eco.net === 'number'); assert(out.saved && out.saved.minutes >= 0);
   assert(E.ST.money !== m0); assert(E.ST.ratings.length === 1); assert(E.ST.clock > Czas.startClock(), 'zegar ruszył'); assert(E.ST.ledger, 'księga zaksięgowana');
   assert(E.ST.unlocked >= 2 && E.ST.best[0], 'postęp poziomów'); t('pełne zlecenie dzienne: newJob → opcje → rozliczenie');
 }
@@ -131,6 +131,10 @@ function playJob(E, i, o) {
   assert.strictEqual(E.checkClaims(), true); assert(/Wypadek/.test(E.pending.prompt.title)); const r0 = E.ST.ratings.length; E.answer('ignore'); assert(E.ST.ratings.length === r0 + 2 && E.ST.claims.length === 0);
   const F = game(44, e => { e.ST.money = 500; e.ST.ledgerMoney = 500; const w = Ekipa.newWorker(Ekipa.CANDIDATES[0]); w.mood = 5; w.owed = 300; e.ST.crew = [w]; });
   const asked = F.checkDemands(); if (asked) { assert(/się upomina/.test(F.pending.prompt.title)); F.answer('n'); assert(F.ST.demandAt[F.ST.crew[0].id] !== undefined); } t('reklamacje, wypadki, upomnienia (upomnienie: ' + asked + ')');
+}
+{ // oszczędność czasu i materiałów na skrótach
+  const a = playJob(game(51), 0, { pick: 'dobrze' }).out.saved, b = playJob(game(51), 0, { pick: 'fusz' }).out.saved;
+  assert.strictEqual(a.minutes, 0); assert(b.minutes > 0, 'fuszerka oszczędza czas (' + b.minutes + ' min)'); assert(b.value >= 0); t('zaoszczędzony czas na fuszerce: ' + b.minutes + ' min, ' + b.cost + ' zł materiałów');
 }
 { // determinizm całego przebiegu
   const run = () => { const E = game(21, e => { e.ST.money = 6000; e.ST.ledgerMoney = 6000; e.ST.done = 12; }); for (let i = 0; i < 30 && !E.pending; i++) E.waitHour(() => {}); const c = Kontrakty.available(E.ST.done)[0]; if (E.pending) E.answer('no'); E.askContract(c.id); E.answer('yes'); E.sleepNow(); return digest(E); };

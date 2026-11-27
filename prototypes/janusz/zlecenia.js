@@ -375,7 +375,7 @@
 
   // ---------- odbiór ----------
   function finish() {
-    const { night, mods, minutes, endClock, rt, um, sea, gos, cut, payMult, r, te, comment, eco } = E.settleJob(cur);
+    const { night, mods, minutes, endClock, rt, um, sea, gos, cut, payMult, r, te, comment, eco, saved } = E.settleJob(cur);
     save(); renderTop();
     const bar = (v, max) => '<span class="b"><i style="width:' + Math.min(100, v / max * 100) + '%"></i></span>';
     const defs = r.defects.length ? r.defects.slice().sort((a, b) => b.sev - a.sev).map(d => {
@@ -385,7 +385,7 @@
       eco.lines.map(l => '<div class="erow"><span>' + l.label + '</span><b class="' + (l.value >= 0 ? 'pos' : 'neg') + '">' + (l.value === 0 ? '0 zł' : signed(l.value)) + '</b></div>').join('') +
       '<div class="erow tot"><span>Zostaje po wszystkich kosztach</span><b class="' + (eco.net >= 0 ? 'pos' : 'neg') + '">' + signed(eco.net) + '</b></div>' +
       '<div class="erow big"><span>Stawka po kosztach</span><b class="' + (eco.perHour >= 0 ? 'pos' : 'neg') + '">' + signed(eco.perHour) + '/h</b></div>' +
-      '<div class="hint">Brutto ' + signed(eco.grossPerHour) + '/h. Pomocnik, podatek i utrzymanie to udziały: realnie płacisz je w dniu wypłaty.</div></div>';
+      (saved.minutes || saved.cost ? '<div class="erow"><span>⏱️ Zaoszczędzone na skrótach</span><b class="pos">' + Czas.fmtMin(saved.minutes) + (saved.cost ? ' + ' + zl(saved.cost) + ' materiałów' : '') + '</b></div><div class="hint">To czas, który zająłbyś solidną robotą' + (saved.value ? ' (przy twojej stawce ok. ' + zl(saved.value) + ')' : '') + '. Wraca do ciebie jako krótsze zlecenie, mniejsze zmęczenie i szansa na kolejny telefon. Ale ukryte wady mogą wrócić jako reklamacja.</div>' : '') + '<div class="hint">Brutto ' + signed(eco.grossPerHour) + '/h. Pomocnik, podatek i utrzymanie to udziały: realnie płacisz je w dniu wypłaty.</div></div>';
     $('job').hidden = true; $('result').hidden = false;
     $('result').innerHTML =
       sceneHTML(cur.job) +
@@ -747,7 +747,9 @@
   Dzwieki.bind(document);
   new MutationObserver(() => { if (!$('modal').hidden) Dzwieki.play('modal'); }).observe($('modal'), { attributes: true, attributeFilter: ['hidden'] });
   const snd = $('snd'); const paintSnd = () => { snd.textContent = Dzwieki.muted() ? '🔇' : '🔊'; snd.setAttribute('aria-label', Dzwieki.muted() ? 'Włącz dźwięk' : 'Wyłącz dźwięk'); };
-  snd.onclick = () => { Dzwieki.toggle(); paintSnd(); }; paintSnd();
+  const mus = $('mus'); const paintMus = () => { mus.style.opacity = Dzwieki.musicEnabled() && !Dzwieki.muted() ? 1 : 0.4; mus.setAttribute('aria-label', Dzwieki.musicEnabled() ? 'Wyłącz muzykę' : 'Włącz muzykę'); };
+  snd.onclick = () => { Dzwieki.toggle(); paintSnd(); paintMus(); }; paintSnd();
+  mus.onclick = () => { Dzwieki.toggleMusic(); paintMus(); }; paintMus();
   // okna wyboru z silnika jako dane: tytuł, tekst, wiersze, przyciski
   const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   function showPrompt(p) {

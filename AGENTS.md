@@ -43,3 +43,6 @@ Napisz `roboty/<id>.rob` (szablon: `node tools/nowa_robota.js --szablon`), uruch
 
 ## Godot Janusz (G0)
 - `janusz_godot/`: projekt portu. `tools/golden.js` → `tests/golden/*.json` → `janusz_godot/tests/parity.gd`. `./tests/run.sh` uruchamia wszystko (GODOT=/ścieżka/do/godot). Godot 4.4.1 headless pobrany ręcznie z GitHub releases; w repozytorium go nie ma.
+
+- Muzyka: `dzwieki.js` gra pętlę disco polo (Am–F–C–G, 132 BPM, oom-pah) przez filtr „starego radia” (pasmo, przester, falowanie, szum, trzaski). Przycisk 🎵 włącza/wyłącza muzykę, 🔊 całość. Start dopiero po pierwszym dotyku (wymóg przeglądarek, iOS: click/touchend).
+- Wynik zlecenia pokazuje „Zaoszczędzone na skrótach” (czas i materiały względem solidnej roboty): `settleJob().saved`.

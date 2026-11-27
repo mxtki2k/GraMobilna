@@ -325,7 +325,10 @@
     const eco = Stawka.jobEconomics({ payout: r.payout + te.bonus, penalty: te.penalty, materials: r.cost, transport: cur.transportCost, helper: cur.helperPaid, tools: toolWearCost, tax: cur.terms.invoice ? r.payout * Umowa.TAX_RATE : 0,
       overhead: Stawka.overheadShare(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)), minutes });
     ST.ledger = Ksiega.noteJob(ST.ledger, bookKey(), eco.net, eco.hours);
-      return { night, mods, units, minutes, endClock, rt, um, sea, gos, cut, payMult, r, te, comment, eco };
+      // ile czasu i materiałów zaoszczędzono względem solidnej roboty („dobrze” w każdym kroku)
+      let su = 0, sc = 0; cur.picks.forEach((pk, i) => { const st = cur.job.steps[i]; if (!st) return; const good = st.options.find(o => o.id === 'dobrze'), got = st.options.find(o => o.id === pk.optionId); if (good && got) { su += good.time - got.time; sc += good.cost - got.cost; } });
+      const saved = { units: Math.max(0, su), minutes: su > 0 ? Czas.minutes(su, night) : 0, cost: Math.max(0, Math.round(sc)), value: su > 0 ? Math.round(Czas.minutes(su, night) / 60 * Math.max(0, eco.grossPerHour)) : 0 };
+      return { night, mods, units, minutes, endClock, rt, um, sea, gos, cut, payMult, r, te, comment, eco, saved };
     }
 
     const formalCtx = l => !!(l && l.contract && Kontrakty.CONTRACTS[l.contract.id] && Kontrakty.CONTRACTS[l.contract.id].tender);
