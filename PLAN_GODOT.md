@@ -93,3 +93,8 @@ Pełna pętla zleceń z niespodziankami, nocą i terminami, ekipa i siedziba, ko
 
 ## Status R0
 ZROBIONE (silnik bez DOM). `silnik.js` ma całą pętlę rozgrywki: zlecenie od `newJob` do `settleJob`, czekanie i telefony, ekipę, kontrakty, przetargi, rok i prestiż, szafę, wypłatę, reklamacje. Bramka spełniona: `tests/silnik.test.js` przechodzi ścieżki w czystym Node (bez DOM), `tests/scenariusze.test.js` te same przez interfejs w jsdom. Poza silnikiem zostały ekrany i komendy Alledrogo, siedziby, finansów, osiedla, fabuły: do przeniesienia razem z portem G4 (wzorzec: `ask` + dane zamiast HTML).
+
+## Status G0
+ZROBIONE. `janusz_godot/` (osobny projekt Godot 4.4, 720×1280): `core/mathx.gd` (round_js, fdiv, pmod, pad2, zl z twardą spacją i „-0”), `core/rng.gd` (LCG jak w JS), `core/czas.gd` (port czas.js z własnym kalendarzem). `tools/golden.js` generuje `janusz_godot/tests/golden/*.json` z JS (czas 2663 przypadki, mathx 62, rng 8). Runner `janusz_godot/tests/parity.gd` porównuje wyniki (tolerancja 1e-9). `tests/run.sh` łączy Node, Arrow Escape i parytet; `.github/workflows/testy.yml` robi to samo w CI (workflow nie był jeszcze uruchamiany).
+Bramka spełniona: moduł `czas` przechodzi parytet 2663/2663. Znaleziona pułapka: `floor(x + 0.5)` daje inny wynik niż `Math.round` dla 0,49999999999999994. Dodać do listy pułapek, nowe porty trzeba testować zawsze z takimi liczbami.
+Jak dodać moduł: napisać `core/<m>.gd` (funkcje static, snake_case), dopisać generator przypadków w `MODULES` w `tools/golden.js`, uruchomić `./tests/run.sh`.

@@ -40,3 +40,6 @@ Napisz `roboty/<id>.rob` (szablon: `node tools/nowa_robota.js --szablon`), uruch
 - Okna wyboru to dane: `ask({kind,title,text,rows,choices:[{id,label,sub}]}, handler)`; odpowiedź to `E.answer(id)`. Widok (`zlecenia.js`) podaje `E.V = {menu, top, screen, prompt}`.
 - `tests/silnik.test.js`: 16 scenariuszy w czystym Node. `tests/scenariusze.test.js`: te same ścieżki przez prawdziwy interfejs w jsdom.
 - Nowa logika rozgrywki idzie do `silnik.js`, a `zlecenia.js` tylko rysuje. W widoku zostają: Alledrogo, Siedziba, Finanse, Osiedle, fabuła, Ekipa (ekrany) i plan dnia.
+
+## Godot Janusz (G0)
+- `janusz_godot/`: projekt portu. `tools/golden.js` → `tests/golden/*.json` → `janusz_godot/tests/parity.gd`. `./tests/run.sh` uruchamia wszystko (GODOT=/ścieżka/do/godot). Godot 4.4.1 headless pobrany ręcznie z GitHub releases; w repozytorium go nie ma.

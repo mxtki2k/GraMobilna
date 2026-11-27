@@ -1,0 +1,15 @@
+name: Testy
+on:
+  push:
+  pull_request:
+jobs:
+  testy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - uses: chickensoft-games/setup-godot@v2
+        with: { version: 4.4.1, use-dotnet: false }
+      - run: GODOT=godot ./tests/run.sh
