@@ -9,7 +9,7 @@
     { id: 'roztopy', name: 'Wiosenne roztopy', em: '💧', from: [2, 10], to: [3, 25], text: 'Piwnice zalane, rury rozmarznięte. Hydraulicy w cenie.', demand: { syfon: 1.5, kran: 1.25, plytki: 1.1 } },
     { id: 'remonty', name: 'Sezon remontowy', em: '🎨', from: [3, 26], to: [5, 30], text: 'Wszyscy odświeżają mieszkania przed latem.', demand: { malowanie: 1.3, sciana: 1.25, plytki: 1.25, drzwi: 1.15 } },
     { id: 'wakacje', name: 'Wakacje', em: '🏖️', from: [5, 1], to: [6, 31], text: 'Klienci na urlopach, mniej zleceń i niższe stawki.', pay: 0.95 },
-    { id: 'bf', name: 'Black Friday w Alledrogo', em: '🛒', from: [10, 22], to: [10, 30], text: 'Narzędzia tańsze o 25%. Podróbki też.', toolPrice: 0.75 },
+    { id: 'bf', name: 'Black Friday w Alledrogo', em: '🛒', from: [10, 22], to: [10, 30], text: 'Narzędzia i ubrania tańsze o 25%. Podróbki też.', toolPrice: 0.75, clothesPrice: 0.75 },
     { id: 'swieta', name: 'Świąteczne porządki', em: '🎄', from: [10, 10], to: [11, 24], text: 'Przed świętami wszyscy chcą coś naprawić i dają napiwki.', demand: { malowanie: 1.3, sciana: 1.2, polka: 1.2, gniazdko: 1.1 }, pay: 1.08 },
   ];
   const ord = (m, d) => m * 100 + d;
@@ -19,5 +19,6 @@
   const pay = clock => Math.round(active(clock).reduce((p, e) => p * (e.pay || 1), 1) * 1000) / 1000;
   const bus = clock => active(clock).reduce((p, e) => p * (e.bus || 1), 1);
   const toolPrice = clock => active(clock).reduce((p, e) => p * (e.toolPrice || 1), 1);
-  return { EVENTS, inRange, active, demand, pay, bus, toolPrice };
+  const clothesPrice = clock => active(clock).reduce((p, e) => p * (e.clothesPrice || 1), 1);
+  return { EVENTS, inRange, active, demand, pay, bus, toolPrice, clothesPrice };
 });

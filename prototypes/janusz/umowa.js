@@ -16,7 +16,7 @@
   function detectChance(client) { return clamp(0.1 + client.attention * 0.35 + (client.expert ? 0.3 : 0), 0, 0.8); }
 
   /* Zwraca skutki ustaleń. rng służy do wykrycia zawyżenia. */
-  function evaluate(terms, client, rng) {
+  function evaluate(terms, client, rng, opts) {
     const t = Object.assign({}, DEFAULT, terms);
     const out = { payMult: 1, satDelta: 0, deadlineFactor: 1, taxRate: TAX_RATE, taxRiskDelta: 0, detected: false, notes: [], terms: t };
     if (!t.invoice) {
@@ -26,7 +26,7 @@
     }
     if (t.quote === 'inflated') {
       out.payMult *= 1.2;
-      if (rng() < detectChance(client)) { out.detected = true; out.satDelta -= 25; out.notes.push('🧐 ' + client.name + ' sprawdził ceny w internecie i zauważył zawyżenie. Awantura.'); }
+      if (rng() < clamp(detectChance(client) * ((opts && opts.detectMult) || 1), 0, 0.9)) { out.detected = true; out.satDelta -= 25; out.notes.push('🧐 ' + client.name + ' sprawdził ceny w internecie i zauważył zawyżenie. Awantura.'); }
       else out.notes.push('Zawyżony kosztorys przeszedł bez problemu. Tym razem.');
     } else if (t.quote === 'low') {
       out.payMult *= 0.85; out.satDelta += 10; out.notes.push('Niska cena zachwyciła klienta. Teraz trzeba z tego wyżyć.');

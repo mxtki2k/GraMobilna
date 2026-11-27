@@ -3,7 +3,7 @@
 Zasady pracy, testy i struktura projektu: `AGENTS.md`. Plan rozgrywki i oszczędność tokenów: `PLAN_ROZGRYWKI.md`. Opis mechanik: `JANUSZ_GDD.md`.
 Ten plik trzyma decyzje i zaplanowane funkcje, o których warto pamiętać między sesjami.
 
-## Zaplanowane (backlog)
+## Backlog i zrobione większe funkcje
 
 ### Sklep z ubraniami: przebieranie się jako szef i ciuchy firmowe dla ekipy
 Decyzja człowieka: robimy sklep z ubraniami. Im drożej i lepiej ubrany szef, tym bardziej wiarygodny, ale nie u każdego klienta i nie w każdej robocie.
@@ -27,4 +27,4 @@ Decyzja człowieka: robimy sklep z ubraniami. Im drożej i lepiej ubrany szef, t
 - Czysta logika: `prototypes/janusz/ubrania.js` + `tests/ubrania.test.js`; symulacja `tools/ubrania_sim.js` (czy drogi strój opłaca się tylko u wybranych klientów i w przetargach).
 - Dane zestawów jako tabela, ikony 16x16 w `pixel.js` (test `pixel.test.js` pilnuje ikon), UI jak szafa w `zlecenia.js`.
 - Kryterium: najdroższy strój nie wygrywa wszędzie (tanio ubrany Mirek-fachowiec ma sens), a firmowe ciuchy zwracają się w przetargach.
-- Status: nie zaczęte. Zakres i kolejność ustalić z człowiekiem (faza E w `PLAN_ROZGRYWKI.md`).
+- Status: ZROBIONE (faza E): `ubrania.js`, `tests/ubrania.test.js`, `tools/ubrania_sim.js`, ekran „Szafa i sklep” w `zlecenia.js`. Nie ma jeszcze nowego wariantu portretu gracza (zmienia się ikona i tekst, nie postać).

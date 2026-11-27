@@ -38,7 +38,7 @@
   /* Szansa wygrania przetargu dla oferty b: ocena, zaufanie klienta, siła rywala i cena. */
   function winChance(bid, ctx) {
     const b = BIDS[bid]; if (!b) throw new Error('Nieznana oferta ' + bid);
-    return Math.round(clamp(0.5 + (ctx.stars - 3) * 0.08 + (ctx.trust || 0) * 0.002 + (1 - b.mult) * 1.6 - ((ctx.rivalPower || 25) - 30) / 200, 0.05, 0.9) * 1000) / 1000;
+    return Math.round(clamp(0.5 + (ctx.stars - 3) * 0.08 + (ctx.trust || 0) * 0.002 + (1 - b.mult) * 1.6 - ((ctx.rivalPower || 25) - 30) / 200 + (ctx.outfit || 0), 0.05, 0.9) * 1000) / 1000;
   }
   /* Rozstrzygnięcie. Zwraca { won, chance }. */
   function bid(bidKey, ctx, rng) { const chance = winChance(bidKey, ctx); return { won: rng() < chance, chance }; }

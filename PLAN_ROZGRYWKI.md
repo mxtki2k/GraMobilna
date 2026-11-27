@@ -57,6 +57,6 @@ Zasada: lokalny model **pisze szkice według sztywnego formatu**, a **walidator 
 Przepływ nowej roboty: `node tools/ollama_robota.js --id okno2 --opis "..."` → `node tools/nowa_robota.js` → `node tests/roboty.test.js` → `node tools/balans.js --style-table` → przegląd tekstów i liczb → commit.
 Wskazówki: model 7–14B (np. `qwen2.5-coder:7b`, `qwen2.5:14b`), `num_ctx` 8192, 3–5 prób; przy słabym modelu skracać opis i prosić o 4 kroki zamiast 6. Szkice, które nie przeszły walidatora, zapisują się jako `roboty/<id>.rob.szkic`.
 
-## Faza E: Sklep z ubraniami (zaplanowane, szczegóły w `CLAUDE.md`)
+## Faza E: Sklep z ubraniami — ZROBIONE (ubrania.js, tools/ubrania_sim.js; szczegóły w `CLAUDE.md`)
 Przebieranie się jako szef (wiarygodność rośnie z ceną, ale zależy od klienta i roboty), ciuchy firmowe dla ekipy (wiarygodność firmy, nastrój, przetargi), sklep lokalny i używane na Alledrogo.
 Kolejność: ubrania.js + testy → symulacja → ikony i szafa w UI → ciuchy ekipy → integracja z przetargami i wyprzedażami sezonowymi.

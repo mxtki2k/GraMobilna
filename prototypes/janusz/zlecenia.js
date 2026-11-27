@@ -6,7 +6,7 @@
   const rnd = Math.random;
 
   // ---------- stan ----------
-  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), pendingYears: [], contracts: Kontrakty.fresh(), xp: Spec.fresh(), tenderCool: {}, board: { day: 0, offers: [] }, crewJobs: [], where: 'baza', waited: 0, bus: Bus.fresh(), fatigue: 10, burnout: 0, rel: Klienci.fresh(), certs: {}, oc: Ubezp.fresh(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
+  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), wardrobe: Ubrania.fresh(), pendingYears: [], contracts: Kontrakty.fresh(), xp: Spec.fresh(), tenderCool: {}, board: { day: 0, offers: [] }, crewJobs: [], where: 'baza', waited: 0, bus: Bus.fresh(), fatigue: 10, burnout: 0, rel: Klienci.fresh(), certs: {}, oc: Ubezp.fresh(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
   // meta-postęp (prestiż i perki) przetrwa „Zacznij od zera” i Nową Grę+
   let META = Rok.freshMeta(); try { const m = localStorage.getItem('zlecenia_meta'); if (m) META = Object.assign(Rok.freshMeta(), JSON.parse(m)); } catch (e) {}
   const saveMeta = () => { try { localStorage.setItem('zlecenia_meta', JSON.stringify(META)); } catch (e) {} };
@@ -60,8 +60,8 @@
 
   // ---------- poziomy ----------
   let cur = null; // bieżące zlecenie
-  const ALL = ['menu', 'job', 'result', 'crew', 'payday', 'hq', 'fin', 'os', 'story', 'alle', 'prestige'];
-  const co = () => Siedziba.rating(ST.hq, ST.hist, ST.ratings, ST.claims.length, Alledrogo.toolScore(ST.inv));
+  const ALL = ['menu', 'job', 'result', 'crew', 'payday', 'hq', 'fin', 'os', 'story', 'alle', 'prestige', 'wardrobe'];
+  const co = () => { const r = Siedziba.rating(ST.hq, ST.hist, ST.ratings, ST.claims.length, Alledrogo.toolScore(ST.inv)); r.stars = Math.min(5, Math.round((r.stars + 0.15 * Ubrania.crewCred(ST.wardrobe, ST.crew, ST.hq.up.szyld || 0)) * 100) / 100); return r; };
   function renderTop() {
     $('money').textContent = zl(ST.money);
     $('rep').textContent = co().stars.toFixed(1).replace('.', ',') + ' ★';
@@ -87,6 +87,7 @@
     bindContracts(); bindBoard(); bindTenders();
     { const ev = Sezon.active(ST.clock); if (ev.length) $('menu').insertAdjacentHTML('afterbegin', ev.map(e => '<div class="banner">' + e.em + ' <b>' + e.name + '</b>: ' + e.text + (e.demand ? ' Popyt: ' + Object.entries(e.demand).map(([j, m]) => (JOBS[j] ? JOBS[j].title.toLowerCase() : j) + ' ×' + String(m).replace('.', ',')).join(', ') + '.' : '') + (e.pay ? ' Wypłaty ×' + String(e.pay).replace('.', ',') + '.' : '') + (e.toolPrice ? ' Narzędzia ×' + String(e.toolPrice).replace('.', ',') + '.' : '') + '</div>').join('')); }
     $('menu').insertAdjacentHTML('beforeend', waitHTML());
+    $('menu').insertAdjacentHTML('beforeend', '<button id="goWardrobe" style="min-height:48px">👔 Szafa i sklep z ubraniami</button>'); $('goWardrobe').onclick = renderWardrobe;
     $('menu').insertAdjacentHTML('beforeend', '<button id="goPrestige" style="min-height:48px">🏆 Prestiż: ' + META.points + ' pkt · gra nr ' + META.games + '</button>'); $('goPrestige').onclick = renderPrestige;
     $('wait').onclick = waitHour; $('sleep').onclick = sleepNow; $('dayoff').onclick = dayOffNow; $('vac').onclick = vacationNow;
     $('goCrew').onclick = renderCrew; $('goHq').onclick = renderHq; $('goFin').onclick = renderFin; $('goOs').onclick = renderOs; $('goStory').onclick = renderStory; $('goAlle').onclick = renderAlle;
@@ -122,10 +123,11 @@
     const state = Swiat.rollState(w, { night: false }, rnd);
     ST.board.offers = ST.board.offers.filter(x => x.id !== o.id);
     if (Ekipa.attendance(w, rnd, {}) === 'absent') { ST.flash.push('👷 ' + w.name + ' nie odebrał telefonu i nie pojechał do ' + CLIENTS[o.client].name + '. Zlecenie przepadło.'); const c0 = Klienci.get(ST.rel, o.client); ST.rel = Object.assign({}, ST.rel, { [o.client]: { trust: Math.max(-100, c0.trust - 4), jobs: c0.jobs } }); save(); renderMenu(); return; }
-    const rt = co(), sim = ZlecEkipy.simulate(w, state, o, rnd, crewDeps(), { payMult: rt.payMult, satBonus: rt.satBonus, from: 'baza', clock: start });
+    const rt = co(), sim = ZlecEkipy.simulate(w, state, o, rnd, crewDeps(), { payMult: rt.payMult, satBonus: rt.satBonus + Ubrania.crewSat(ST.wardrobe, w.id, ST.hq.up.szyld || 0), from: 'baza', clock: start });
     let drive = 0, note = '';
     const dr = Swiat.resolveDrive(w, state, ST.world, 'worker', rnd); drive = dr.cost; if (dr.notes.length && dr.incident) note = dr.notes[dr.notes.length - 1]; if (dr.claim) ST.claims.push(Object.assign({ client: CLIENTS[o.client].name, due: ST.done + 1 }, dr.claim)); Swiat.tickWorld(ST.world, dr.heatDelta);
     if (Object.keys(dr.driverPatch).length) ST.crew = ST.crew.map(x => x.id === w.id ? Object.assign({}, x, dr.driverPatch) : x);
+    ST.wardrobe = Ubrania.uniformAfterJob(ST.wardrobe, w.id, o.job);
     const endAt = sim.endAt + Math.max(0, dr.timeAdj);
     ST.crewJobs.push({ id: o.id, workerId: w.id, offer: o, startAt: start, endAt, stars: sim.r.stars, index: sim.r.index, payout: sim.payout, cost: sim.cost, fuel: sim.fuel + drive, claim: sim.claimInfo ? sim.claimInfo : null, defects: sim.r.defects.length, drunk: state !== 'trzezwy' ? state : null, note, finished: false });
     ST.flash.push('👷 ' + w.name + ' jedzie do ' + CLIENTS[o.client].name + ' (' + JOBS[o.job].title + '), wróci ok. ' + Czas.hm(endAt) + '.' + (state !== 'trzezwy' ? ' Uwaga: ' + Swiat.LABEL[state] + '.' : ''));
@@ -147,6 +149,33 @@
     save(); renderTop(); modalOpen = true; $('mtitle').textContent = '👷 Ekipa wróciła'; $('mtext').textContent = lines.join('\n');
     $('mchoices').innerHTML = '<button data-a="ok">Dalej</button>'; $('modal').hidden = false; $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; renderMenu(); };
     return true;
+  }
+  // ---------- szafa i sklep z ubraniami (faza E) ----------
+  const clothesPrice = () => Sezon.clothesPrice(ST.clock);
+  function renderWardrobe() {
+    ALL.forEach(x => $(x).hidden = true); $('wardrobe').hidden = false; renderTop();
+    const W = ST.wardrobe, cur0 = Ubrania.current(W), day = Czas.dateOf(ST.clock).dayIndex, pm = clothesPrice(), icon = o => Pix.icon(o.icon, 'inline');
+    const taste = Object.keys(CLIENTS).map(cid => { const e = Ubrania.effect(cur0, cid, {}), f = Ubrania.effect(cur0, cid, { formal: true }); return '<div class="erow"><span>' + CLIENTS[cid].name + '</span><b class="' + (e.imp >= 0 ? 'pos' : 'neg') + '">' + (e.imp >= 0 ? '+' : '') + e.imp.toFixed(1).replace('.', ',') + ' · przetarg ' + (f.imp >= 0 ? '+' : '') + f.imp.toFixed(1).replace('.', ',') + '</b></div>'; }).join('');
+    const owned = W.owned.map(it => { const o = Ubrania.OUTFITS[it.id]; return '<div class="prow"><div class="hd"><span class="nm">' + icon(o) + ' ' + o.name + (it.uid === W.worn ? ' · NA SOBIE' : '') + '</span><span>' + Math.round(it.cond) + '%' + (it.dirty ? ' · brudne' : '') + (it.smell ? ' · śmierdzi' : '') + '</span></div><div class="row2">' +
+      (it.uid !== W.worn ? '<button data-wear="' + it.uid + '" style="min-height:40px">Załóż</button>' : '<button disabled style="min-height:40px">Założone</button>') + (it.dirty ? '<button data-wash="' + it.uid + '" ' + (ST.money >= Ubrania.WASH ? '' : 'disabled') + ' style="min-height:40px">Pierz · ' + zl(Ubrania.WASH) + '</button>' : (it.id !== 'wlasne' ? '<button data-sell="' + it.uid + '" style="min-height:40px">Sprzedaj · ' + zl(Math.round(o.price * 0.3 * it.cond / 100)) + '</button>' : '<span></span>')) + '</div></div>'; }).join('');
+    const shop = Object.values(Ubrania.OUTFITS).filter(o => o.id !== 'wlasne').map(o => { const c = Math.round(o.price * pm); return '<div class="prow"><div class="hd"><span class="nm">' + icon(o) + ' ' + o.name + '</span><span>' + zl(c) + (pm < 1 ? ' (wyprzedaż)' : '') + '</span></div><div class="hint">wiarygodność ' + Math.round(o.cred * 100) + '% · elegancja ' + Math.round(o.style * 100) + '% · robocze ' + Math.round(o.work * 100) + '% · wytrzymuje ok. ' + o.dur + ' zleceń · brudzi się ' + Math.round(o.dirt * 100) + '%</div><button data-buy="' + o.id + '" ' + (ST.money >= c ? '' : 'disabled') + ' style="min-height:44px">Kup · ' + zl(c) + '</button></div>'; }).join('');
+    const lump = Ubrania.lumpeks(day).filter(l => !(ST.wardrobe.bought || []).includes(l.id)).map(l => { const o = Ubrania.OUTFITS[l.outfit]; return '<div class="prow"><div class="hd"><span class="nm">' + icon(o) + ' ' + o.name + ' (używane)</span><span>' + zl(l.price) + '</span></div><div class="hint">stan ' + l.cond + '%, sprzedawca zapewnia, że „nie śmierdzi”.</div><button data-lump="' + l.id + '" ' + (ST.money >= l.price ? '' : 'disabled') + ' style="min-height:44px">Kup z lumpeksu · ' + zl(l.price) + '</button></div>'; }).join('');
+    const crew = ST.crew.map(w => { const u = Ubrania.uniformOf(W, w.id); return '<div class="prow"><div class="hd"><span class="nm">' + w.em + ' ' + w.name + '</span><span>' + (u ? Pix.icon(u.icon, 'inline') + ' ' + u.name + ' · ' + Math.round(u.cond) + '%' + (u.bhp ? ' · BHP' : '') : 'bez stroju') + '</span></div><div class="chips">' + Object.values(Ubrania.UNIFORMS).map(x => '<button data-uni="' + w.id + ':' + x.id + '" ' + (ST.money >= x.price ? '' : 'disabled') + ' style="min-height:36px;font-size:.8rem">' + x.name + ' · ' + zl(x.price) + '</button>').join('') + '</div></div>'; }).join('');
+    $('wardrobe').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Szafa i sklep</h2><div class="hint">Wiarygodność rośnie z ceną i stanem, ale gust klientów jest różny: Karyna i Sebix lubią styl, Heniek i Grażyna ceniących robocze ubranie, a garnitur na malowaniu to zły pomysł. W przetargu liczy się elegancja.</div>' +
+      '<h3 style="color:var(--muted);text-transform:uppercase">Wrażenie obecnego ubioru</h3><div class="econ">' + taste + '</div><h3 style="color:var(--muted);text-transform:uppercase">Twoja szafa</h3>' + owned +
+      '<h3 style="color:var(--muted);text-transform:uppercase">Sklep z odzieżą roboczą</h3>' + shop + '<h3 style="color:var(--muted);text-transform:uppercase">Lumpeks (dziś)</h3>' + (lump || '<div class="hint">Na dziś wszystko wykupione.</div>') +
+      '<h3 style="color:var(--muted);text-transform:uppercase">Ciuchy firmowe dla ekipy</h3><div class="hint">Zestawy z logo (lepsze logo = lepsza wiarygodność ze szyldu). BHP wymagane w przetargach. Nastrój ekipy rośnie, zestawy się zużywają.</div>' + (crew || '<div class="hint">Nie masz jeszcze ekipy.</div>') + '<button class="primary" id="wBack">Wróć</button>';
+    $('wBack').onclick = renderMenu;
+    $('wardrobe').onclick = e => {
+      const q = sel => e.target.closest(sel);
+      let b;
+      if ((b = q('[data-wear]'))) { ST.wardrobe = Ubrania.wear(ST.wardrobe, +b.dataset.wear); save(); renderWardrobe(); return; }
+      if ((b = q('[data-wash]'))) { const r = Ubrania.wash(ST.wardrobe, +b.dataset.wash, ST.money); if (r.ok) { cash('ubrania', -r.cost); ST.wardrobe = r.w; save(); renderTop(); renderWardrobe(); } return; }
+      if ((b = q('[data-sell]'))) { const r = Ubrania.sell(ST.wardrobe, +b.dataset.sell); if (r.ok) { cash('zakupy', r.price); ST.wardrobe = r.w; save(); renderTop(); renderWardrobe(); } return; }
+      if ((b = q('[data-buy]'))) { const r = Ubrania.buy(ST.wardrobe, b.dataset.buy, ST.money, clothesPrice()); if (r.ok) { cash('zakupy', -r.cost); ST.wardrobe = Ubrania.wear(r.w, r.item.uid); save(); renderTop(); renderWardrobe(); } return; }
+      if ((b = q('[data-lump]'))) { const l = Ubrania.lumpeks(Czas.dateOf(ST.clock).dayIndex).find(x => x.id === +b.dataset.lump); if (l) { const r = Ubrania.buy(ST.wardrobe, l.outfit, ST.money, 1, { price: l.price, cond: l.cond, smell: l.smell }); if (r.ok) { cash('zakupy', -r.cost); ST.wardrobe = Object.assign({}, r.w, { bought: (r.w.bought || []).concat([l.id]) }); save(); renderTop(); renderWardrobe(); } } return; }
+      if ((b = q('[data-uni]'))) { const [wid, uid] = b.dataset.uni.split(':'), r = Ubrania.buyUniform(ST.wardrobe, wid, uid, ST.money); if (r.ok) { cash('zakupy', -r.cost); ST.wardrobe = r.w; save(); renderTop(); renderWardrobe(); } }
+    };
   }
   // ---------- rok firmy, prestiż i Nowa Gra+ (faza D) ----------
   function yearStats() {
@@ -183,11 +212,11 @@
   }
   // ---------- przetargi publiczne (faza C) ----------
   const specLevels = () => Object.fromEntries(Object.keys(Spec.AREAS).map(k => [k, Spec.level(ST.xp[k] || 0, k, ST.certs)]));
-  const tenderCtx = cid => ({ stars: co().stars, tier: ST.hq.tier, spec: specLevels(), trust: Klienci.get(ST.rel, cid).trust, rivalPower: ST.os.rival.power });
+  const tenderCtx = cid => ({ stars: co().stars, tier: ST.hq.tier, spec: specLevels(), trust: Klienci.get(ST.rel, cid).trust, rivalPower: ST.os.rival.power, outfit: Ubrania.effect(Ubrania.current(ST.wardrobe), cid, { formal: true }).tender });
   function tendersHTML() {
     const h = '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Przetargi publiczne</h3>', day = Czas.dateOf(ST.clock).dayIndex;
-    const rows = Object.values(Przetargi.TENDERS).map(t => { const miss = Przetargi.missing(t, tenderCtx(t.client)), cd = Przetargi.cooldownOk(ST.tenderCool, t.id, day), q = Kontrakty.quote(Kontrakty.CONTRACTS[Przetargi.cid(t.id)], JOBS), cl = CLIENTS[t.client], ok = !miss.length && cd && !KT().active;
-      return '<button class="lvl" data-tender="' + t.id + '" ' + (ok ? '' : 'disabled') + '><span class="av">' + (miss.length ? '🔒' : cl.em) + '</span><span><b>' + t.title.replace('Przetarg: ', '') + '</b><small>' + t.stages.length + ' etapów · ' + t.deadline + ' dni · wartość ok. ' + zl(q.expected) + ' · wadium ' + zl(Math.round(q.nominal * Przetargi.WADIUM)) + '</small><small>' + (miss.length ? 'brakuje: ' + miss.join(', ') : !cd ? 'rozstrzygnięty, następny za tydzień' : KT().active ? 'masz aktywny kontrakt' : t.desc) + '</small></span><span class="res">' + (ok ? 'oferta' : '') + '</span></button>'; }).join('');
+    const rows = Object.values(Przetargi.TENDERS).map(t => { const miss = Przetargi.missing(t, tenderCtx(t.client)), cd = Przetargi.cooldownOk(ST.tenderCool, t.id, day), q = Kontrakty.quote(Kontrakty.CONTRACTS[Przetargi.cid(t.id)], JOBS), cl = CLIENTS[t.client], bhp = Ubrania.bhpOk(ST.wardrobe, ST.crew), ok = !miss.length && cd && !KT().active && bhp;
+      return '<button class="lvl" data-tender="' + t.id + '" ' + (ok ? '' : 'disabled') + '><span class="av">' + (miss.length ? '🔒' : cl.em) + '</span><span><b>' + t.title.replace('Przetarg: ', '') + '</b><small>' + t.stages.length + ' etapów · ' + t.deadline + ' dni · wartość ok. ' + zl(q.expected) + ' · wadium ' + zl(Math.round(q.nominal * Przetargi.WADIUM)) + '</small><small>' + (miss.length ? 'brakuje: ' + miss.join(', ') : !bhp ? 'ekipa bez odzieży BHP (kombinezony lub kurtki z Szafy)' : !cd ? 'rozstrzygnięty, następny za tydzień' : KT().active ? 'masz aktywny kontrakt' : t.desc) + '</small></span><span class="res">' + (ok ? 'oferta' : '') + '</span></button>'; }).join('');
     return h + '<div class="hint">Duże zlecenia publiczne: wysokie stawki, wadium i surowy audyt. Wady zagrażające bezpieczeństwu wykryte przy odbiorze oblewają audyt (kara ' + Math.round(Kontrakty.AUDIT_FAIL * 100) + '% wartości, wadium przepada). Wymagają oceny firmy, siedziby i specjalizacji.</div>' + rows;
   }
   function bindTenders() { document.querySelectorAll('[data-tender]').forEach(b => { b.onclick = () => askTender(b.dataset.tender); }); }
@@ -321,7 +350,7 @@
       helper: null, helperOn: false, helperPaid: 0, timeAdj: 0, extraDefects: [], notes: [], states: {}, night, intro: l.intro || JOBS[l.job].intro, transportCost: 0, scandal: false };
     cur.startClock = call ? (call.startAt || ST.clock + 20) : Czas.jobStart(ST.clock, l.time, 1);
     if (l.contract) { cur.notes.push('📋 Kontrakt „' + l.contract.title + '”, etap ' + (l.contract.stage + 1) + '/' + l.contract.of + '.'); cur.intro = CLIENTS[l.client].name + ' (kontrakt „' + l.contract.title + '”, etap ' + (l.contract.stage + 1) + '): ' + JOBS[l.job].intro; }
-    ST.world.night = night; cur.dueSpec = l.due ? Terminy.make(cur.job.deadline, cur.startClock, l.due, night) : null;
+    cur.outfit = outfitFx(); ST.world.night = night; cur.dueSpec = l.due ? Terminy.make(cur.job.deadline, cur.startClock, l.due, night) : null;
     ST.crew.forEach(w => { cur.states[w.id] = Swiat.rollState(w, { paydayEve: ST.lastPayDone === ST.done, night }, rnd); });
     cur.season = Czas.season(cur.startClock); cur.deadline = cur.job.deadline; cur.umowa = null; cur.terms = Object.assign({}, Umowa.DEFAULT);
     cur.mystery = Fabula.rollMystery({ done: ST.done }, rnd);
@@ -337,6 +366,14 @@
   }
   function afterUmowa() { if (ST.crew.length) pickHelper(); else transport(); }
   const dueNote = () => { const d = cur.dueSpec; if (!d) return ''; const T = Terminy; return '<div class="banner">⏰ Zlecenie terminowe: ' + d.name + '. Skończ do <b>' + Czas.hm(d.dueAt) + '</b> (masz ' + Czas.fmtMin(d.allowed) + ' od startu). Spóźnienie: kara ' + Math.round(d.pct * 100) + '% wypłaty za każde zaczęte ' + T.BLOCK + ' min (max ' + Math.round(T.CAP * 100) + '%). Szybciej niż w 80% czasu: premia ' + Math.round(T.BONUS * 100) + '%. Wypłata ×' + String(d.pay).replace('.', ',') + '.' + (d.kind === 'ostry' ? ' Solidna robota się nie zmieści. Ktoś będzie musiał iść na skróty.' : '') + '</div>'; };
+  const formalCtx = l => !!(l && l.contract && Kontrakty.CONTRACTS[l.contract.id] && Kontrakty.CONTRACTS[l.contract.id].tender);
+  const outfitFx = () => Ubrania.effect(Ubrania.current(ST.wardrobe), cur.client.id, { formal: formalCtx(cur.level), job: cur.job.id });
+  const outfitNote = () => { const it = Ubrania.current(ST.wardrobe), o = Ubrania.OUTFITS[it.id], e = cur.outfit; return '<div class="hint">' + Pix.icon(o.icon, 'inline') + ' Ubiór: <b>' + o.name + '</b> (stan ' + Math.round(it.cond) + '%' + (it.dirty ? ', brudny' : '') + '). Wrażenie u klienta: ' + (e.imp > 0.3 ? 'świetne' : e.imp > 0.05 ? 'dobre' : e.imp > -0.1 ? 'obojętne' : 'złe') + ' (' + (e.satBonus >= 0 ? '+' : '') + e.satBonus + ' pkt zadowolenia, wypłata ×' + String(e.pay).replace('.', ',') + '). <button id="chgOutfit" style="min-height:32px;padding:0 8px">Przebierz się</button></div>'; };
+  function changeOutfit() {
+    modalOpen = true; $('mtitle').textContent = '👔 W co się ubierasz?'; $('mtext').textContent = cur.client.name + (formalCtx(cur.level) ? ' (oficjalnie, przetarg)' : '') + ', ' + cur.job.title + (Ubrania.messy(cur.job.id) >= 0.5 ? ' (brudna robota)' : '') + '.';
+    $('mchoices').innerHTML = ST.wardrobe.owned.map(it => { const o = Ubrania.OUTFITS[it.id], e = Ubrania.effect(it, cur.client.id, { formal: formalCtx(cur.level), job: cur.job.id }); return '<button data-u="' + it.uid + '">' + Pix.icon(o.icon, 'inline') + ' ' + o.name + (it.uid === ST.wardrobe.worn ? ' (masz na sobie)' : '') + '<small>stan ' + Math.round(it.cond) + '%' + (it.dirty ? ' · brudny' : '') + ' · wrażenie ' + (e.imp >= 0 ? '+' : '') + e.imp.toFixed(1).replace('.', ',') + ' · wypłata ×' + String(e.pay).replace('.', ',') + '</small></button>'; }).join('') + '<button data-u="">Zostaw jak jest<small>bez zmiany</small></button>'; $('modal').hidden = false;
+    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false; if (b.dataset.u) { ST.wardrobe = Ubrania.wear(ST.wardrobe, +b.dataset.u); const it = Ubrania.current(ST.wardrobe); if (it.smell) { ST.flash.push('👔 Ubranie z lumpeksu śmierdzi stęchlizną. Wiarygodność −0,15.'); } cur.outfit = outfitFx(); save(); } umowa(); };
+  }
   const nightNote = () => cur.night ? '<div class="banner">🌙 Zlecenie nocne: dopłata ×' + String(Czas.NIGHT.payMult).replace('.', ',') + ', ale ciemno (celność −' + Math.round(Czas.NIGHT.accPenalty * 100) + ' pkt), robota trwa o 10% dłużej, więcej wypadków i kontroli policji, ekipa częściej nie przychodzi. Klient jest zaspany, więc mniej zauważa.</div>' : '';
 
   // ---------- umowa: faktura, kosztorys, termin ----------
@@ -347,19 +384,19 @@
     const uPre = Umowa.evaluate(t, c, () => 1);
     $('job').innerHTML = '<div class="bubble"><span class="av">' + c.em + '</span><div><b>' + c.name + '</b>: „' + cur.intro + '”<br><small style="color:var(--muted)">' + c.note + '</small></div></div>' +
       sceneHTML(cur.job) +
-      '<div class="hint">' + (cur.night ? '🌙' : '☀️') + ' Start: <b>' + Czas.label(cur.startClock) + '</b> (' + (cur.night ? 'noc' : 'dzień') + '). Sezon: ' + sea + (dm !== 1 ? ' (popyt na takie roboty ×' + String(dm).replace('.', ',') + ')' : '') + '.</div>' + nightNote() + dueNote() +
+      '<div class="hint">' + (cur.night ? '🌙' : '☀️') + ' Start: <b>' + Czas.label(cur.startClock) + '</b> (' + (cur.night ? 'noc' : 'dzień') + '). Sezon: ' + sea + (dm !== 1 ? ' (popyt na takie roboty ×' + String(dm).replace('.', ',') + ')' : '') + '.</div>' + nightNote() + dueNote() + outfitNote() +
       '<h2 style="font-size:1.4rem;text-transform:uppercase">Umowa</h2>' +
       '<div class="hint">' + (ni ? c.name + ' wymaga faktury.' : c.name + ' pyta, czy „może być bez papierów”.') + '</div>' +
       '<div class="step"><h3 style="color:var(--muted);text-transform:uppercase">Faktura</h3>' + seg('invoice', [[true, 'Z fakturą (podatek 10%)'], [false, 'Bez faktury (−4% ceny)']]) + '</div>' +
-      '<div class="step"><h3 style="color:var(--muted);text-transform:uppercase">Kosztorys</h3>' + seg('quote', [['fair', 'Uczciwy'], ['inflated', 'Zawyżony (+20%)'], ['low', 'Zaniżony (−15%)']]) + '<div class="hint">Zawyżenie zauważy: ' + Math.round(Umowa.detectChance(c) * 100) + '% (uważny klient lub fachowiec zauważy częściej).</div></div>' +
+      '<div class="step"><h3 style="color:var(--muted);text-transform:uppercase">Kosztorys</h3>' + seg('quote', [['fair', 'Uczciwy'], ['inflated', 'Zawyżony (+20%)'], ['low', 'Zaniżony (−15%)']]) + '<div class="hint">Zawyżenie zauważy: ' + Math.round(Math.min(0.9, Umowa.detectChance(c) * cur.outfit.detect) * 100) + '% (uważny klient lub fachowiec zauważy częściej).</div></div>' +
       '<div class="step"><h3 style="color:var(--muted);text-transform:uppercase">Termin</h3>' + seg('rush', [[false, 'Realny (' + Czas.fmtUnits(cur.job.deadline, cur.night) + ')'], [true, 'Na wczoraj (' + Czas.fmtUnits(cur.job.deadline * 0.75, cur.night) + ', +10%)']]) + '</div>' +
       '<div class="econ"><div class="erow"><span>Szacowana wypłata</span><b>~' + zl(est.lines[0].value) + '</b></div><div class="erow"><span>Szacowany czas</span><b>~' + Czas.fmtMin(est.hours * 60) + '</b></div><div class="erow big"><span>Zostaje po kosztach (bez pomocnika)</span><b>' + perHourTxt(est) + '</b></div></div>' +
       '<button class="primary" id="umOk">Ustalone, jedziemy</button><button id="back" style="background:transparent;min-height:40px;color:var(--muted)">Wróć do listy</button>';
     void uPre;
-    $('back').onclick = renderMenu;
+    $('back').onclick = renderMenu; if ($('chgOutfit')) $('chgOutfit').onclick = changeOutfit;
     $('job').onclick = e => { const b = e.target.closest('.seg button'); if (!b) return; const k = b.parentNode.dataset.key; t[k] = b.dataset.v === 'true' ? true : b.dataset.v === 'false' ? false : b.dataset.v; umowa(); };
     $('umOk').onclick = () => {
-      cur.umowa = Umowa.evaluate(t, c, rnd); cur.notes.push(...cur.umowa.notes);
+      cur.umowa = Umowa.evaluate(t, c, rnd, { detectMult: cur.outfit.detect }); cur.notes.push(...cur.umowa.notes);
       if (cur.level.contract && cur.level.contract.stage === 0) KT().active.terms = Object.assign({}, t);
       cur.deadline = Math.round(cur.job.deadline * cur.umowa.deadlineFactor);
       afterUmowa();
@@ -561,9 +598,10 @@
     const job = Object.assign({}, cur.job, { base: Math.round(cur.job.base * cur.mult), deadline: cur.deadline });
     const rt = co(), um = cur.umowa || { payMult: 1, satDelta: 0, taxRiskDelta: 0 };
     const sea = Kalendarz.demandMult(cur.season, cur.job.id) * Sezon.demand(cur.startClock, cur.job.id) * Sezon.pay(cur.startClock), gos = Osiedle.gossipMult(ST.os), cut = 1 - Osiedle.undercut(ST.os, { rating: rt.stars, tier: ST.hq.tier });
-    const payMult = Math.round(rt.payMult * um.payMult * sea * gos * cut * mods.payMult * (cur.dueSpec ? cur.dueSpec.pay : 1) * extraPay(cur.level, cur.job.id) * 1000) / 1000;
+    const payMult = Math.round(rt.payMult * um.payMult * sea * gos * cut * mods.payMult * (cur.dueSpec ? cur.dueSpec.pay : 1) * extraPay(cur.level, cur.job.id) * cur.outfit.pay * 1000) / 1000;
     const hz = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id])).hazardMult * mods.hazard * Szkolenia.modsFor(ST.certs, cur.job.id).hazard * specM(cur.job.id).hazard;
-    const r = Fuszerka.evaluate(job, cur.picks, cur.client, { time: Math.round(cur.timeAdj), defects: cur.extraDefects, satBonus: rt.satBonus + um.satDelta, payMult, hazardMult: hz, attentionMult: mods.attention });
+    const helperSat = cur.helperOn && cur.helper ? Ubrania.crewSat(ST.wardrobe, cur.helper.id, ST.hq.up.szyld || 0) : 0;
+    const r = Fuszerka.evaluate(job, cur.picks, cur.client, { time: Math.round(cur.timeAdj), defects: cur.extraDefects, satBonus: rt.satBonus + um.satDelta + cur.outfit.satBonus + helperSat, payMult, hazardMult: hz, attentionMult: mods.attention * cur.outfit.attention });
     const te = Terminy.evaluate(cur.dueSpec, minutes, r.payout);
     const comment = Fuszerka.clientComment(cur.client, r, rnd);
     const claim = Fuszerka.rollClaim(r, rnd);
@@ -604,6 +642,7 @@
     ST.waited = 0;
     { const a0 = specM(cur.job.id).level; ST.xp = Spec.addXp(ST.xp, cur.job.id, r.stars, !!cur.level.contract); const a1 = specM(cur.job.id).level;
       if (a1 > a0) cur.notes.push('🎓 Specjalizacja „' + Spec.AREAS[Spec.areaOf(cur.job.id)].name + '”: poziom ' + a1 + '!'); }
+    { const aj = Ubrania.afterJob(ST.wardrobe, cur.job.id, rnd); ST.wardrobe = aj.w; cur.notes.push(...aj.notes); if (cur.helperOn && cur.helper) ST.wardrobe = Ubrania.uniformAfterJob(ST.wardrobe, cur.helper.id, cur.job.id); }
     if (cur.level.contract) { const rs = Kontrakty.recordStage(KT(), r, r.payout); ST.contracts = rs.state; cur.notes.push('📋 Kontrakt „' + cur.level.contract.title + '”: etap ' + (cur.level.contract.stage + 1) + '/' + cur.level.contract.of + ' zakończony (' + stars(r.stars) + ', transza ' + zl(r.payout) + ').' + (rs.last ? ' To był ostatni etap, czas na odbiór.' : '')); }
     { const before = Klienci.level(Klienci.get(ST.rel, cur.client.id).trust); ST.rel = Klienci.afterJob(ST.rel, cur.client.id, r.stars, Osiedle.GOSSIP[cur.client.id]); const after = Klienci.level(Klienci.get(ST.rel, cur.client.id).trust);
       if (before !== after) cur.notes.push('🤝 ' + cur.client.name + ': teraz „' + after + '” (zaufanie ' + Klienci.get(ST.rel, cur.client.id).trust + ').'); }
@@ -965,7 +1004,7 @@
   }
   const rl = a => a[Math.floor(rnd() * a.length)];
   function confirmPay() {
-    const res = Ekipa.applyPay(ST.crew, PAY, { patienceBonus: Siedziba.effects(ST.hq).comfort * 0.5 - Kalendarz.moodPenalty(Czas.season(ST.clock), Siedziba.effects(ST.hq).comfort) }); cash('pensje', -res.spent); ST.crew = res.workers;
+    const res = Ekipa.applyPay(ST.crew, PAY, { patienceBonus: Ubrania.crewMood(ST.wardrobe, ST.crew) + Siedziba.effects(ST.hq).comfort * 0.5 - Kalendarz.moodPenalty(Czas.season(ST.clock), Siedziba.effects(ST.hq).comfort) }); cash('pensje', -res.spent); ST.crew = res.workers;
     const lines = res.details.map(d => {
       const w = ST.crew.find(x => x.id === d.id);
       const weaker = ST.crew.filter(o => o.id !== d.id && o.skill < w.skill && (PAY[o.id] || 0) > (PAY[d.id] || 0))[0];
@@ -1060,6 +1099,6 @@
     new MutationObserver(() => requestAnimationFrame(run)).observe(document.body, { childList: true, subtree: true });
     run();
   })();
-  window.__z = { get META() { return META; }, renderPrestige, checkYear, Spec, Przetargi, ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
+  window.__z = { Ubrania, renderWardrobe, get META() { return META; }, renderPrestige, checkYear, Spec, Przetargi, ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
   renderMenu();
 })();
