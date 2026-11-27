@@ -1,0 +1,28 @@
+# Lodówka nie chłodzi: scena ogólna z własnym tłem i obiektem (generator).
+robota lodowka | Lodówka nie chłodzi | Kuchnia | baza 270 | termin 19
+intro Lodówka szumi i się nie wyłącza, a w zamrażalniku robi się jezioro. Mięso zaczyna pachnieć.
+tlo kuchnia | obiekt lodowka | anim tester,screwdriver,pliers,tester
+kurs sep | narzedzia probnik,zestaw | popyt lato=1.3 zima=0.9
+poziom klient=karyna mult=1.2 slot=dzien czas=11:00
+poziom klient=sebix mult=1.6 slot=dzien czas=16:30
+poziom klient=tesciowa mult=2.1 slot=noc czas=22:45 | intro=Teściowa o 22:45: „Lodówka mi się rozmroziła, uda mi się mięso uratować?!”
+krok odlacz | Odłącz od prądu | Bezpieczeństwo przede wszystkim.
+  d | Wyjmij wtyczkę | Suche ręce, wyjęta wtyczka. | 2 | 0 | lo-prad-ok | 
+  s | Wyłącz bezpiecznik | Szybciej, ale lodówka dalej pod prądem. | 1 | 0 | lo-prad-bez | zasilanie nie odcięte:2:0.2:1
+  f | Zostaw w gniazdku | Przecież to tylko lodówka. | 0 | 0 | lo-prad-zostaw | porażenie przy pracy:3:0.3:0.5
+krok diag | Znajdź przyczynę | Termostat, sprężarka, uszczelka?
+  d | Zmierz i sprawdź po kolei | Wiadomo, co jest nie tak. | 5 | 0 | lo-diag-ok |  | skill
+  s | Sprawdź uszczelkę | Czasem wystarczy. | 2 | 0 | lo-diag-uszcz | nie sprawdzono termostatu:1.5:0.3 | skill
+  f | Kopnij w bok | Czasem działa. | 1 | 0 | lo-diag-kop | wgnieciony bok lodówki:2:0.9
+krok naprawa | Wymień termostat | Nowa część z hurtowni.
+  d | Nowy termostat | Pasuje fabrycznie. | 6 | 70 | lo-nap-ok |  | skill
+  s | Przyklej stary | Kapnie jakoś. | 2 | 5 | lo-nap-klej | termostat na taśmie:3:0.3 | skill
+  f | Zewrzyj druty | Działa non stop. | 1 | 2 | lo-nap-zwarcie | zwarty termostat:4.5:0.2:0.38
+krok start | Uruchom i sprawdź | Temperatura po godzinie.
+  d | Termometr i 60 minut | Pewnie schładza. | 4 | 0 | lo-start-ok | 
+  s | Chwila nasłuchu | Szumi, to działa. | 1 | 0 | lo-start-szum | brak pomiaru temperatury:1.5:0.1
+  f | Zostaw i idź | Zadziała. | 0 | 0 | lo-start-brak | nie sprawdzono chłodzenia:3:0.15
+niespodzianka szron | po=1 | szansa=0.3 | Pod szronem wyciek | Za zamrażalnikiem leży kałuża po starym wycieku.
+  d | Wysusz i uszczelnij | Czysto. | 4 | 10 | 
+  s | Wytrzyj ręcznikiem | Do jutra sucho. | 1 | 0 | wilgoć pod lodówką:2:0.4
+  f | Przesuń lodówkę | Zasłoń. | 0 | 0 | pleśń za lodówką:3:0.3

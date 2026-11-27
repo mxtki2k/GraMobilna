@@ -1,0 +1,28 @@
+# Pralka przecieka: scena ogólna z własnym tłem i obiektem (generator).
+robota pralka | Pralka przecieka | Łazienka | baza 270 | termin 21
+intro Pralka po każdym praniu zostawia kałużę. Klientka podkłada ręczniki, a ręczników już brak.
+tlo lazienka | obiekt pralka | anim pliers,wrench,screwdriver,tester
+kurs hydr | narzedzia klucze,pistolet | popyt zima=1.0 lato=1.1
+poziom klient=grazyna mult=1.2 slot=dzien czas=11:30
+poziom klient=karyna mult=1.5 slot=dzien czas=17:00
+poziom klient=mirek mult=2.1 slot=noc czas=23:50 | intro=Mirek o 23:50: „Pralka zalała mi całą łazienkę, panie, pomóż, bo mi sąsiad leci na łeb!”
+krok odlacz | Odłącz pralkę | Prąd i woda.
+  d | Wtyczka i zawory | Sucho i bezpiecznie. | 3 | 0 | pr2-odl-ok | 
+  s | Tylko wtyczka | Woda dalej płynie. | 1 | 0 | pr2-odl-wtyk | woda pod ciśnieniem:2:0.5
+  f | Zostaw | Przecież jest wyłączona. | 0 | 0 | pr2-odl-zostaw | zalana podłoga:4:1
+krok diag | Znajdź przeciek | Wąż, uszczelka, pompa?
+  d | Suchy papier i latarka | Wiadomo gdzie. | 5 | 0 | pr2-diag-ok |  | skill
+  s | Obejrzyj wąż | Pewnie wąż. | 2 | 0 | pr2-diag-waz | pominięto pompę:1.5:0.3 | skill
+  f | Zgadnij | Zawsze wąż. | 0 | 0 | pr2-diag-zgadnij | zła diagnoza:3.5:0.5
+krok naprawa | Wymień uszczelkę i wąż | Dopasuj długość.
+  d | Nowa uszczelka i wąż | Pasuje i szczelnie. | 6 | 35 | pr2-nap-ok |  | skill
+  s | Tylko uszczelka | Połowa roboty. | 3 | 12 | pr2-nap-uszcz | stary wąż dalej ciągnie:2.5:0.3 | skill
+  f | Silikon | Na wszystko. | 1 | 6 | pr2-nap-silikon | silikon zamiast uszczelki:5:0.7
+krok proba | Pranie próbne | Cały cykl.
+  d | Pełny cykl, kontrola | Sucho. | 5 | 0 | pr2-test-ok | 
+  s | Płukanie | Prawie suche. | 2 | 0 | pr2-test-plukanie | brak pełnej próby:1.5:0.2
+  f | Zostaw | Powinno być dobrze. | 0 | 0 | pr2-test-brak | nie sprawdzono szczelności:4:0.4
+niespodzianka lozysko | po=1 | szansa=0.3 | Łożysko bębna jest zużyte | Bęben chodzi z hałasem i szuka mocy.
+  d | Wymień łożysko | Dłużej, ale na lata. | 8 | 55 | 
+  s | Przesmaruj | Pocisz się, ale działa. | 2 | 5 | łożysko padnie za rok:3:0.3
+  f | Zostaw | Szumi, to działa. | 0 | 0 | zużyte łożysko bębna:3.5:0.5

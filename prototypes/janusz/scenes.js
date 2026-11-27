@@ -661,15 +661,29 @@
       o = o || {}; const g = G(), tlo = meta.tlo || 'pokoj';
       if (tlo === 'lazienka') { tiledWall(g, 58); rc(g, '6', 0, 58, W, 22); for (let y = 60; y < H; y += 8) for (let x = 0; x < W; x += 8) if (((x >> 3) + ((y - 60) >> 3)) % 2 === 0) rc(g, '5', x, y, 8, 8); rc(g, '&', 0, 58, W, 2); }
       else if (tlo === 'kuchnia') { tiledWall(g, 34); rc(g, '1', 0, 34, W, 28); dith(g, '2', 0, 34, W, 28, 1); skirting(g, 58, '3'); woodFloor(g, 62); }
+      else if (tlo === 'korytarz') { wallpaper(g, 60, ['4', '5', '4']); rc(g, '6', 0, 40, W, 2); skirting(g, 60, '6'); for (let y = 62; y < H; y += 6) for (let x = 0; x < W; x += 12) { rc(g, ((x / 12 + (y - 62) / 6) & 1) ? '3' : '2', x, y, 12, 6); } }
+      else if (tlo === 'piwnica') { rc(g, 'G', 0, 0, W, 62); for (let y = 0; y < 62; y += 6) for (let x = (y / 6 & 1) * 8; x < W; x += 16) { rc(g, 'd', x, y, 15, 5); dith(g, '&', x, y + 3, 15, 2); } rc(g, '%', 0, 62, W, 18); dith(g, 'G', 0, 62, W, 18, 1); rc(g, 'k', 0, 62, W, 1); }
       else { wallpaper(g, 64, ['2', '3', '1']); skirting(g, 64, '3'); woodFloor(g, 68); }
+      if (tlo === 'piwnica') { rc(g, 'k', 6, 8, 20, 8); rc(g, '^', 7, 9, 18, 6); dith(g, '~', 7, 9, 18, 3); if (o.night) rc(g, 'B', 7, 9, 18, 6); px(g, 'e', 64, 2); rc(g, 'k', 64, 0, 1, 2); }
+      else if (tlo === 'korytarz') { rc(g, '&', 100, 8, 20, 24); rc(g, '+', 101, 9, 18, 22); rc(g, 'e', 103, 11, 14, 8); rc(g, 'T', 103, 21, 14, 8); px(g, 'y', 112, 15); }
+      else {
       rc(g, '&', 6, 6, 22, 24); rc(g, '+', 7, 7, 20, 22); rc(g, '^', 9, 9, 16, 18); dith(g, '~', 9, 9, 16, 6); rc(g, '+', 16, 9, 2, 18);
       if (o.night) { nightGlass(g, 9, 9, 16, 18, f); rc(g, '+', 16, 9, 2, 18); }
+      }
       const marks = {}; T.forEach(t => { if (q[t]) marks[q[t][0]] = q[t][1]; });
       const done = Object.keys(marks).length, good = done === job.steps.length && Object.values(marks).every(x => x === 'dobrze');
       const ob = meta.obiekt || 'panel', X = 40, Y = 18;
       if (ob === 'rura') { rc(g, 'g', X + 8, Y, 6, 22); rc(g, 'g', X + 8, Y + 18, 36, 6); rc(g, 'g', X + 38, Y + 8, 6, 16); rc(g, '#', X + 8, Y, 1, 22); rc(g, 'y', X + 6, Y + 14, 10, 3); rc(g, 'y', X + 36, Y + 4, 10, 3); }
       else if (ob === 'drzwi') { rc(g, '8', X + 6, Y - 8, 40, 52); rc(g, 't', X + 8, Y - 6, 36, 48); rc(g, 'y', X + 38, Y + 16, 5, 4); }
       else if (ob === 'okno') { rc(g, '&', X, Y - 4, 52, 40); rc(g, '+', X + 2, Y - 2, 48, 36); rc(g, '^', X + 4, Y, 20, 32); rc(g, '^', X + 28, Y, 20, 32); }
+      else if (ob === 'muszla') { rc(g, 'k', X + 11, Y - 8, 30, 16); rc(g, '#', X + 12, Y - 7, 28, 14); rc(g, '=', X + 12, Y + 5, 28, 2); rc(g, 'y', X + 24, Y - 10, 4, 3); rc(g, 'k', X + 14, Y + 8, 24, 12); rc(g, '#', X + 15, Y + 9, 22, 10); rc(g, '%', X + 15, Y + 17, 22, 2); rc(g, 'k', X + 18, Y + 20, 16, 12); rc(g, '#', X + 19, Y + 21, 14, 10); }
+      else if (ob === 'lodowka') { rc(g, 'k', X + 8, Y - 14, 34, 56); rc(g, '#', X + 9, Y - 13, 32, 54); rc(g, '%', X + 9, Y + 12, 32, 1); rc(g, 'G', X + 35, Y - 8, 2, 14); rc(g, 'G', X + 35, Y + 16, 2, 18); rc(g, 'a', X + 14, Y - 6, 5, 4); rc(g, 'm', X + 22, Y - 2, 4, 4); if (f % 4 < 2) rc(g, 'a', X + 12, Y + 14, 4, 3); }
+      else if (ob === 'zamek') { rc(g, '8', X + 6, Y - 12, 40, 56); rc(g, 't', X + 8, Y - 10, 36, 52); rc(g, 'T', X + 10, Y - 6, 14, 18); rc(g, 'T', X + 28, Y - 6, 14, 18); rc(g, 'k', X + 30, Y + 16, 12, 18); rc(g, 'y', X + 31, Y + 17, 10, 16); rc(g, 'Y', X + 31, Y + 17, 1, 16); rc(g, 'k', X + 35, Y + 21, 2, 6); rc(g, 'e', X + 34, Y + 20, 4, 1); }
+      else if (ob === 'lampa') { rc(g, 'k', X + 25, Y - 20, 2, 18); line(g, 'k', X + 14, Y + 4, X + 38, Y + 4, 1); rc(g, 'k', X + 12, Y + 1, 28, 4); rc(g, 'Y', X + 13, Y + 2, 26, 2); rc(g, 'y', X + 14, Y + 2, 24, 1); rc(g, 'k', X + 20, Y + 5, 12, 6); if (!done || f % 3 !== 0) { rc(g, 'e', X + 21, Y + 6, 10, 4); dith(g, 'e', X + 14, Y + 11, 24, 14, f); } }
+      else if (ob === 'rolety') { rc(g, '&', X, Y - 6, 52, 46); rc(g, '+', X + 2, Y - 4, 48, 42); rc(g, '^', X + 4, Y - 2, 44, 38); const dn = done ? 4 : 2; for (let i = 0; i < 5 + dn; i++) { rc(g, 'T', X + 4, Y - 2 + i * 3, 44, 2); rc(g, 't', X + 4, Y - 2 + i * 3, 44, 1); } rc(g, 'k', X + 2, Y - 8, 48, 4); rc(g, 'G', X + 3, Y - 7, 46, 2); }
+      else if (ob === 'skrzynka') { rc(g, 'k', X + 2, Y - 8, 48, 44); rc(g, 'G', X + 3, Y - 7, 46, 42); rc(g, 'd', X + 6, Y - 4, 40, 36); for (let r = 0; r < 3; r++) for (let c = 0; c < 6; c++) { rc(g, 'k', X + 8 + c * 6, Y - 1 + r * 11, 5, 8); rc(g, (r + c + f) % 5 === 0 && !done ? 'r' : 'w', X + 9 + c * 6, Y + r * 11 + ((c + r) % 2), 3, 3); } if (!done) { px(g, 'e', X + 22, Y - 6 + (f % 2)); px(g, 'y', X + 30, Y - 5); } }
+      else if (ob === 'bojler') { rc(g, 'k', X + 12, Y - 14, 28, 52); rc(g, 'g', X + 13, Y - 13, 26, 50); rc(g, '#', X + 14, Y - 12, 4, 48); rc(g, 'k', X + 22, Y - 6, 10, 8); rc(g, 'n', X + 23, Y - 5, 8, 6); rc(g, 'g', X + 16, Y - 18, 6, 4); rc(g, 'g', X + 30, Y - 18, 6, 4); line(g, 'k', X + 19, Y - 18, X + 19, Y - 30, 2); line(g, 'k', X + 33, Y - 18, X + 33, Y - 30, 2); if (!done && f % 2) { px(g, 'w', X + 24, Y - 24); px(g, 'w', X + 26, Y - 28); } }
+      else if (ob === 'pralka') { rc(g, 'k', X + 6, Y - 10, 40, 48); rc(g, '#', X + 7, Y - 9, 38, 46); rc(g, 'k', X + 10, Y - 6, 8, 3); rc(g, 'a', X + 20, Y - 6, 4, 3); disc(g, 'k', X + 26, Y + 14, 14); disc(g, '&', X + 26, Y + 14, 12); disc(g, '^', X + 26, Y + 14, 9); dith(g, '~', X + 17, Y + 5, 18, 8, f); if (!done) { rc(g, 'a', X + 12, Y + 38, 28, 2); rc(g, '^', X + 14, Y + 40, 24, 1); } }
       else if (ob === 'kratka') { rc(g, 'G', X, Y, 52, 34); for (let i = 0; i < 6; i++) rc(g, 'k', X + 4 + i * 8, Y + 3, 3, 28); }
       else { rc(g, 'k', X, Y, 52, 34); rc(g, '+', X + 1, Y + 1, 50, 32); for (let i = 0; i < 9; i++) rc(g, '=', X + 4 + i * 5, Y + 4, 1, 26); }
       if (!done) { for (const [x, y] of [[X + 10, Y + 22], [X + 30, Y + 12]]) { rc(g, 'r', x, y, 6, 2); px(g, 'R', x + 2, y + 2); } rc(g, 'a', X + 20, Y + 36 + (f % 3) * 2, 2, 3); }

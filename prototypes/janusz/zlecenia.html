@@ -179,6 +179,12 @@
   .tabs6 > *, .tiles > *, .accs > * { min-width: 0; } main, #menu { min-width: 0; max-width: 100%; }
   .accs { display: grid; grid-template-columns: 1fr 1fr; gap: 0 4px; } .accs details[open] { grid-column: 1 / -1; } .accs details.acc > summary { font-size: 19px; padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #menu details.more > summary { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .clockbar { font-size: 19px !important; padding: 4px 8px !important; } .clockbar small { font-size: 14px; }
+  #coach { position: fixed; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); z-index: 9; max-width: 544px; margin: 0 auto; background: #20262c; box-shadow: 0 0 0 3px #000, 0 0 0 6px #ffc300; padding: 8px 10px; display: grid; gap: 6px; }
+  #coach[hidden] { display: none; } #ctext { font-size: 21px; line-height: 1.15; } .cbtns { display: flex; gap: 6px; justify-content: flex-end; } .cbtns button { min-height: 40px; padding: 0 12px; margin: 2px; } #cNext { background: #ffc300; color: #14171a; }
+  body.coaching { padding-bottom: 170px !important; }
+  .tutglow { outline: 4px solid #ffc300 !important; outline-offset: 2px; animation: tutpulse 1s steps(2) infinite; } @keyframes tutpulse { 50% { outline-color: #fff; } }
+  .tipbtn { text-align: left; font-size: 20px; padding: 6px 10px; min-height: 40px; width: 100%; background: #3a2b12 !important; color: #ffd98a !important; margin: 0 !important; }
+  .bar button { margin: 0 2px; flex: none; } .bar { flex-wrap: nowrap; } .bar h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 20px !important; }
   .clockbar.night { background: #0e1630; color: #9fc2ff; }
   .lvl.nightlvl { background: #141b33; }
   .chip.warn { color: #ff7b72; } .chip.due { color: #ffe27a; }
@@ -196,7 +202,7 @@
 </style>
 
 <main>
-  <div class="bar"><h1>Zlecenia Janusza Biznesu</h1><button id="reset" style="min-height:40px;padding:4px 10px;font-size:.95rem">Zacznij od nowa</button></div>
+  <div class="bar"><h1>Zlecenia Janusza Biznesu</h1><button id="help" aria-label="Pomoc" style="min-height:40px;padding:4px 10px;font-size:.95rem">❓</button><button id="reset" style="min-height:40px;padding:4px 10px;font-size:.95rem">Zacznij od nowa</button></div>
   <div class="stats">
     <div class="stat"><small>💰 Kasa</small><b id="money">0 zł</b></div>
     <div class="stat"><small>⭐ Ocena firmy</small><b id="rep">–</b></div>
@@ -218,6 +224,7 @@
   <section id="payday" hidden class="card"></section>
   <div class="note">Prototyp do testów. Postacie i sytuacje są fikcyjne, humor to satyra. Nie zachęcamy do prawdziwych fuszerek: w prawdziwym życiu prąd, gaz i konstrukcja wymagają fachowca.</div>
 </main>
+<div id="coach" hidden role="status"><div id="ctext"></div><div class="cbtns"><button id="cNext">OK</button><button id="cSkip">Pomiń samouczek</button></div></div>
 <div class="modal" id="modal" hidden><div class="card" role="dialog" aria-modal="true" aria-labelledby="mtitle"><h2 id="mtitle"></h2><p id="mtext"></p><div class="choices" id="mchoices"></div></div></div>
 
 <script src="roboty_gen.js"></script>
@@ -252,5 +259,6 @@
 <script src="fabula.js"></script>
 <script src="alledrogo.js"></script>
 <script src="dzwieki.js"></script>
+<script src="samouczek.js"></script>
 <script src="silnik.js"></script>
 <script src="zlecenia.js"></script>

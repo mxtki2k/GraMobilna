@@ -1,0 +1,28 @@
+# Bojler: scena ogólna z własnym tłem i obiektem (generator).
+robota bojler | Bojler | Piwnica | baza 320 | termin 21
+intro Woda w kranie jest tylko lodowata. Bojler szumi i dziwnie pachnie.
+tlo piwnica | obiekt bojler | anim wrench,tester,pliers,wrench
+kurs hydr | narzedzia klucze,pistolet | popyt zima=1.4 lato=0.7
+poziom klient=mirek mult=1.3 slot=dzien czas=09:15
+poziom klient=tesciowa mult=1.8 slot=dzien czas=16:00
+poziom klient=karyna mult=2.3 slot=noc czas=22:40 | intro=Karyna o 22:40: „Nie mam ciepłej wody, a mam gości, niech pan szybko przyjedzie!”
+krok woda | Spuść wodę i odłącz prąd | Najpierw bezpieczeństwo.
+  d | Zawór, prąd, spust | Bojler pusty i bez napięcia. | 4 | 0 | bj-woda-ok | 
+  s | Tylko prąd | Woda w środku. | 2 | 0 | bj-woda-prad | zalany podłoga:2:0.9
+  f | Rozkręć od razu | Szybko. | 1 | 0 | bj-woda-rozkr | gorąca woda i porażenie:3:1:0.62
+krok grzalka | Wymień grzałkę | Kamień na starej grzałce.
+  d | Nowa grzałka | Pasuje fabrycznie. | 7 | 95 | bj-grz-ok |  | skill
+  s | Oczyść starą | Pewnie wystarczy. | 4 | 10 | bj-grz-stara | grzałka w kamieniu:2.5:0.4 | skill
+  f | Zewrzyj | Grzeje. | 1 | 0 | bj-grz-zwarcie | zwarcie grzałki:4.5:0.2:0.5
+krok zawor | Wymień zawór bezpieczeństwa | Musi być szczelny.
+  d | Nowy zawór | Czysto. | 3 | 25 | bj-zaw-ok | 
+  s | Dokręć stary | Trzyma. | 1 | 0 | bj-zaw-stary | nieszczelny zawór bezpieczeństwa:2.5:0.3:1
+  f | Zaślep | Nie wycieka. | 1 | 0 | bj-zaw-zaslep | zaślepiony zawór bezpieczeństwa:5:0.1:0.75
+krok proba | Napełnij i uruchom | Test po godzinie.
+  d | Napełnij, odpowietrz, godzina | Pewnie grzeje. | 5 | 0 | bj-test-ok | 
+  s | Napełnij i włącz | Pewnie działa. | 2 | 0 | bj-test-szybko | brak odpowietrzenia:1.5:0.2
+  f | Włącz na sucho | Zagrzeje. | 0 | 0 | bj-test-sucho | grzałka włączona na sucho:3.5:0.1:0.38
+niespodzianka kamien | po=1 | szansa=0.4 | Zbiornik zarósł kamieniem | Ścianki są jak z betonu.
+  d | Odkamień kwasem | Długo, ale skutecznie. | 6 | 18 | 
+  s | Przepłucz wodą | Lepiej niż nic. | 2 | 0 | kamień w zbiorniku:3:0.4
+  f | Zostaw | Nie widać. | 0 | 0 | zarośnięty zbiornik:3.5:0.5

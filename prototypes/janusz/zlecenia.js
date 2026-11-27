@@ -67,14 +67,15 @@
     lvPage = Math.max(0, Math.min(pages - 1, lvPage));
     const tabs = [['goCrew', '👷', 'Ekipa', ST.crew.some(w => Ekipa.demand(w))], ['goHq', '🏢', 'Siedziba'], ['goFin', '💼', 'Finanse', Finanse.debt(ST.fin) > 0], ['goOs', '🏘️', 'Osiedle'], ['goStory', '📖', 'Fabuła'], ['goAlle', '🛒', 'Alle', ST.orders.length > 0]]
       .map(t => '<button class="tabbtn mini' + (t[3] ? ' alert' : '') + '" id="' + t[0] + '">' + t[1] + '<br>' + t[2] + '</button>').join('');
-    const kt = contractsHTML(), tn = tendersHTML(), bd = boardHTML();
+    const menuTip = Samouczek.tip(tutFacts()), kt = contractsHTML(), tn = tendersHTML(), bd = boardHTML();
     const kN = (KT().active ? 1 : 0) + KT().others.length;
     $('menu').innerHTML = flash + '<div class="tabs6">' + tabs + '</div>' +
-      '<div class="hint" style="text-align:center">Reklamacje ' + ST.claims.length + ' · ' + Czas.season(ST.clock) + ' · wypłata za ' + toPay + ' zlec. · ' + Siedziba.TIERS[ST.hq.tier].name + '</div>' +
+      '<button class="tipbtn" id="tip">💡 ' + menuTip.text + '</button>' +
       '<div class="lvhead"><h3>Zlecenia</h3><span><button id="lvPrev" ' + (lvPage <= 0 ? 'disabled' : '') + '>◀</button> <b>' + (lvPage + 1) + '/' + pages + '</b> <button id="lvNext" ' + (lvPage >= pages - 1 ? 'disabled' : '') + '>▶</button></span></div>' +
       '<div class="tiles">' + vis.slice(lvPage * LV_PER, lvPage * LV_PER + LV_PER).map(levelTile).join('') + '</div>' +
       '<div class="accs">' + acc('📋 Kontrakty' + (kN ? ' (' + kN + ')' : ''), kt, !!KT().active) + acc('🏛️ Przetargi', tn, false) + acc('👷 Dla ekipy', bd, false) + acc('⏳ Czekanie', waitHTML(), false) + '</div>' +
       '<div class="grid3"><button id="goPlan" class="tabbtn mini">📅<br>Plan dnia</button><button id="goWardrobe" class="tabbtn mini">👔<br>Szafa</button><button id="goPrestige" class="tabbtn mini">🏆<br>' + META.points + ' pkt</button></div>';
+    $('tip').onclick = () => tipAction(menuTip.action);
     $('lvPrev').onclick = () => { lvPage--; renderMenu(); }; $('lvNext').onclick = () => { lvPage++; renderMenu(); };
     bindContracts(); bindBoard(); bindTenders();
     { const ev = Sezon.active(ST.clock); if (ev.length) $('menu').insertAdjacentHTML('afterbegin', ev.map(e => '<div class="banner">' + e.em + ' <b>' + e.name + '</b>: ' + e.text + (e.demand ? ' Popyt: ' + Object.entries(e.demand).map(([j, m]) => (JOBS[j] ? JOBS[j].title.toLowerCase() : j) + ' ×' + String(m).replace('.', ',')).join(', ') + '.' : '') + (e.pay ? ' Wypłaty ×' + String(e.pay).replace('.', ',') + '.' : '') + (e.toolPrice ? ' Narzędzia ×' + String(e.toolPrice).replace('.', ',') + '.' : '') + '</div>').join('')); }
@@ -754,7 +755,7 @@
 
   // ---------- reklamacje po tygodniu ----------
 
-  $('reset').onclick = () => { if ($('reset').dataset.s) { E.replace(withMeta(fresh())); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od nowa'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od nowa'; }, 3000); } };
+  $('reset').onclick = () => { if ($('reset').dataset.s) { E.replace(withMeta(fresh())); save(); TUT.reset(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od nowa'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od nowa'; }, 3000); } };
 
   // krótkie opisy: długie teksty zwijają się do jednego zdania, reszta po dotknięciu
   function firstSentence(t) { t = t.replace(/\s+/g, ' ').trim(); const m = t.match(/^.{25,}?[.!?](?=\s|$)/); let s = m ? m[0] : t; if (s.length > 64) s = s.slice(0, 62).replace(/\s+\S*$/, '') + '…'; return s; }
@@ -780,6 +781,29 @@
   const mus = $('mus'); const paintMus = () => { mus.style.opacity = Dzwieki.musicEnabled() && !Dzwieki.muted() ? 1 : 0.4; mus.setAttribute('aria-label', Dzwieki.musicEnabled() ? 'Wyłącz muzykę' : 'Włącz muzykę'); };
   snd.onclick = () => { Dzwieki.toggle(); paintSnd(); paintMus(); }; paintSnd();
   mus.onclick = () => { Dzwieki.toggleMusic(); paintMus(); }; paintMus();
+  // ---------- samouczek i podpowiedzi ----------
+  const TUT = Samouczek.create({ getItem: lsGet, setItem: lsSet }, { off: !!window.__bezSamouczka });
+  let coachStep = null;
+  function tutFacts() {
+    return { done: ST.done, money: ST.money, claims: ST.claims.length, fatigue: ST.fatigue, crew: ST.crew.length, toolsWeak: ST.inv.length <= 1, contractReady: Kontrakty.available(ST.done).length > 0, activeContract: !!KT().active, hqTier: ST.hq.tier };
+  }
+  function openAcc(word) { const d = Array.from(document.querySelectorAll('#menu details.acc')).find(x => x.firstChild && x.firstChild.textContent.indexOf(word) >= 0); if (d) { d.open = true; d.scrollIntoView({ block: 'nearest' }); } }
+  function tipAction(a) { if (a === 'goCrew') renderCrew(); else if (a === 'goAlle') renderAlle(); else if (a === 'goHq') renderHq(); else if (a === 'contracts') openAcc('Kontrakty'); else if (a === 'wait') openAcc('Czekanie'); }
+  function tutHide() { $('coach').hidden = true; document.body.classList.remove('coaching'); document.querySelectorAll('.tutglow').forEach(e => e.classList.remove('tutglow')); coachStep = null; }
+  function coachShow(s, label) {
+    const el = document.querySelector(s.sel); if (!el || el.closest('[hidden]')) return false;
+    coachStep = s; el.classList.add('tutglow'); $('ctext').textContent = s.text; $('cNext').textContent = label; $('coach').hidden = false; document.body.classList.add('coaching'); if (el.scrollIntoView) el.scrollIntoView({ block: 'center' }); return true;
+  }
+  function tutShow(ctx) { tutHide(); const s = TUT.next(ctx, tutFacts()); if (s) coachShow(s, s.act ? 'OK' : 'Dalej ›'); }
+  function tour(i) { tutHide(); const s = Samouczek.TOUR[i]; if (!s) return; if (coachShow(Object.assign({}, s, { tour: i }), i + 1 < Samouczek.TOUR.length ? 'Dalej ›' : 'Gotowe')) $('coach').dataset.tour = i; }
+  $('cNext').onclick = () => { const s = coachStep; if (!s) return; if (s.tour !== undefined) { tour(s.tour + 1); return; } TUT.done(s.id); tutShow(s.ctx); };
+  $('cSkip').onclick = () => { TUT.skip(); tutHide(); };
+  $('help').onclick = () => { renderMenu(); tour(0); };
+  document.addEventListener('click', e => { if (!coachStep || e.target.closest('#coach') || e.target.closest('#help')) return; if (coachStep.tour === undefined && e.target.closest(coachStep.sel)) TUT.done(coachStep.id); tutHide(); }, true);
+  [['umowa', 'umowa'], ['pickHelper', 'helper'], ['transport', 'transport'], ['renderJob', 'job'], ['timing', 'timing'], ['finish', 'result'], ['renderMenu', 'menu']].forEach(([fn, ctx]) => {
+    const orig = eval(fn); const wrapped = function () { const r = orig.apply(this, arguments); tutShow(ctx); return r; };
+    eval(fn + ' = wrapped');
+  });
   // okna wyboru z silnika jako dane: tytuł, tekst, wiersze, przyciski
   const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   function showPrompt(p) {

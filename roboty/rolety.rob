@@ -1,0 +1,28 @@
+# Rolety w oknie: scena ogólna z własnym tłem i obiektem (generator).
+robota rolety | Rolety w oknie | Pokój | baza 220 | termin 18
+intro Roleta zjeżdża na dół jak gilotyna albo wcale. Klient śpi w dzień, więc potrzebny ciemny pokój.
+tlo pokoj | obiekt rolety | anim pencil,drill,screwdriver,tester
+kurs mont | narzedzia wiertarka,poziomica | popyt lato=1.3 zima=0.9
+poziom klient=sebix mult=1.2 slot=dzien czas=10:45
+poziom klient=karyna mult=1.5 slot=dzien czas=14:15
+poziom klient=tesciowa mult=1.9 slot=noc czas=22:10 | intro=Teściowa o 22:10: „Rolety mi zjechały, nic nie widzę!”
+krok pomiar | Zmierz okno | Szerokość i wysokość.
+  d | Zmierz dwa razy | Pasuje do milimetra. | 3 | 0 | ro-pom-ok | 
+  s | Zmierz raz | Chyba tyle. | 1 | 0 | ro-pom-raz | roleta o centymetr za szeroka:1.5:0.6
+  f | Na oko | Rolety są uniwersalne. | 0 | 0 | ro-pom-oko | roleta za wąska:3:0.9
+krok kasetka | Zamontuj kasetę | Wiercenie w ramie.
+  d | Poziomica i dwa wiertła | Równo i pewnie. | 6 | 10 | ro-kas-ok |  | skill
+  s | Na oko, jeden otwór | Prawie. | 3 | 5 | ro-kas-oko | kaseta lekko krzywo:2:0.8 | skill
+  f | Przyklej | Klej trzyma. | 1 | 0 | ro-kas-klej | kaseta na kleju:4:0.7
+krok mechanizm | Zamontuj prowadnice i mechanizm | Naprężenie sprężyny.
+  d | Prowadnice w osi | Zwija się równo. | 5 | 28 | ro-mech-ok |  | skill
+  s | Napnij na oko | Czasem się zacina. | 3 | 18 | ro-mech-oko | roleta zacina się:2.5:0.4 | skill
+  f | Zostaw luźno | Samo się ułoży. | 1 | 0 | ro-mech-luz | mechanizm nienaprężony:3.5:0.4
+krok proba | Próba | Zwiń i rozwiń pięć razy.
+  d | Pięć razy | Gładko. | 2 | 0 | ro-test-ok | 
+  s | Dwa razy | Chodzi. | 1 | 0 | ro-test-dwa | brak pełnej próby:1.5:0.1
+  f | Zostaw | Powinno chodzić. | 0 | 0 | ro-test-brak | roleta bez próby:3:0.2
+niespodzianka rama | po=1 | szansa=0.3 | Rama okna jest spróchniała | Wkręty nie trzymają w drewnie.
+  d | Wzmocnij kołkami | Pewne mocowanie. | 5 | 12 | 
+  s | Dłuższe wkręty | Trzymają, ale na ile? | 2 | 3 | wkręty wyrwą się w zimie:3:0.3
+  f | Przyklej mocniej | Trzyma. | 1 | 0 | kaseta na spróchniałej ramie:4:0.4

@@ -90,5 +90,16 @@ async function dismiss(g) { for (let k = 0; k < 6 && g.visible('#modal'); k++) a
     S.pendingMonths = ['2027-03']; await dismiss(g); S.pendingMonths = ['2027-03']; assert.strictEqual(Z.E.checkMonthReport(), true); assert(/Podsumowanie/.test(g.text('#mtitle'))); assert(g.$$('#mtext .erow').length >= 2, 'tabela miesiąca'); await g.click('#mchoices button');
     assert.deepStrictEqual(g.errors(), []); g.close(); t('wypłata, reklamacja i raport przez UI');
   }
+  { // 9. samouczek: dymek prowadzi przez pierwsze zlecenie, a ❓ uruchamia wycieczkę po menu
+    const g = await H.start({ seed: 27, tutorial: true }); await g.click('#mchoices button[data-i="0"]'); await g.settle(3);
+    assert(g.visible('#coach'), 'dymek na starcie'); assert(/Zacznij od zlecenia/.test(g.text('#ctext'))); assert(g.$('.tile.tutglow'), 'kafelek podświetlony');
+    await g.click('.tile:not([disabled])'); assert(g.visible('#coach') && /Umowa/.test(g.text('#ctext')) && g.$('#umOk.tutglow'), 'krok umowy'); assert(g.state().ratings.length === 0);
+    await g.click('#umOk'); for (let k = 0; k < 4 && !/Każdy krok|Dojazd|Pomocnik|znacznik/.test(g.text('#ctext')); k++) await g.settle(2);
+    assert(g.visible('#coach'), 'dymek przy wyborze'); await g.click('#cSkip'); assert(!g.visible('#coach')); assert.strictEqual(JSON.parse(g.w.localStorage.getItem('zlecenia_tut')).off, true, 'pominięcie zapamiętane');
+    g.z().renderMenu(); await g.settle(2); assert(!g.visible('#coach'), 'po pominięciu cisza');
+    await g.click('#help'); assert(g.visible('#coach') && g.$('.stats.tutglow'), 'wycieczka zaczyna się od statystyk'); await g.click('#cNext'); assert(g.$('.tabs6.tutglow'));
+    await g.click('#cNext'); await g.click('#cNext'); assert(g.$('.accs.tutglow')); assert.strictEqual(g.text('#cNext'), 'Gotowe'); await g.click('#cNext'); assert(!g.visible('#coach'));
+    const tip = g.$('#tip'); assert(tip && /💡/.test(tip.textContent), 'podpowiedź w menu'); assert.deepStrictEqual(g.errors(), []); g.close(); t('samouczek: prowadzenie, pominięcie i wycieczka ❓');
+  }
   console.log('scenariusze: ' + n + ' OK');
 })().catch(e => { console.error(e); process.exit(1); });

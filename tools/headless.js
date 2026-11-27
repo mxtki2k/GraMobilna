@@ -10,7 +10,11 @@ const DIR = path.join(__dirname, '..', 'prototypes', 'janusz');
 function lcg(seed) { let s = seed >>> 0; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; }
 function tick(w, n) { return new Promise(res => { let i = 0; const f = () => { if (++i >= n) res(); else w.setTimeout(f, 1); }; w.setTimeout(f, 1); }); }
 
+/* jsdom po close() potrafi jeszcze raz wywołać zaległe requestAnimationFrame i rzucić wyjątek o `_location`: ignorujemy tylko ten przypadek. */
+let guarded = false;
+function guard() { if (guarded) return; guarded = true; process.on('uncaughtException', e => { if (/_location/.test(String(e && e.message))) return; console.error(e); process.exit(1); }); }
 async function start(opts) {
+  guard();
   if (!JSDOM) throw new Error('Brak jsdom: uruchom `npm install` w katalogu głównym repozytorium.');
   opts = opts || {};
   const dom = await JSDOM.fromFile(path.join(DIR, 'zlecenia.html'), {
@@ -27,6 +31,7 @@ async function start(opts) {
       w.__errors = []; w.addEventListener('error', e => w.__errors.push(String(e.message || e.error)));
       const st = w.setTimeout.bind(w); w.setTimeout = (fn, ms, ...a) => st(fn, ms > 20 ? 1 : ms, ...a);
       let tt = 0; w.performance.now = () => (tt += 16);
+      if (opts.tutorial !== true) store.setItem('zlecenia_tut', '{"off":true}');
       if (opts.storage) for (const k of Object.keys(opts.storage)) store.setItem(k, opts.storage[k]);
     },
   });

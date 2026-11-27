@@ -1,0 +1,28 @@
+# Zacięty zamek: scena ogólna z własnym tłem i obiektem (generator).
+robota zamek | Zacięty zamek | Korytarz | baza 190 | termin 16
+intro Klucz się kręci, ale drzwi nie otwierają. Lokator stoi na klatce z siatkami i mówi, że lody już się topią.
+tlo korytarz | obiekt zamek | anim screwdriver,pliers,wrench,tester
+kurs stol | narzedzia zestaw,szpachle | popyt zima=1.2 lato=0.9
+poziom klient=mirek mult=1.1 slot=dzien czas=10:30
+poziom klient=heniek mult=1.4 slot=dzien czas=13:45
+poziom klient=sebix mult=2.0 slot=noc czas=23:30 | intro=Sebix o 23:30: „Panie, drzwi nie ruszają, żona za drzwiami głośno gada!”
+krok diag | Sprawdź wkładkę | Klucz, wkładka czy zaczep?
+  d | Obejrzyj i przetestuj | Wiadomo, co siedzi. | 3 | 0 | za-diag-ok | 
+  s | Potrząśnij klamką | Chyba wkładka. | 1 | 0 | za-diag-klamka | zła diagnoza:1.5:0.3
+  f | Kopnij w drzwi | Przecież zaskoczy. | 1 | 0 | za-diag-kop | wgnieciony skrzydło drzwi:3.5:0.9
+krok wkladka | Wymień wkładkę | Dobierz długość.
+  d | Zmierz i dobierz | Pasuje jak ulał. | 5 | 40 | za-wk-ok |  | skill
+  s | Weź najbliższą | Prawie pasuje. | 3 | 25 | za-wk-blisko | wkładka wystaje:1.5:0.8 | skill
+  f | Wbij młotkiem | Wejdzie. | 1 | 0 | za-wk-mlot | pęknięta wkładka:4:0.6
+krok regulacja | Wyreguluj zaczep | Drzwi muszą domykać.
+  d | Zaczep w osi | Domyka bez szarpnięcia. | 4 | 0 | za-reg-ok | 
+  s | Przesuń o oko | Prawie. | 2 | 0 | za-reg-oko | drzwi lekko szurają:1.5:0.5
+  f | Odgnij blachę | Tak będzie. | 1 | 0 | za-reg-blacha | wygięta blacha zaczepu:3:0.8
+krok proba | Próba kluczem | Dziesięć razy otwórz i zamknij.
+  d | Dziesięć prób | Gładko. | 2 | 0 | za-test-ok | 
+  s | Dwa razy | Działa. | 1 | 0 | za-test-dwa | brak pełnej próby:1.5:0.1
+  f | Zostaw | Powinno działać. | 0 | 0 | za-test-brak | zamek bez próby:3.5:0.4
+niespodzianka rdza | po=0 | szansa=0.3 | Zaczep jest przerdzewiały | Blacha rozsypuje się w dłoni.
+  d | Wymień zaczep | Metal jak nowy. | 4 | 18 | 
+  s | Nasmaruj i dociśnij | Na jakiś czas. | 1 | 2 | zaczep pęknie za miesiąc:3:0.2
+  f | Zakryj farbą | Nie widać. | 0 | 0 | zardzewiały zaczep:3.5:0.3

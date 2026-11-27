@@ -48,3 +48,6 @@ Napisz `roboty/<id>.rob` (szablon: `node tools/nowa_robota.js --szablon`), uruch
 - Wynik zlecenia pokazuje „Zaoszczędzone na skrótach” (czas i materiały względem solidnej roboty): `settleJob().saved`.
 
 - Ludki na scenach: `Scenes.people()` rysuje Janusza (ubiór z szafy, ręka sięga do narzędzia), klienta (reaguje na wybór: kciuk, zmartwienie, złość) i pomocnika na każdym poziomie. Test: `tests/ludki.test.js`.
+
+- Samouczek (`samouczek.js`): dymek prowadzi przez pierwsze zlecenie i menu, ❓ uruchamia wycieczkę po menu, a w menu jest jedna podpowiedź „co dalej” (💡). Postęp w `zlecenia_tut`. Testy: `tests/samouczek.test.js`, scenariusz 9 w `tests/scenariusze.test.js` (harness domyślnie wyłącza samouczek, `H.start({tutorial:true})` włącza).
+- Nowe roboty (osiem, z własnymi scenami): spłuczka, lodówka, zamek, lampa, rolety, skrzynka bezpieczników, bojler, pralka. Generator tekstów w `roboty/*.rob`, sceny w `genericScene` (tła: korytarz, piwnica; obiekty: muszla, lodowka, zamek, lampa, rolety, skrzynka, bojler, pralka). Razem 58 poziomów.

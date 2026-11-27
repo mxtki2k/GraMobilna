@@ -1,0 +1,28 @@
+# Spłuczka WC: scena ogólna z własnym tłem i obiektem (generator).
+robota spluczka | Spłuczka WC | Łazienka | baza 230 | termin 18
+intro Spłuczka szumi całą noc, a rachunek za wodę rośnie. Sąsiad z dołu pyta, czy to potop.
+tlo lazienka | obiekt muszla | anim screwdriver,pliers,wrench,tester
+kurs hydr | narzedzia klucze,pistolet | popyt zima=1.1 lato=0.95
+poziom klient=mirek mult=1.1 slot=dzien czas=09:30
+poziom klient=karyna mult=1.5 slot=dzien czas=15:00
+poziom klient=grazyna mult=2.0 slot=noc czas=23:00 | intro=Pani Grażyna o 23:00: „Toaleta się nie przestaje spuszczać, panie, to chyba duch!”
+krok woda | Zakręć wodę | Zawór pod spłuczką.
+  d | Zawór kątowy | Zakręcony do oporu. | 3 | 0 | sp-woda-ok | 
+  s | Zakręć na oko | Prawie szczelnie. | 2 | 0 | sp-woda-oko | kapie z zaworu:1:0.4
+  f | Zostaw wodę | Przecież to tylko woda. | 1 | 0 | sp-flood | zalana podłoga:4:1
+krok demontaz | Zdejmij pokrywę i mechanizm | Uważaj na ceramikę.
+  d | Wykręć delikatnie | Bez pęknięć. | 4 | 0 | sp-demontaz-ok |  | skill
+  s | Zdejmij na siłę | Pęknie albo nie. | 2 | 0 | sp-demontaz-sila | pęknięta pokrywa:2:0.7 | skill
+  f | Wyrwij całość | Szybko. | 1 | 0 | sp-demontaz-wyrwij | wyrwany mocowania:4:0.5
+krok mechanizm | Wymień mechanizm spłuczki | Pływak i zawór spustowy.
+  d | Nowy zestaw | Dobrana wysokość pływaka. | 6 | 38 | sp-mech-ok |  | skill
+  s | Tylko pływak | Połowa roboty. | 3 | 12 | sp-mech-pływak | stary zawór dalej cieknie:2.5:0.2
+  f | Zawiąż sznurek | Chwilowo trzyma. | 1 | 0 | sp-mech-sznurek | sznurek zamiast mechanizmu:4:0.8
+krok proba | Próba spłukiwania | Napełnij i spuść trzy razy.
+  d | Trzy spłukania i kontrola | Sucho i cicho. | 3 | 0 | sp-test-ok | 
+  s | Jedno spłukanie | Chyba dobrze. | 1 | 0 | sp-test-jedno | brak pełnej próby:1.5:0.1
+  f | Bez próby | Nikt nie sprawdza. | 0 | 0 | sp-test-brak | nie sprawdzono szczelności:4:0.4
+niespodzianka pekniecie | po=1 | szansa=0.3 | Ceramika ma pęknięcie | Pod pokrywą widać włosowate pęknięcie przy mocowaniu.
+  d | Wymień spłuczkę | Drożej, ale trwale. | 7 | 60 | 
+  s | Zaklej żywicą | Na jakiś czas. | 2 | 8 | pęknięcie rozejdzie się za miesiąc:3:0.2
+  f | Udawaj, że nie widzisz | Nie ruszaj. | 0 | 0 | pęknięta spłuczka:4:0.5
