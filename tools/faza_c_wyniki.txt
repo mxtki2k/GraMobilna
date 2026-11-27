@@ -1,0 +1,36 @@
+1) Specjalizacje: stawka po kosztach (zł/h) tych samych zleceń, mieszany styl, mnożnik 1,4
+
+robota         poz.0   poz.1   poz.2   poz.3   zysk poz.3
+kran            +131    +136    +143    +148   13%
+sciana          +179    +188    +195    +203   13%
+gniazdko         +43     +55     +68     +80   87%
+polka           +138    +143    +149    +156   13%
+syfon            +98    +103    +108    +113   15%
+drzwi           +127    +134    +140    +146   15%
+plytki           +64     +69     +74     +82   29%
+grzejnik        +107    +112    +116    +121   13%
+okno            +141    +147    +153    +160   13%
+malowanie       +125    +131    +138    +145   17%
+prysznic        +113    +119    +124    +129   14%
+
+2) Przetargi: wartość oczekiwana jednej próby (zł) i zł/h pracy, 300 prób na przetarg, oferta × styl pracy (poziomy specjalizacji 2, ocena firmy 3,5)
+
+przetarg     oferta    szansa solid: EV zł | zł/h | oblany audyt      mieszanie: EV zł | zł/h | oblany audyt  
+blok         low          76% +2336 | +252 | 0%                        -173 | -27 | 97%                        
+blok         std          52% +1855 | +293 | 0%                        +23 | +5 | 97%                          
+blok         high         28% +1131 | +334 | 0%                        +89 | +37 | 97%                         
+przychodnia  low          76% +3212 | +275 | 0%                        -452 | -52 | 95%                        
+przychodnia  std          52% +2550 | +321 | 0%                        -126 | -21 | 95%                        
+przychodnia  high         28% +1554 | +366 | 0%                        +30 | +9 | 95%                          
+szkola       low          76% +3589 | +312 | 0%                        -482 | -59 | 97%                        
+szkola       std          52% +2841 | +362 | 0%                        -140 | -25 | 97%                        
+szkola       high         28% +1727 | +412 | 0%                        +26 | +9 | 97%                          
+urzad        low          76% +4078 | +324 | 0%                        -505 | -54 | 97%                        
+urzad        std          52% +3226 | +376 | 0%                        -122 | -19 | 97%                        
+urzad        high         28% +1960 | +427 | 0%                        +53 | +16 | 97%                         
+hotel        low          76% +5786 | +351 | 0%                        -966 | -81 | 97%                        
+hotel        std          52% +4576 | +407 | 0%                        -383 | -47 | 97%                        
+hotel        high         28% +2779 | +463 | 0%                        -57 | -13 | 97%                         
+szpital      low          76% +6422 | +405 | 0%                        -1126 | -98 | 100%                      
+szpital      std          52% +5073 | +469 | 0%                        -474 | -61 | 100%                       
+szpital      high         28% +3078 | +533 | 0%                        -96 | -23 | 100%                        

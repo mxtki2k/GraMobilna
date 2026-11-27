@@ -17,7 +17,7 @@ Kontrakt = kilka robót u jednego klienta w kolejnych dniach (np. „Remont łaz
 - Kalendarz dnia z oknami czasowymi, dojazd zajmuje czas zależnie od lokalizacji (osiedle, miasto, wieś).
 - Test akceptacji: symulacja `tempo.js` z ekipą pokazuje przyspieszenie progresji o 20–40% bez zabicia roli gracza.
 
-## Faza C: Specjalizacje i przetargi
+## Faza C: Specjalizacje i przetargi — ZROBIONE (specjalizacje.js, przetargi.js, tools/faza_c_sim.js)
 - Drzewko umiejętności (hydraulika, elektryka, wykończenia, stolarka): kursy z `szkolenia.js` odblokowują kontrakty tego typu i przetargi.
 - Przetargi publiczne (szkoła, urząd): wymagają uprawnień i oceny firmy, płacą dużo, mają audyt jakości i kary. Daje cel dla siedziby 4–5.
 

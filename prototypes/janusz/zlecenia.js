@@ -6,7 +6,7 @@
   const rnd = Math.random;
 
   // ---------- stan ----------
-  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), contracts: Kontrakty.fresh(), board: { day: 0, offers: [] }, crewJobs: [], where: 'baza', waited: 0, bus: Bus.fresh(), fatigue: 10, burnout: 0, rel: Klienci.fresh(), certs: {}, oc: Ubezp.fresh(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
+  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), contracts: Kontrakty.fresh(), xp: Spec.fresh(), tenderCool: {}, board: { day: 0, offers: [] }, crewJobs: [], where: 'baza', waited: 0, bus: Bus.fresh(), fatigue: 10, burnout: 0, rel: Klienci.fresh(), certs: {}, oc: Ubezp.fresh(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
   let ST = fresh();
   try { const r = localStorage.getItem('zlecenia_v1'); if (r) { const saved = JSON.parse(r); ST = Object.assign(fresh(), saved); if (saved.starterGiven === undefined) ST.starterGiven = false; if (saved.clock === undefined) { ST.clock = Czas.startClock() + (saved.done || 0) * 2 * 1440; ST.ledgerMoney = ST.money; } } } catch (e) {}
   (() => {
@@ -74,12 +74,12 @@
     const flash = ST.flash.length ? '<div class="banner">' + ST.flash.join('<br>') + '</div>' : ''; ST.flash = [];
     $('menu').innerHTML = flash + '<div class="grid3"><button class="tabbtn' + (ST.crew.some(w => Ekipa.demand(w)) ? ' alert' : '') + '" id="goCrew">👷 Ekipa (' + ST.crew.length + ')</button><button class="tabbtn" id="goHq">🏢 Siedziba</button><button class="tabbtn' + (Finanse.debt(ST.fin) > 0 ? ' alert' : '') + '" id="goFin">💼 Finanse</button><button class="tabbtn" id="goOs">🏘️ Osiedle</button><button class="tabbtn" id="goStory">📖 Fabuła</button><button class="tabbtn' + (ST.orders.length ? ' alert' : '') + '" id="goAlle">🛒 Alledrogo</button></div>' +
       '<div class="hint" style="text-align:center">Reklamacje: ' + ST.claims.length + ' · ' + sea.name + ' · dzień wypłaty za ' + toPay + ' zlec. · utrzymanie ' + zl(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)) + ' · ' + Siedziba.TIERS[ST.hq.tier].name + '</div>' +
-      contractsHTML() + boardHTML() + '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Zlecenia</h3>' + LEVELS.map((l, i) => {
+      contractsHTML() + tendersHTML() + boardHTML() + '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Zlecenia</h3>' + LEVELS.map((l, i) => {
       const job = JOBS[l.job], cl = CLIENTS[l.client], locked = i + 1 > ST.unlocked, b = ST.best[i], est = estimateFor(l), st = Czas.jobStart(ST.clock, l.time, 1);
       return '<button class="lvl' + (l.slot === 'noc' ? ' nightlvl' : '') + '" data-i="' + i + '" ' + (locked ? 'disabled' : '') + '><span class="av">' + (locked ? '🔒' : cl.em) + '</span><span><b>' + (i + 1) + '. ' + job.title + '</b><small>' + (l.slot === 'noc' ? '🌙 ' : '☀️ ') + Czas.label(st) + '</small><small>' + (l.due ? '⏰ ' + Terminy.KINDS[l.due].name + ' · ' : '') + (Klienci.get(ST.rel, l.client).jobs ? '🤝 ' + Klienci.level(Klienci.get(ST.rel, l.client).trust) + ' · ' : '') + job.place + ' · ' + cl.name + ' · ok. ' + zl(job.base * l.mult * (l.slot === 'noc' ? Czas.NIGHT.payMult : 1)) + ' · ' + perHourTxt(est) + '</small></span><span class="res">' +
         (b ? '<span class="stars">' + stars(b.stars) + '</span><br>fuszerka ' + b.index + '%' : (locked ? '' : 'nowe')) + '</span></button>';
     }).join('');
-    bindContracts(); bindBoard();
+    bindContracts(); bindBoard(); bindTenders();
     $('menu').insertAdjacentHTML('beforeend', waitHTML());
     $('wait').onclick = waitHour; $('sleep').onclick = sleepNow; $('dayoff').onclick = dayOffNow; $('vac').onclick = vacationNow;
     $('goCrew').onclick = renderCrew; $('goHq').onclick = renderHq; $('goFin').onclick = renderFin; $('goOs').onclick = renderOs; $('goStory').onclick = renderStory; $('goAlle').onclick = renderAlle;
@@ -141,6 +141,26 @@
     $('mchoices').innerHTML = '<button data-a="ok">Dalej</button>'; $('modal').hidden = false; $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; renderMenu(); };
     return true;
   }
+  // ---------- przetargi publiczne (faza C) ----------
+  const specLevels = () => Object.fromEntries(Object.keys(Spec.AREAS).map(k => [k, Spec.level(ST.xp[k] || 0, k, ST.certs)]));
+  const tenderCtx = cid => ({ stars: co().stars, tier: ST.hq.tier, spec: specLevels(), trust: Klienci.get(ST.rel, cid).trust, rivalPower: ST.os.rival.power });
+  function tendersHTML() {
+    const h = '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Przetargi publiczne</h3>', day = Czas.dateOf(ST.clock).dayIndex;
+    const rows = Object.values(Przetargi.TENDERS).map(t => { const miss = Przetargi.missing(t, tenderCtx(t.client)), cd = Przetargi.cooldownOk(ST.tenderCool, t.id, day), q = Kontrakty.quote(Kontrakty.CONTRACTS[Przetargi.cid(t.id)], JOBS), cl = CLIENTS[t.client], ok = !miss.length && cd && !KT().active;
+      return '<button class="lvl" data-tender="' + t.id + '" ' + (ok ? '' : 'disabled') + '><span class="av">' + (miss.length ? '🔒' : cl.em) + '</span><span><b>' + t.title.replace('Przetarg: ', '') + '</b><small>' + t.stages.length + ' etapów · ' + t.deadline + ' dni · wartość ok. ' + zl(q.expected) + ' · wadium ' + zl(Math.round(q.nominal * Przetargi.WADIUM)) + '</small><small>' + (miss.length ? 'brakuje: ' + miss.join(', ') : !cd ? 'rozstrzygnięty, następny za tydzień' : KT().active ? 'masz aktywny kontrakt' : t.desc) + '</small></span><span class="res">' + (ok ? 'oferta' : '') + '</span></button>'; }).join('');
+    return h + '<div class="hint">Duże zlecenia publiczne: wysokie stawki, wadium i surowy audyt. Wady zagrażające bezpieczeństwu wykryte przy odbiorze oblewają audyt (kara ' + Math.round(Kontrakty.AUDIT_FAIL * 100) + '% wartości, wadium przepada). Wymagają oceny firmy, siedziby i specjalizacji.</div>' + rows;
+  }
+  function bindTenders() { document.querySelectorAll('[data-tender]').forEach(b => { b.onclick = () => askTender(b.dataset.tender); }); }
+  function askTender(id) {
+    const t = Przetargi.TENDERS[id], ctx = tenderCtx(t.client); modalOpen = true; $('mtitle').textContent = '🏛️ ' + t.title; $('mtext').textContent = t.desc + ' Wybierz ofertę: niższa cena zwiększa szansę, ale obniża wypłatę. Wadium płacisz przy wygranej, zwrot po zaliczonym audycie. Rywal: ' + ST.os.rival.name + '.';
+    $('mchoices').innerHTML = Object.entries(Przetargi.BIDS).map(([k, b]) => { const tm = Przetargi.terms(t, k, JOBS); return '<button data-b="' + k + '">' + b.name + '<small>szansa ' + Math.round(Przetargi.winChance(k, ctx) * 100) + '% · wartość ok. ' + zl(Math.round(tm.quote.expected * b.mult)) + ' · wadium ' + zl(tm.wadium) + '</small></button>'; }).join('') + '<button data-b="">Rezygnuję<small>bez kosztów</small></button>'; $('modal').hidden = false;
+    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false; if (!b.dataset.b) { renderMenu(); return; }
+      const day = Czas.dateOf(ST.clock).dayIndex, res = Przetargi.bid(b.dataset.b, ctx, rnd); ST.tenderCool[id] = day;
+      if (!res.won) { ST.os.rival.power += 1.5; ST.flash.push('🏛️ Przetarg „' + t.title.replace('Przetarg: ', '') + '” wygrał ' + ST.os.rival.name + ' (twoja szansa: ' + Math.round(res.chance * 100) + '%).'); save(); renderMenu(); return; }
+      const tm = Przetargi.terms(t, b.dataset.b, JOBS), r = Kontrakty.accept(KT(), Przetargi.cid(id), ST.clock, JOBS, { priceMult: tm.priceMult, wadium: tm.wadium });
+      if (!r.ok) { ST.flash.push(r.reason); renderMenu(); return; }
+      ST.contracts = r.state; cash('wadium', -tm.wadium); cash('zlecenia', r.deposit); ST.flash.push('🏛️ Wygrany przetarg „' + t.title.replace('Przetarg: ', '') + '”! Wadium ' + zl(tm.wadium) + ', zaliczka ' + zl(r.deposit) + '.'); save(); renderTop(); renderMenu(); };
+  }
   // ---------- kontrakty ----------
   const KT = () => ST.contracts;
   function contractsHTML() {
@@ -173,7 +193,7 @@
       if (b.dataset.a === 'yes') { const r = Kontrakty.accept(KT(), id, ST.clock, JOBS); if (r.ok) { ST.contracts = r.state; cash('zlecenia', r.deposit); ST.flash.push('📋 Przyjęty kontrakt „' + c.title + '”. Zaliczka ' + zl(r.deposit) + '.'); save(); renderTop(); } } renderMenu(); };
   }
   function askCancel() {
-    const a = KT().active, pen = Math.round(a.deposit + a.nominal * 0.1); modalOpen = true; $('mtitle').textContent = 'Zrezygnować z kontraktu?';
+    const a = KT().active, pen = Math.round(a.deposit + a.nominal * 0.1 + (a.wadium || 0)); modalOpen = true; $('mtitle').textContent = 'Zrezygnować z kontraktu?';
     $('mtext').textContent = 'Oddasz zaliczkę ' + zl(a.deposit) + ' i zapłacisz karę umowną: razem ' + zl(pen) + '. Klient nie zapomni.';
     $('mchoices').innerHTML = '<button data-a="yes">Zrezygnuj<small>−' + zl(pen) + ', zaufanie klienta −15</small></button><button data-a="no">Zostaję<small>kontrakt trwa</small></button>'; $('modal').hidden = false;
     $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false;
@@ -183,9 +203,9 @@
   function checkContractFinal() {
     const a = KT().active; if (!a || modalOpen || a.stage < Kontrakty.CONTRACTS[a.id].stages.length) return false;
     const c = Kontrakty.CONTRACTS[a.id], cl = CLIENTS[c.client], f = Kontrakty.final(KT(), ST.clock, cl, rnd); modalOpen = true;
-    ST.contracts = f.state; if (f.bonus) cash('zdarzenia', f.bonus); if (f.rework) cash('reklamacje', -f.rework); if (f.latePenalty) cash('kary', -f.latePenalty);
+    ST.contracts = f.state; if (f.bonus) cash('zdarzenia', f.bonus); if (f.rework) cash('reklamacje', -f.rework); if (f.latePenalty) cash('kary', -f.latePenalty); if (f.auditPenalty) cash('kary', -f.auditPenalty); if (f.wadiumBack) cash('wadium', f.wadiumBack); if (f.failed) ST.ratings.push(1);
     ST.ratings.push(f.stars); ST.rel = Klienci.afterJob(ST.rel, cl.id, f.stars, Osiedle.GOSSIP[cl.id]); save(); renderTop();
-    $('mtitle').textContent = '📋 Odbiór końcowy: ' + c.title; $('mtext').textContent = cl.name + ' ocenia całość na ' + stars(f.stars) + ' (średnia etapów ' + f.avg.toFixed(1).replace('.', ',') + '). ' + (f.notes.join(' ') || 'Bez uwag.') + ' Wynik odbioru: ' + (f.net >= 0 ? '+' : '−') + zl(Math.abs(f.net)) + '.';
+    $('mtitle').textContent = '📋 Odbiór końcowy: ' + c.title; $('mtext').textContent = cl.name + ' ocenia całość na ' + stars(f.stars) + ' (średnia etapów ' + f.avg.toFixed(1).replace('.', ',') + '). ' + (f.notes.join(' ') || 'Bez uwag.') + (f.wadiumBack ? ' Wadium ' + zl(f.wadiumBack) + ' wraca.' : '') + ' Wynik odbioru: ' + (f.net >= 0 ? '+' : '−') + zl(Math.abs(f.net)) + '.';
     $('mchoices').innerHTML = '<button data-a="ok">Dalej</button>'; $('modal').hidden = false; $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; renderMenu(); };
     return true;
   }
@@ -251,7 +271,8 @@
       invoice: (opts.terms || Umowa.DEFAULT).invoice, overhead: Stawka.overheadShare(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)), extraMinutes: 15 });
   }
   /* Mnożnik z uprawnień, zaufania klienta i obniżki dla rywala (poza ocenami, umową, sezonem i nocą). */
-  const extraPay = (l, jobId) => Szkolenia.modsFor(ST.certs, jobId).pay * Klienci.payMult(Klienci.get(ST.rel, l.client).trust) * (l.priceMult || 1);
+  const specM = jobId => Spec.mods(ST.xp, ST.certs, jobId);
+  const extraPay = (l, jobId) => Szkolenia.modsFor(ST.certs, jobId).pay * specM(jobId).pay * Klienci.payMult(Klienci.get(ST.rel, l.client).trust) * (l.priceMult || 1);
   const perHourTxt = e => 'ok. ' + signed(e.perHour) + '/h';
   function startJob(i, call) {
     const l = call || LEVELS[i], night = l.slot === 'noc';
@@ -431,9 +452,9 @@
       }
     });
     const tb = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id]));
-    if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + tb.acc - mods.accPenalty + Zmeczenie.accMod(ST.fatigue) + Wypalenie.accMod(ST.burnout) + Szkolenia.modsFor(ST.certs, cur.job.id).acc));
+    if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + tb.acc - mods.accPenalty + Zmeczenie.accMod(ST.fatigue) + Wypalenie.accMod(ST.burnout) + Szkolenia.modsFor(ST.certs, cur.job.id).acc + specM(cur.job.id).acc));
     if (rnd() < Zmeczenie.nodChance(ST.fatigue)) { cur.extraDefects.push({ label: 'przysnąłeś przy robocie i coś ci umknęło', sev: 2, vis: 0.5 }); cur.notes.push('😴 Zasnąłeś na stojąco. Zmęczenie ' + Math.round(ST.fatigue) + '%. Czas na sen.'); }
-    cur.timeAdj -= Math.round(opt.time * tb.time * 10) / 10;
+    cur.timeAdj -= Math.round(opt.time * (tb.time + specM(cur.job.id).time) * 10) / 10;
     cur.picks.push({ stepId: cur.job.steps[cur.step].id, optionId: opt.id, accuracy });
     cur.time += opt.time; cur.cost += opt.cost;
     cur.timeAdj += Math.round(opt.time * (Zmeczenie.timeMult(ST.fatigue) * Wypalenie.timeMult(ST.burnout) - 1) * 10) / 10; // zmęczony i wypalony pracuje wolniej
@@ -500,7 +521,7 @@
     const rt = co(), um = cur.umowa || { payMult: 1, satDelta: 0, taxRiskDelta: 0 };
     const sea = Kalendarz.demandMult(cur.season, cur.job.id), gos = Osiedle.gossipMult(ST.os), cut = 1 - Osiedle.undercut(ST.os, { rating: rt.stars, tier: ST.hq.tier });
     const payMult = Math.round(rt.payMult * um.payMult * sea * gos * cut * mods.payMult * (cur.dueSpec ? cur.dueSpec.pay : 1) * extraPay(cur.level, cur.job.id) * 1000) / 1000;
-    const hz = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id])).hazardMult * mods.hazard * Szkolenia.modsFor(ST.certs, cur.job.id).hazard;
+    const hz = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id])).hazardMult * mods.hazard * Szkolenia.modsFor(ST.certs, cur.job.id).hazard * specM(cur.job.id).hazard;
     const r = Fuszerka.evaluate(job, cur.picks, cur.client, { time: Math.round(cur.timeAdj), defects: cur.extraDefects, satBonus: rt.satBonus + um.satDelta, payMult, hazardMult: hz, attentionMult: mods.attention });
     const te = Terminy.evaluate(cur.dueSpec, minutes, r.payout);
     const comment = Fuszerka.clientComment(cur.client, r, rnd);
@@ -540,6 +561,8 @@
       if (!prev || r.stars > prev.stars || (r.stars === prev.stars && r.index < prev.index)) ST.best[cur.i] = { stars: r.stars, index: r.index };
       ST.unlocked = Math.max(ST.unlocked, cur.i + 2); }
     ST.waited = 0;
+    { const a0 = specM(cur.job.id).level; ST.xp = Spec.addXp(ST.xp, cur.job.id, r.stars, !!cur.level.contract); const a1 = specM(cur.job.id).level;
+      if (a1 > a0) cur.notes.push('🎓 Specjalizacja „' + Spec.AREAS[Spec.areaOf(cur.job.id)].name + '”: poziom ' + a1 + '!'); }
     if (cur.level.contract) { const rs = Kontrakty.recordStage(KT(), r, r.payout); ST.contracts = rs.state; cur.notes.push('📋 Kontrakt „' + cur.level.contract.title + '”: etap ' + (cur.level.contract.stage + 1) + '/' + cur.level.contract.of + ' zakończony (' + stars(r.stars) + ', transza ' + zl(r.payout) + ').' + (rs.last ? ' To był ostatni etap, czas na odbiór.' : '')); }
     { const before = Klienci.level(Klienci.get(ST.rel, cur.client.id).trust); ST.rel = Klienci.afterJob(ST.rel, cur.client.id, r.stars, Osiedle.GOSSIP[cur.client.id]); const after = Klienci.level(Klienci.get(ST.rel, cur.client.id).trust);
       if (before !== after) cur.notes.push('🤝 ' + cur.client.name + ': teraz „' + after + '” (zaufanie ' + Klienci.get(ST.rel, cur.client.id).trust + ').'); }
@@ -757,6 +780,11 @@
     return Object.keys(names).map(k => names[k] + ' +' + Math.round(c[k].acc * 100) + ' pkt, −' + Math.round(c[k].time * 100) + '% czasu').join('; ');
   }
   const ASSET_NAMES = ['Stary kombi'].concat(Siedziba.ASSETS.bus.levels.map(l => l.name));
+  function specPanel() {
+    return '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Specjalizacje</h3><div class="hint">Doświadczenie rośnie z gwiazdek za zlecenia (kontrakty i przetargi +50%). Bez kursu z obszaru poziom kończy się na 1. Każdy poziom: +2 pkt celności, −1,5% czasu, −5% zagrożenia, +2% wypłaty.</div>' +
+      Object.entries(Spec.AREAS).map(([k, a]) => { const nx = Spec.next(ST.xp, ST.certs, k), xp = ST.xp[k] || 0, cert = ST.certs[a.cert];
+        return '<div class="prow"><div class="hd"><span class="nm">🎓 ' + a.name + '</span><span>poziom ' + nx.level + '/3</span></div><div class="mbar"><i style="width:' + Math.min(100, xp / Spec.XP[3] * 100) + '%"></i></div><div class="hint">Doświadczenie ' + Math.round(xp) + ' / ' + Spec.XP[3] + (nx.need === null ? ' · maksimum' : ' · do następnego poziomu ' + Math.round(nx.need)) + (cert ? '' : ' · brak kursu: ' + Szkolenia.CERTS[a.cert].name + ' (limit poziomu 1)') + '</div></div>'; }).join('');
+  }
   function certPanel() {
     return '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Szkolenia i uprawnienia</h3><div class="hint">Szkolenie kosztuje i zabiera czas (męczy). W zamian roboty danego rodzaju są bezpieczniejsze, celniejsze i lepiej płatne.</div>' +
       Object.entries(Szkolenia.CERTS).map(([id, c]) => { const has = ST.certs[id], r = Szkolenia.buy(ST.certs, id, ST.money);
@@ -791,7 +819,7 @@
       (nt ? card('Następny: ' + nt.name, '', '<span class="chip">' + nt.desc + '</span><span class="chip">utrzymanie ' + zl(nt.upkeep) + '</span><span class="chip">remonty budynku zaczynasz od zera</span>', 'tier', nt.cost, 'Kup i przeprowadź się') : '<div class="hint">Masz najlepszą siedzibę.</div>') +
       '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Remont budynku</h3>' + upCards +
       '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Sprzęt i flota (zostaje po przeprowadzce)</h3>' + asCards +
-      busPanel() + certPanel() +
+      specPanel() + busPanel() + certPanel() +
       '<div class="hint">Narzędzia (kupno, serwis, stan) są w aplikacji Alledrogo. Ocena firmy uwzględnia ich jakość i pokrycie zleceń.</div>' +
       '<div class="hint">Ocena firmy zależy od siedziby, sprzętu, opinii klientów i rzetelności (średnia fuszerka z ostatnich zleceń, minus otwarte reklamacje).</div>' +
       '<button class="primary" id="hqBack">Wróć</button>';
@@ -990,6 +1018,6 @@
     new MutationObserver(() => requestAnimationFrame(run)).observe(document.body, { childList: true, subtree: true });
     run();
   })();
-  window.__z = { ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
+  window.__z = { Spec, Przetargi, ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
   renderMenu();
 })();
