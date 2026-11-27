@@ -12,7 +12,7 @@ Kontrakt = kilka robót u jednego klienta w kolejnych dniach (np. „Remont łaz
 - **Długość:** kontrakt 3–5 etapów ≈ 15–25 minut gry. Poziomy z listy zostają jako szybkie zlecenia.
 - **Test akceptacji:** `tests/kontrakty.test.js`, symulacja: kontrakt opłaca się o 10–20% lepiej na godzinę niż pojedyncze zlecenia, ale z wyższą wariancją (kary).
 
-## Faza B: Równoległa ekipa i plan dnia
+## Faza B: Równoległa ekipa i plan dnia — ZROBIONE (zlecenia_ekipy.js, tools/faza_b_sim.js)
 - Ekipa wykonuje proste zlecenia bez gracza (jakość z umiejętności, nastroju i trzeźwości, wynik z `fuszerka.js`), gracz bierze trudne.
 - Kalendarz dnia z oknami czasowymi, dojazd zajmuje czas zależnie od lokalizacji (osiedle, miasto, wieś).
 - Test akceptacji: symulacja `tempo.js` z ekipą pokazuje przyspieszenie progresji o 20–40% bez zabicia roli gracza.

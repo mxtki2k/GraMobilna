@@ -6,7 +6,7 @@
   const rnd = Math.random;
 
   // ---------- stan ----------
-  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), contracts: Kontrakty.fresh(), waited: 0, bus: Bus.fresh(), fatigue: 10, burnout: 0, rel: Klienci.fresh(), certs: {}, oc: Ubezp.fresh(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
+  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), contracts: Kontrakty.fresh(), board: { day: 0, offers: [] }, crewJobs: [], where: 'baza', waited: 0, bus: Bus.fresh(), fatigue: 10, burnout: 0, rel: Klienci.fresh(), certs: {}, oc: Ubezp.fresh(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
   let ST = fresh();
   try { const r = localStorage.getItem('zlecenia_v1'); if (r) { const saved = JSON.parse(r); ST = Object.assign(fresh(), saved); if (saved.starterGiven === undefined) ST.starterGiven = false; if (saved.clock === undefined) { ST.clock = Czas.startClock() + (saved.done || 0) * 2 * 1440; ST.ledgerMoney = ST.money; } } } catch (e) {}
   (() => {
@@ -74,16 +74,72 @@
     const flash = ST.flash.length ? '<div class="banner">' + ST.flash.join('<br>') + '</div>' : ''; ST.flash = [];
     $('menu').innerHTML = flash + '<div class="grid3"><button class="tabbtn' + (ST.crew.some(w => Ekipa.demand(w)) ? ' alert' : '') + '" id="goCrew">👷 Ekipa (' + ST.crew.length + ')</button><button class="tabbtn" id="goHq">🏢 Siedziba</button><button class="tabbtn' + (Finanse.debt(ST.fin) > 0 ? ' alert' : '') + '" id="goFin">💼 Finanse</button><button class="tabbtn" id="goOs">🏘️ Osiedle</button><button class="tabbtn" id="goStory">📖 Fabuła</button><button class="tabbtn' + (ST.orders.length ? ' alert' : '') + '" id="goAlle">🛒 Alledrogo</button></div>' +
       '<div class="hint" style="text-align:center">Reklamacje: ' + ST.claims.length + ' · ' + sea.name + ' · dzień wypłaty za ' + toPay + ' zlec. · utrzymanie ' + zl(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)) + ' · ' + Siedziba.TIERS[ST.hq.tier].name + '</div>' +
-      contractsHTML() + '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Zlecenia</h3>' + LEVELS.map((l, i) => {
+      contractsHTML() + boardHTML() + '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Zlecenia</h3>' + LEVELS.map((l, i) => {
       const job = JOBS[l.job], cl = CLIENTS[l.client], locked = i + 1 > ST.unlocked, b = ST.best[i], est = estimateFor(l), st = Czas.jobStart(ST.clock, l.time, 1);
       return '<button class="lvl' + (l.slot === 'noc' ? ' nightlvl' : '') + '" data-i="' + i + '" ' + (locked ? 'disabled' : '') + '><span class="av">' + (locked ? '🔒' : cl.em) + '</span><span><b>' + (i + 1) + '. ' + job.title + '</b><small>' + (l.slot === 'noc' ? '🌙 ' : '☀️ ') + Czas.label(st) + '</small><small>' + (l.due ? '⏰ ' + Terminy.KINDS[l.due].name + ' · ' : '') + (Klienci.get(ST.rel, l.client).jobs ? '🤝 ' + Klienci.level(Klienci.get(ST.rel, l.client).trust) + ' · ' : '') + job.place + ' · ' + cl.name + ' · ok. ' + zl(job.base * l.mult * (l.slot === 'noc' ? Czas.NIGHT.payMult : 1)) + ' · ' + perHourTxt(est) + '</small></span><span class="res">' +
         (b ? '<span class="stars">' + stars(b.stars) + '</span><br>fuszerka ' + b.index + '%' : (locked ? '' : 'nowe')) + '</span></button>';
     }).join('');
-    bindContracts();
+    bindContracts(); bindBoard();
     $('menu').insertAdjacentHTML('beforeend', waitHTML());
     $('wait').onclick = waitHour; $('sleep').onclick = sleepNow; $('dayoff').onclick = dayOffNow; $('vac').onclick = vacationNow;
     $('goCrew').onclick = renderCrew; $('goHq').onclick = renderHq; $('goFin').onclick = renderFin; $('goOs').onclick = renderOs; $('goStory').onclick = renderStory; $('goAlle').onclick = renderAlle;
     nextEvent();
+  }
+  // ---------- ekipa na własnych zleceniach (faza B) ----------
+  const crewBusy = w => ST.crewJobs.find(j => j.workerId === w.id && j.endAt > ST.clock) || ST.crewJobs.find(j => j.workerId === w.id);
+  const crewDeps = () => ({ evaluate: Fuszerka.evaluate, rollClaim: Fuszerka.rollClaim, minutes: u => Czas.minutes(u, false), jobs: JOBS, clients: CLIENTS });
+  function ensureBoard() {
+    const day = Czas.dateOf(ST.clock).dayIndex; if (ST.board.day === day) return;
+    ST.board = { day, offers: ZlecEkipy.makeBoard(day, rnd, co().stars, Object.keys(JOBS), Object.keys(CLIENTS), 5) };
+  }
+  function boardHTML() {
+    if (!ST.crew.length) return '';
+    ensureBoard();
+    const h = '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Ekipa na zleceniach</h3>';
+    const act = ST.crewJobs.slice().sort((a, b) => a.endAt - b.endAt).map(j => { const w = ST.crew.find(x => x.id === j.workerId); return '<div class="erow"><span>' + (w ? w.em + ' ' + w.name : '?') + ': ' + JOBS[j.offer.job].title + ' · ' + CLIENTS[j.offer.client].name + ' (' + ZlecEkipy.DISTRICTS[j.offer.district] + ')</span><b>' + (j.endAt > ST.clock ? 'do ' + Czas.hm(j.endAt) : 'gotowe!') + '</b></div>'; }).join('');
+    const offers = ST.board.offers.map(o => { const job = JOBS[o.job], free = ST.crew.filter(w => !crewBusy(w) && !(w.outJobs > 0) && ZlecEkipy.canDo(w, o.job));
+      return '<button class="lvl" data-offer="' + o.id + '" ' + (free.length ? '' : 'disabled') + '><span class="av">' + CLIENTS[o.client].em + '</span><span><b>' + job.title + '</b><small>' + CLIENTS[o.client].name + ' · ' + ZlecEkipy.DISTRICTS[o.district] + ' · ok. ' + zl(job.base * o.mult) + '</small><small>trudność ' + Math.round(ZlecEkipy.difficulty(o.job) * 100) + '% · ' + (free.length ? 'wolnych: ' + free.length : 'brak wolnych pracowników z uprawnieniami') + '</small></span><span class="res">zleć</span></button>'; }).join('');
+    return h + '<div class="hint">Pracownicy robią proste zlecenia sami, w dzień (8–17), z dojazdem. Jakość zależy od umiejętności, trzeźwości i nastroju. Ty w tym czasie bierzesz trudniejsze roboty. Jesteś teraz: ' + ZlecEkipy.DISTRICTS[ST.where] + '.</div>' + (act ? '<div class="econ">' + act + '</div>' : '') + offers;
+  }
+  function bindBoard() { document.querySelectorAll('[data-offer]').forEach(b => { b.onclick = () => pickWorkerFor(+b.dataset.offer); }); }
+  function pickWorkerFor(id) {
+    const o = ST.board.offers.find(x => x.id === id); if (!o) return;
+    const free = ST.crew.filter(w => !crewBusy(w) && !(w.outJobs > 0) && ZlecEkipy.canDo(w, o.job)); if (!free.length) return;
+    modalOpen = true; $('mtitle').textContent = '👷 Kto jedzie: ' + JOBS[o.job].title; $('mtext').textContent = CLIENTS[o.client].name + ', ' + ZlecEkipy.DISTRICTS[o.district] + '. Pracownik pojedzie sam, wróci z wynikiem. Jakość to szacunek, trzeźwość sprawdzi się w drodze.';
+    $('mchoices').innerHTML = free.map(w => { const p = ZlecEkipy.preview(w, 'trzezwy', o, { from: 'baza' }); return '<button data-w="' + w.id + '">' + w.em + ' ' + w.name + ' · ' + p.label + '<small>nastrój ' + Math.round(w.mood) + '% · dojazd ' + p.travelMin + ' min · umiejętności ' + Math.round(w.skill * 100) + '%</small></button>'; }).join('') + '<button data-w="">Anuluj<small>zostaje na tablicy</small></button>';
+    $('modal').hidden = false;
+    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false; if (b.dataset.w) dispatchCrew(o, ST.crew.find(w => w.id === b.dataset.w)); else renderMenu(); };
+  }
+  function dispatchCrew(o, w) {
+    const hour = Czas.dateOf(ST.clock).hour; let start = ST.clock; if (hour < 7 || hour >= 17) start = Czas.nextAt(ST.clock, '08:00');
+    const state = Swiat.rollState(w, { night: false }, rnd);
+    ST.board.offers = ST.board.offers.filter(x => x.id !== o.id);
+    if (Ekipa.attendance(w, rnd, {}) === 'absent') { ST.flash.push('👷 ' + w.name + ' nie odebrał telefonu i nie pojechał do ' + CLIENTS[o.client].name + '. Zlecenie przepadło.'); const c0 = Klienci.get(ST.rel, o.client); ST.rel = Object.assign({}, ST.rel, { [o.client]: { trust: Math.max(-100, c0.trust - 4), jobs: c0.jobs } }); save(); renderMenu(); return; }
+    const rt = co(), sim = ZlecEkipy.simulate(w, state, o, rnd, crewDeps(), { payMult: rt.payMult, satBonus: rt.satBonus, from: 'baza', clock: start });
+    let drive = 0, note = '';
+    const dr = Swiat.resolveDrive(w, state, ST.world, 'worker', rnd); drive = dr.cost; if (dr.notes.length && dr.incident) note = dr.notes[dr.notes.length - 1]; if (dr.claim) ST.claims.push(Object.assign({ client: CLIENTS[o.client].name, due: ST.done + 1 }, dr.claim)); Swiat.tickWorld(ST.world, dr.heatDelta);
+    if (Object.keys(dr.driverPatch).length) ST.crew = ST.crew.map(x => x.id === w.id ? Object.assign({}, x, dr.driverPatch) : x);
+    const endAt = sim.endAt + Math.max(0, dr.timeAdj);
+    ST.crewJobs.push({ id: o.id, workerId: w.id, offer: o, startAt: start, endAt, stars: sim.r.stars, index: sim.r.index, payout: sim.payout, cost: sim.cost, fuel: sim.fuel + drive, claim: sim.claimInfo ? sim.claimInfo : null, defects: sim.r.defects.length, drunk: state !== 'trzezwy' ? state : null, note, finished: false });
+    ST.flash.push('👷 ' + w.name + ' jedzie do ' + CLIENTS[o.client].name + ' (' + JOBS[o.job].title + '), wróci ok. ' + Czas.hm(endAt) + '.' + (state !== 'trzezwy' ? ' Uwaga: ' + Swiat.LABEL[state] + '.' : ''));
+    save(); renderTop(); renderMenu();
+  }
+  /* Odbiór wyników ekipy, której czas minął: wypłaty, materiały, reklamacje, oceny. */
+  function collectCrew() {
+    if (modalOpen) return false;
+    const due = ST.crewJobs.filter(j => j.endAt <= ST.clock); if (!due.length) return false;
+    const lines = []; ST.crewJobs = ST.crewJobs.filter(j => j.endAt > ST.clock);
+    for (const j of due) {
+      const w = ST.crew.find(x => x.id === j.workerId), cl = CLIENTS[j.offer.client];
+      cash('zlecenia', j.payout); cash('materialy', -j.cost); cash('transport', -j.fuel); ST.ratings.push(j.stars); ST.done++; ST.hist.push({ index: j.index }); ST.hist = ST.hist.slice(-12);
+      ST.fin = Finanse.addIncome(ST.fin, j.payout, true); ST.rel = Klienci.afterJob(ST.rel, cl.id, j.stars, Osiedle.GOSSIP[cl.id]);
+      if (j.claim) ST.claims.push(Object.assign({ client: cl.name, due: ST.done + 1 }, j.claim));
+      if (w) ST.crew = ST.crew.map(x => x.id === w.id ? Object.assign({}, x, { mood: Math.max(0, x.mood - 2) }) : x);
+      lines.push((w ? w.name : '?') + ': ' + JOBS[j.offer.job].title + ' u ' + cl.name + ' ' + stars(j.stars) + ', wpływ ' + zl(j.payout - j.cost - j.fuel) + (j.claim ? ' (grozi reklamacja)' : '') + (j.note ? ' ' + j.note : ''));
+    }
+    save(); renderTop(); modalOpen = true; $('mtitle').textContent = '👷 Ekipa wróciła'; $('mtext').textContent = lines.join('\n');
+    $('mchoices').innerHTML = '<button data-a="ok">Dalej</button>'; $('modal').hidden = false; $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; renderMenu(); };
+    return true;
   }
   // ---------- kontrakty ----------
   const KT = () => ST.contracts;
@@ -209,6 +265,8 @@
     cur.mystery = Fabula.rollMystery({ done: ST.done }, rnd);
     cur.tools = Alledrogo.forJob(ST.inv, cur.job.id); cur.failAt = {}; cur.brokenTools = {};
     cur.tools.forEach(tl => { cur.failAt[tl.id] = rnd() < Alledrogo.failChance(tl) ? Math.floor(rnd() * cur.job.steps.length) : -1; });
+    { const dist = ZlecEkipy.districtOf(l.client), trav = l.contract && l.contract.stage > 0 ? 0 : ZlecEkipy.travel(ST.where, dist); cur.district = dist; cur.travelMin = trav;
+      if (trav) { cur.timeAdj += trav / Czas.TIME_SCALE; cur.fuel = Math.round(trav * ZlecEkipy.FUEL_PER_MIN); cash('transport', -cur.fuel); cur.transportCost += cur.fuel; cur.notes.push('🚗 Dojazd z ' + ZlecEkipy.DISTRICTS[ST.where] + ' (' + trav + ' min, paliwo ' + zl(cur.fuel) + ').'); } }
     if (cur.tools.length) cur.notes.push('🧰 Bierzesz ze sobą: ' + cur.tools.map(tl => tl.brand).join(', ') + '.');
     const wx = Kalendarz.weather(cur.season, rnd); if (wx.delay) { cur.timeAdj += wx.delay; cur.notes.push(wx.text); }
     ALL.forEach(x => $(x).hidden = true); $('job').hidden = false;
@@ -250,8 +308,8 @@
     $('job').innerHTML = '<div class="bubble"><span class="av">' + cur.client.em + '</span><div><b>' + cur.job.title + '</b> · ' + cur.client.name + '<br><small style="color:var(--muted)">' + cur.intro + '</small></div></div>' +
       '<div class="hint">' + (cur.night ? '🌙 Noc' : '☀️ Dzień') + ', start ' + Czas.hm(cur.startClock) + '. Pomocnik kosztuje udział w pensji za to zlecenie' + (cur.night ? ' (w nocy z dopłatą 50%)' : '') + '.</div>' +
       '<h2 style="font-size:1.4rem;text-transform:uppercase">Kogo bierzesz do pomocy?</h2><div class="hint">Dobry pomocnik poprawia celność i skraca robotę. Wkurzony może nie przyjść albo zostawić cię w połowie zlecenia.</div>' +
-      '<div class="opts">' + ST.crew.map(w => { const r = Ekipa.risk(w, { night: cur.night }), stt = cur.states[w.id], out = w.outJobs > 0, cost = Stawka.helperShare(w, cur.night), est = estimateFor(cur.level, { terms: cur.terms, helper: w, states: cur.states });
-        return '<button class="opt" data-w="' + w.id + '" ' + (out ? 'disabled' : '') + '><b>' + w.em + ' ' + w.name + ' · ' + Ekipa.moodEmoji(w.mood) + ' ' + Ekipa.moodLabel(w.mood) + (out ? ' · na zwolnieniu (' + w.outJobs + ' zlec.)' : '') + '</b><span>dziś: ' + Swiat.LABEL[stt] + (stt !== 'trzezwy' ? ' ⚠' : '') + ' · pracowitość ' + Math.round((w.diligence == null ? 0.5 : w.diligence) * 100) + '%</span><span>' + w.role + ' · umiejętności ' + Math.round(w.skill * 100) + '%</span><span class="chips"><span class="chip cost">💰 koszt wzięcia: ' + zl(cost) + '</span><span class="chip">stawka z nim ' + perHourTxt(est) + '</span></span><span class="chips"><span class="chip">nie przyjdzie: ' + Math.round(r.absent * 100) + '%</span><span class="chip">zostawi w połowie: ' + Math.round(r.walkout * 100) + '%</span></span></button>'; }).join('') +
+      '<div class="opts">' + ST.crew.map(w => { const r = Ekipa.risk(w, { night: cur.night }), stt = cur.states[w.id], busy = crewBusy(w), out = w.outJobs > 0 || !!busy, cost = Stawka.helperShare(w, cur.night), est = estimateFor(cur.level, { terms: cur.terms, helper: w, states: cur.states });
+        return '<button class="opt" data-w="' + w.id + '" ' + (out ? 'disabled' : '') + '><b>' + w.em + ' ' + w.name + ' · ' + Ekipa.moodEmoji(w.mood) + ' ' + Ekipa.moodLabel(w.mood) + (busy ? ' · na zleceniu do ' + Czas.hm(busy.endAt) : w.outJobs > 0 ? ' · na zwolnieniu (' + w.outJobs + ' zlec.)' : '') + '</b><span>dziś: ' + Swiat.LABEL[stt] + (stt !== 'trzezwy' ? ' ⚠' : '') + ' · pracowitość ' + Math.round((w.diligence == null ? 0.5 : w.diligence) * 100) + '%</span><span>' + w.role + ' · umiejętności ' + Math.round(w.skill * 100) + '%</span><span class="chips"><span class="chip cost">💰 koszt wzięcia: ' + zl(cost) + '</span><span class="chip">stawka z nim ' + perHourTxt(est) + '</span></span><span class="chips"><span class="chip">nie przyjdzie: ' + Math.round(r.absent * 100) + '%</span><span class="chip">zostawi w połowie: ' + Math.round(r.walkout * 100) + '%</span></span></button>'; }).join('') +
       '<button class="opt" data-w=""><b>Sam, bez pomocnika</b><span>Spokojniej. Wolniej.</span><span class="chips"><span class="chip cost">💰 koszt wzięcia: 0 zł</span><span class="chip">stawka sam ' + perHourTxt(solo) + '</span></span></button></div>' +
       '<button id="back" style="background:transparent;min-height:40px;color:var(--muted)">Wróć do listy</button>';
     $('back').onclick = renderMenu;
@@ -477,7 +535,7 @@
       if (th.itemStolen && ST.inv.length) { const top = ST.inv.slice().sort((a, b) => Alledrogo.value(b) - Alledrogo.value(a))[0]; ST.inv = ST.inv.filter(x => x.id !== top.id); cur.notes.push('🕵️ Złodziej zabrał też „' + top.brand + '”.'); }
       cur.notes.push('🕵️ W nocy ktoś włamał się do siedziby: strata ' + zl(th.loss) + (th.recovered ? ', ale kamery pomogły odzyskać ' + zl(th.recovered) : '') + '.' + (th.cameras ? '' : ' Kamery i mocniejsze drzwi by pomogły.'));
     }
-    ST.crew = Swiat.tickWorkers(ST.crew); Swiat.tickWorld(ST.world, 0);
+    ST.crew = Swiat.tickWorkers(ST.crew); Swiat.tickWorld(ST.world, 0); ST.where = cur.district || ST.where;
     if (cur.i >= 0) { const prev = ST.best[cur.i];
       if (!prev || r.stars > prev.stars || (r.stars === prev.stars && r.index < prev.index)) ST.best[cur.i] = { stars: r.stars, index: r.index };
       ST.unlocked = Math.max(ST.unlocked, cur.i + 2); }
@@ -890,6 +948,7 @@
   }
   function nextEvent() {
     if (modalOpen) return;
+    if (collectCrew()) return;
     if (checkContractFinal()) return;
     if (ST.pendingMonths.length) { showMonthReport(ST.pendingMonths.shift()); return; }
     if (ST.done >= ST.nextPay) { startPayday(true); return; }
@@ -931,6 +990,6 @@
     new MutationObserver(() => requestAnimationFrame(run)).observe(document.body, { childList: true, subtree: true });
     run();
   })();
-  window.__z = { Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
+  window.__z = { ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
   renderMenu();
 })();
