@@ -35,3 +35,6 @@ Nadal nie ma: portretu gracza zmieniającego się z ubraniem, dedykowanych scen 
 
 ### Przeniesienie na Godota
 Plan: `PLAN_GODOT.md` (parytet zamiast przepisywania, etap R0 rozdzielający silnik od UI w JS, port modułów z testami parytetu, delegowanie portów lokalnemu agentowi). Status: tylko plan, nic jeszcze nie zbudowane. Decyzje człowieka są w tabeli na początku planu.
+
+### Wersja jako aplikacja (tylko online)
+PWA zbudowana z prototypu: `tools/zbuduj_web.js` → `web/` (manifest, ikony pixel art, service worker pokazujący „Brak internetu”, wersjonowane skrypty), hosting przez GitHub Pages (`.github/workflows/web.yml`), opakowanie Androida w `aplikacja_android/` (Capacitor, ładuje grę z URL). Zapis gry jest w localStorage telefonu. Instrukcje: `APLIKACJA.md`. Offline i zapis w chmurze: nie zrobione.

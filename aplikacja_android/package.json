@@ -1,0 +1,17 @@
+{
+  "name": "janusz-biznesu-android",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Opakowanie wersji online (Capacitor): aplikacja Android ładuje grę z adresu w capacitor.config.json (server.url).",
+  "scripts": {
+    "gra": "node ../tools/zbuduj_web.js ../web",
+    "dodaj": "npx cap add android",
+    "synchronizuj": "npx cap sync android",
+    "otworz": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  }
+}

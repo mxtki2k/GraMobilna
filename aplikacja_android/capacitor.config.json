@@ -1,0 +1,14 @@
+{
+  "appId": "pl.januszbiznesu.gra",
+  "appName": "Janusz Biznesu",
+  "webDir": "../web",
+  "server": {
+    "url": "https://TWOJ-LOGIN.github.io/GraMobilna/index.html",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#14171a"
+  }
+}
