@@ -733,7 +733,7 @@
 
   // ---------- reklamacje po tygodniu ----------
 
-  $('reset').onclick = () => { if ($('reset').dataset.s) { E.replace(withMeta(fresh())); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; }, 3000); } };
+  $('reset').onclick = () => { if ($('reset').dataset.s) { E.replace(withMeta(fresh())); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od nowa'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od nowa'; }, 3000); } };
 
   // pikselizacja: emoji i znaczniki @postać zamieniane na sprite'y, sceny SVG na obrazy w małej rozdzielczości
   (function () {
