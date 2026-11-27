@@ -32,3 +32,6 @@ Decyzja człowieka: robimy sklep z ubraniami. Im drożej i lepiej ubrany szef, t
 ### Domknięte braki (faza B i C)
 Plan dnia z osią czasu, XP ekipy, wypadki w trakcie zleceń ekipy, tablica rosnąca z siedzibą i kontrakty równolegle zrobione (patrz `JANUSZ_GDD.md`, sekcja „Domknięcie braków faz B i C”).
 Nadal nie ma: portretu gracza zmieniającego się z ubraniem, dedykowanych scen pixel art dla robót z generatora, wersji na Godota.
+
+### Przeniesienie na Godota
+Plan: `PLAN_GODOT.md` (parytet zamiast przepisywania, etap R0 rozdzielający silnik od UI w JS, port modułów z testami parytetu, delegowanie portów lokalnemu agentowi). Status: tylko plan, nic jeszcze nie zbudowane. Decyzje człowieka są w tabeli na początku planu.
