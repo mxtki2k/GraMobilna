@@ -6,6 +6,7 @@
   if (typeof module === 'object' && module.exports) module.exports = factory(require('./pixel.js'));
   else root.Scenes = factory(root.Pix);
 })(typeof self !== 'undefined' ? self : this, function (Pix) {
+  const GEN = (typeof RobotyGen !== 'undefined' ? RobotyGen : (() => { try { return require('./roboty_gen.js'); } catch (e) { return null; } })()) || { JOBS: {}, SURPRISES: {}, CHAINS: {}, LEVELS: [], META: {} };
   const W = 128, H = 80;
   const G = () => Pix.grid(W, H);
   const rc = (g, c, x, y, w, h) => Pix.rect(g, c, x, y, w, h);
@@ -650,6 +651,38 @@
     return g;
   }
 
+
+  // ---------------------------------------------------------------- SCENA OGÓLNA dla robót z generatora (bez dedykowanej grafiki)
+  /* Tło wg meta.tlo, przedmiot wg meta.obiekt, rząd etapów: szary = jeszcze nie, zielony = dobrze, żółty = skrót, czerwony = fuszerka. */
+  function genericScene(id) {
+    const job = GEN.JOBS[id], meta = GEN.META[id] || {}, q = {};
+    job.steps.forEach((st, i) => st.options.forEach(o => { q[o.fx] = [i, o.id]; }));
+    return function (T, f, o) {
+      o = o || {}; const g = G(), tlo = meta.tlo || 'pokoj';
+      if (tlo === 'lazienka') { tiledWall(g, 58); rc(g, '6', 0, 58, W, 22); for (let y = 60; y < H; y += 8) for (let x = 0; x < W; x += 8) if (((x >> 3) + ((y - 60) >> 3)) % 2 === 0) rc(g, '5', x, y, 8, 8); rc(g, '&', 0, 58, W, 2); }
+      else if (tlo === 'kuchnia') { tiledWall(g, 34); rc(g, '1', 0, 34, W, 28); dith(g, '2', 0, 34, W, 28, 1); skirting(g, 58, '3'); woodFloor(g, 62); }
+      else { wallpaper(g, 64, ['2', '3', '1']); skirting(g, 64, '3'); woodFloor(g, 68); }
+      rc(g, '&', 6, 6, 22, 24); rc(g, '+', 7, 7, 20, 22); rc(g, '^', 9, 9, 16, 18); dith(g, '~', 9, 9, 16, 6); rc(g, '+', 16, 9, 2, 18);
+      if (o.night) { nightGlass(g, 9, 9, 16, 18, f); rc(g, '+', 16, 9, 2, 18); }
+      const marks = {}; T.forEach(t => { if (q[t]) marks[q[t][0]] = q[t][1]; });
+      const done = Object.keys(marks).length, good = done === job.steps.length && Object.values(marks).every(x => x === 'dobrze');
+      const ob = meta.obiekt || 'panel', X = 40, Y = 18;
+      if (ob === 'rura') { rc(g, 'g', X + 8, Y, 6, 22); rc(g, 'g', X + 8, Y + 18, 36, 6); rc(g, 'g', X + 38, Y + 8, 6, 16); rc(g, '#', X + 8, Y, 1, 22); rc(g, 'y', X + 6, Y + 14, 10, 3); rc(g, 'y', X + 36, Y + 4, 10, 3); }
+      else if (ob === 'drzwi') { rc(g, '8', X + 6, Y - 8, 40, 52); rc(g, 't', X + 8, Y - 6, 36, 48); rc(g, 'y', X + 38, Y + 16, 5, 4); }
+      else if (ob === 'okno') { rc(g, '&', X, Y - 4, 52, 40); rc(g, '+', X + 2, Y - 2, 48, 36); rc(g, '^', X + 4, Y, 20, 32); rc(g, '^', X + 28, Y, 20, 32); }
+      else if (ob === 'kratka') { rc(g, 'G', X, Y, 52, 34); for (let i = 0; i < 6; i++) rc(g, 'k', X + 4 + i * 8, Y + 3, 3, 28); }
+      else { rc(g, 'k', X, Y, 52, 34); rc(g, '+', X + 1, Y + 1, 50, 32); for (let i = 0; i < 9; i++) rc(g, '=', X + 4 + i * 5, Y + 4, 1, 26); }
+      if (!done) { for (const [x, y] of [[X + 10, Y + 22], [X + 30, Y + 12]]) { rc(g, 'r', x, y, 6, 2); px(g, 'R', x + 2, y + 2); } rc(g, 'a', X + 20, Y + 36 + (f % 3) * 2, 2, 3); }
+      else if (good) for (const [x, y] of [[X - 4, Y - 4], [X + 54, Y + 4], [X + 20, Y - 6]]) if (((x + f) & 1) === 0) { px(g, 'w', x, y); px(g, 'e', x + 1, y); px(g, 'e', x, y + 1); }
+      // rząd etapów
+      const n = job.steps.length, w = Math.min(14, Math.floor(110 / n) - 2), x0 = Math.floor((W - n * (w + 2)) / 2);
+      job.steps.forEach((st, i) => { const x = x0 + i * (w + 2), y = 62, m = marks[i];
+        rc(g, 'k', x - 1, y - 1, w + 2, 14); rc(g, !m ? '=' : m === 'dobrze' ? 'n' : m === 'skrot' ? 'e' : 'r', x, y, w, 12);
+        if (!m) for (let d = 0; d <= i % 3; d++) px(g, 'G', x + 3 + d * 3, y + 5); else if (m === 'dobrze') spr(g, x + 2, y + 3, CHECK); else if (m === 'skrot') spr(g, x + 2, y + 3, CHECK_Y); else { px(g, 'w', x + w / 2 | 0, y + 3); px(g, 'w', x + w / 2 | 0, y + 5); px(g, 'w', x + w / 2 | 0, y + 8); } });
+      return g;
+    };
+  }
+
   // ---------------------------------------------------------------- ANIMACJE CZYNNOŚCI (narzędzie w akcji nad sceną)
   const ACTIONS = { kran: ['wrench', 'wrench', 'wrench', 'tester'], sciana: ['trowel', 'trowel', 'sander', 'roller'], gniazdko: ['tester', 'pliers', 'screwdriver', 'tester'], polka: ['pencil', 'drill', 'screwdriver', 'hammer'], syfon: ['pliers', 'wrench', 'pliers', 'wrench', 'tester'], drzwi: ['tester', 'screwdriver', 'screwdriver', 'sander', 'tester'], plytki: ['trowel', 'roller', 'trowel', 'pencil', 'trowel', 'tester'], grzejnik: ['tester', 'wrench', 'wrench', 'wrench', 'tester'], okno: ['tester', 'screwdriver', 'pliers', 'trowel', 'tester'], malowanie: ['roller', 'trowel', 'roller', 'roller', 'roller', 'pliers'] };
   const TARGETS = { kran: [[11, 44], [65, 29], [65, 40], [86, 33]], sciana: [[66, 36], [66, 36], [66, 36], [66, 36]], gniazdko: [[12, 40], [100, 18], [64, 36], [64, 36]], polka: [[64, 32], [34, 34], [64, 32], [64, 30]], syfon: [[70, 58], [64, 44], [64, 46], [72, 44], [66, 28]], drzwi: [[56, 20], [31, 40], [74, 42], [80, 40], [60, 44]], plytki: [[58, 36], [58, 36], [58, 36], [58, 36], [58, 36], [58, 36]], grzejnik: [[50, 40], [91, 61], [91, 60], [76, 20], [50, 40]], okno: [[40, 50], [34, 30], [64, 30], [60, 57], [48, 40]], malowanie: [[56, 30], [56, 30], [56, 30], [56, 30], [56, 30], [56, 62]] };
@@ -691,6 +724,10 @@
   }
 
   const JOB_SCENES = { kran, sciana, gniazdko, polka, syfon, drzwi, plytki, grzejnik, okno, malowanie };
+  for (const [id, m] of Object.entries(GEN.META)) if (!JOB_SCENES[id]) {
+    JOB_SCENES[id] = genericScene(id); const n = GEN.JOBS[id].steps.length, an = m.anim || ['wrench', 'screwdriver', 'pliers', 'tester', 'trowel'];
+    ACTIONS[id] = Array.from({ length: n }, (_, i) => an[i % an.length]); TARGETS[id] = Array.from({ length: n }, () => [64, 36]);
+  }
   /* Rysuje siatkę na canvasie 128x80 (przeglądarka). */
   function draw(canvas, grid, opts) {
     opts = opts || {}; const im = opts.night ? nightRGBA(grid, opts.light) : Pix.rgba(grid, 1), ctx = canvas.getContext('2d');

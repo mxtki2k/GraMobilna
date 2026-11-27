@@ -31,6 +31,8 @@
     walki: { id: 'walki', name: 'Wałki i pędzle', jobs: ['malowanie'], base: 70, acc: 0.12, time: 0.075, brands: ['Malarz Pro', 'Zestaw „Pędzel i wałek”', 'Kolor-Max'] },
     szpachle: { id: 'szpachle', name: 'Zestaw szpachli', jobs: ['sciana', 'malowanie', 'plytki'], base: 40, acc: 0.075, time: 0.045, brands: ['Szpachlarz', 'Gładko', 'Zestaw 12w1'] },
   };
+  const GEN = (typeof RobotyGen !== 'undefined' ? RobotyGen : (() => { try { return require('./roboty_gen.js'); } catch (e) { return null; } })()) || { JOBS: {}, SURPRISES: {}, CHAINS: {}, LEVELS: [], META: {} };
+  for (const [id, m] of Object.entries(GEN.META)) { if (ALL_JOBS.indexOf(id) < 0) ALL_JOBS.push(id); for (const t of (m.narzedzia || [])) if (TYPES[t] && TYPES[t].jobs.indexOf(id) < 0) TYPES[t].jobs.push(id); }
   const CLASSES = [
     { id: 'nowe', name: 'nowe', price: 1.0, cond: [100, 100], life: [80, 120] },
     { id: 'jak_nowe', name: 'jak nowe', price: 0.8, cond: [88, 100], life: [40, 80] },

@@ -7,6 +7,7 @@
   else root.Jobs = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
 
+  const GEN = (typeof RobotyGen !== 'undefined' ? RobotyGen : (() => { try { return require('./roboty_gen.js'); } catch (e) { return null; } })()) || { JOBS: {}, SURPRISES: {}, CHAINS: {}, LEVELS: [], META: {} };
   const CLIENTS = {
     mirek: { id: 'mirek', name: 'Pan Mirek', em: '@mirek', attention: 0.35, strict: 0.7, expert: false, note: 'Patrzy, czy działa. Reszta go nie obchodzi.',
       lines: {
@@ -406,6 +407,11 @@
       { id: 'fusz', label: 'Maluj dalej', desc: 'Zakryje.', time: 0, cost: 0, defects: [{ label: 'plama wilgoci pod farbą', sev: 4.5, vis: 0.4 }] } ] });
   const CHAINS = {"kran:zawor": {"skrot": "zawor-pekl", "fusz": "zawor-pekl"}, "sciana:kabel": {"fusz": "kabel-iskra"}, "gniazdko:alu": {"skrot": "alu-iskra", "fusz": "alu-iskra"}, "polka:gk": {"fusz": "gk-pekniecie"}, "syfon:rdza": {"skrot": "rdza-wyciek", "fusz": "rdza-wyciek"}, "drzwi:puchnie": {"skrot": "puchnie-zaklin", "fusz": "puchnie-zaklin"}, "plytki:plesn": {"skrot": "plesn-wraca", "fusz": "plesn-wraca"}, "grzejnik:szlam": {"skrot": "szlam-zator", "fusz": "szlam-zator"}, "okno:rama": {"skrot": "rama-pekla", "fusz": "rama-pekla"}, "malowanie:wilgoc": {"skrot": "wilgoc-wraca", "fusz": "wilgoc-wraca"}};
   for (const [key, m] of Object.entries(CHAINS)) { const [job, id] = key.split(':'), sur = SURPRISES[job].find(x => x.id === id); for (const [opt, then] of Object.entries(m)) sur.options.find(o => o.id === opt).then = then; }
+  // roboty z plików roboty/*.rob (generator tools/nowa_robota.js)
+  for (const [id, j] of Object.entries(GEN.JOBS)) {
+    JOBS[id] = Object.assign({}, j, { base: Math.round(j.base * PAY_SCALE) }); SURPRISES[id] = GEN.SURPRISES[id].slice();
+    for (const [sid, m] of Object.entries(GEN.CHAINS[id] || {})) { const sur = SURPRISES[id].find(x => x.id === sid); for (const [opt, then] of Object.entries(m)) sur.options.find(o => o.id === opt).then = then; }
+  }
   /* Losuje niespodziankę po ukończeniu kroku (indeks od 0). Następstwa (follow) są pomijane: wywołuje je wybór gracza. */
   function rollSurprise(jobId, doneStep, rng) {
     const l = SURPRISES[jobId] || [], x = l.find(s => !s.follow && s.after === doneStep);
@@ -449,6 +455,8 @@
     { job: 'grzejnik', client: 'mirek', mult: 1.7, slot: 'dzien', time: '14:30', due: 'normalny' },
   ];
 
+  GEN.LEVELS.forEach(l => LEVELS.push(l));
+
   /* Telefony „z ulicy”: gdy skończą się zlecenia z listy, gracz może przesuwać zegar o godzinę. Co godzinę jest szansa na telefon. */
   const CALL_BASE = { dzien: 0.22, noc: 0.08 };
   /* Szansa na telefon po godzinie czekania. Dobra ocena firmy pomaga, a każda kolejna godzina bez telefonu dodaje 4 pkt (max +20). */
@@ -466,5 +474,5 @@
 
 
   const getSurprise = (jobId, id) => (SURPRISES[jobId] || []).find(x => x.id === id) || null;
-  return { callChance, rollCall, rollSurprise, getSurprise, SURPRISES, CLIENTS, JOBS, LEVELS };
+  return { PAY_SCALE, callChance, rollCall, rollSurprise, getSurprise, SURPRISES, CLIENTS, JOBS, LEVELS };
 });

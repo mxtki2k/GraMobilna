@@ -6,6 +6,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   const SEASONS = ['wiosna', 'lato', 'jesień', 'zima'];
   const DAYS_PER_SEASON = 12;
+  const GEN = (typeof RobotyGen !== 'undefined' ? RobotyGen : (() => { try { return require('./roboty_gen.js'); } catch (e) { return null; } })()) || { JOBS: {}, SURPRISES: {}, CHAINS: {}, LEVELS: [], META: {} };
   const DEMAND = {
     kran: { wiosna: 0.95, lato: 1.0, 'jesień': 1.0, zima: 1.25 },
     sciana: { wiosna: 1.2, lato: 1.05, 'jesień': 1.0, zima: 0.9 },
@@ -18,6 +19,7 @@
     malowanie: { wiosna: 1.2, lato: 1.15, 'jesień': 1.0, zima: 0.85 },
     plytki: { wiosna: 1.15, lato: 1.1, 'jesień': 0.95, zima: 0.85 },
   };
+  for (const [id, m] of Object.entries(GEN.META)) if (m.popyt) DEMAND[id] = Object.assign({ wiosna: 1, lato: 1, 'jesień': 1, zima: 1 }, m.popyt);
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
   function seasonOf(day) {

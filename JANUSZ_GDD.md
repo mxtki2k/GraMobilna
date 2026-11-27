@@ -229,3 +229,9 @@ Bot gra 60 dni gry, 150 przebiegów na scenariusz. Po strojeniu: sen przy 60–8
 - Odkrycie: narzędzia z Alledrogo obejmowały tylko 4 pierwsze roboty. Dodano pokrycie dla wszystkich 10 (`ALL_JOBS`) oraz trzy nowe narzędzia: przecinarka do płytek, pistolet do silikonu, wałki i pędzle (z ikonami).
 - Narzędzia były nieopłacalne (zakup przynosił −3,6% netto). Premie ×1,5, trwałość nowych i „jak nowych” ×2: teraz kupno tylko ze sklepu daje ok. +5,6% netto, kupowanie „okazji” wszędzie jest neutralne (ale daje wyższą ocenę firmy), a sam zestaw startowy ok. +0,5%.
 - Plan dłuższej rozgrywki i wskazówki, jak pracować taniej: `PLAN_ROZGRYWKI.md`.
+
+## Generator robót (`tools/nowa_robota.js`)
+- Robota to krótki plik `roboty/<id>.rob`: nagłówek, kroki (d/s/f: etykieta, opis, czas, koszt, fx, wady `etykieta:sev:vis[:hazard]`, `skill`), niespodzianki z następstwami, poziomy, rejestracja (kurs, narzędzia, popyt). Jeden plik ≈ 50 linii (ok. 3 KB) zamiast ok. 10 KB kodu w kilku modułach.
+- `node tools/nowa_robota.js` waliduje zgodnie z `roboty.test.js` (czasy, wady, fx, niespodzianki, łańcuchy, kurs, narzędzia, klienci) i generuje `roboty_gen.js`, który ładują `jobs.js`, `kalendarz.js`, `szkolenia.js`, `alledrogo.js` i `scenes.js`. Kolejne komendy: `--szablon`, `--lista`.
+- Scena ogólna (bez grafiki): tło wg `tlo` (łazienka, kuchnia, pokój), przedmiot wg `obiekt` (rura, panel, drzwi, okno, kratka), rząd etapów z kolorami dobrze/skrót/fusz i animacje narzędzi z `anim`. Dedykowana scena w `scenes.js` ma pierwszeństwo.
+- Przykład: `roboty/prysznic.rob` (Bateria prysznicowa, 11. robota). Test: `tests/generator.test.js`.

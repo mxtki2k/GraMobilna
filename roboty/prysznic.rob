@@ -1,0 +1,35 @@
+# Bateria prysznicowa: pierwsza robota z generatora (scena ogólna, bez dedykowanej grafiki).
+robota prysznic | Bateria prysznicowa | Łazienka | baza 260 | termin 30
+intro Z baterii leje się wrzątek albo lód. Pani Grażyna twierdzi, że to spisek sąsiadów.
+tlo lazienka | obiekt rura | anim wrench,pliers,wrench,pliers,tester
+kurs hydr | narzedzia klucze,pistolet | popyt zima=1.15 lato=0.9
+poziom klient=mirek mult=1.2 slot=dzien czas=10:00
+poziom klient=grazyna mult=1.8 slot=noc czas=22:30 | intro=Pani Grażyna o 22:30: „Woda w prysznicu parzy, proszę przyjechać!”
+krok woda | Odetnij wodę | Najpierw zawory, potem śruby.
+  d | Zakręć zawór główny | Pewnie i sucho. | 6 | 0 | pr-woda-off |
+  s | Zakręć zawór w łazience | Szybciej. | 3 | 0 | pr-woda-sink | zawór się nie domyka:1:0.3
+  f | Nie zakręcaj | Przecież to tylko woda. | 1 | 0 | pr-flood | woda w całej łazience:3:1
+krok demontaz | Zdejmij starą baterię | Nakrętki są zapieczone kamieniem.
+  d | Odkamienić i odkręcić kluczem | Bez zrywania gwintu. | 5 | 4 | pr-demontaz-ok | | skill
+  s | Rozkręć na siłę | Gwint trzaśnie. Może. | 3 | 0 | pr-demontaz-sila | zerwany gwint:2.5:0.3 | skill
+  f | Odetnij palnikiem | Szybko. | 1 | 0 | pr-demontaz-palnik | osmalona wylewka:3:0.5:0.2
+krok bateria | Zamontuj nową baterię | Odstęp między mimośrodami musi się zgadzać.
+  d | Poziomica i mimośrody | Równo i szczelnie. | 8 | 45 | pr-bateria-ok | | skill
+  s | Na oko | Prawie prosto. | 4 | 45 | pr-bateria-oko | bateria krzywo na ścianie:2:0.7 | skill
+  f | Na kleju | Klej trzyma. | 2 | 10 | pr-bateria-klej | bateria na kleju:5:0.3
+krok uszczelnij | Uszczelnij połączenia | Teflon i uszczelki.
+  d | Nowe uszczelki i taśma | Czysto. | 4 | 8 | pr-uszcz-ok |
+  s | Stara taśma | Trzyma. | 2 | 0 | pr-uszcz-stara | przeciek po miesiącu:3:0.1
+  f | Silikon | Na wszystko. | 1 | 6 | pr-uszcz-silikon | silikon zamiast uszczelek:4:0.4
+krok test | Próba | Ciepła, zimna, pełne ciśnienie.
+  d | Kranik na ciepłą i zimną, 5 minut | Dobrze, że sprawdzone. | 4 | 0 | pr-test-ok |
+  s | Chwila na ciepłej | Nie kapie. | 2 | 0 | pr-test-szybko | brak pełnej próby:1.5:0.1
+  f | Pewnie dobrze | Nikt nie sprawdza. | 0 | 0 | pr-test-brak | brak próby baterii:3:0.15
+niespodzianka rdza | po=0 | szansa=0.3 | Rura w ścianie jest zardzewiała | Gwint osypuje się w palcach.
+  d | Wymień odcinek rury | Dłużej, ale trwale. | 6 | 20 |
+  s | Owiń taśmą | Na jakiś czas. | 2 | 3 | rdza przebije za miesiąc:3.5:0.1 | then=rdza-wyciek
+  f | Udawaj, że nie widzisz | Nie ruszaj. | 0 | 0 | przerdzewiała rura:4:0.3 | then=rdza-wyciek
+nastepstwo rdza-wyciek | Rura puściła | Woda tryska na ścianę, prosto na świeżo zamontowaną baterię.
+  d | Zakręć i wymień | Mokro, ale szybko. | 7 | 20 |
+  s | Opaska zaciskowa | Trzyma. | 3 | 5 | opaska zamiast rury:3:0.3
+  f | Podstaw wiadro | Kapie. | 1 | 0 | stały wyciek:4.5:0.4

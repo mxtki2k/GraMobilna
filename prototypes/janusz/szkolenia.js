@@ -11,6 +11,8 @@
     plyt: { name: 'Kurs glazurniczy', jobs: ['plytki'], cost: 800, hours: 16, hazard: 0.7, acc: 0.06, pay: 1.1, desc: 'Fugi proste, hydroizolacja szczelna.' },
     mont: { name: 'Szkolenie z montażu', jobs: ['polka'], cost: 250, hours: 5, hazard: 0.7, acc: 0.04, pay: 1.05, desc: 'Poziomica przestaje być tajemnicą.' },
   };
+  const GEN = (typeof RobotyGen !== 'undefined' ? RobotyGen : (() => { try { return require('./roboty_gen.js'); } catch (e) { return null; } })()) || { JOBS: {}, SURPRISES: {}, CHAINS: {}, LEVELS: [], META: {} };
+  for (const [id, m] of Object.entries(GEN.META)) if (m.kurs && CERTS[m.kurs] && CERTS[m.kurs].jobs.indexOf(id) < 0) CERTS[m.kurs].jobs.push(id);
   const forJob = (certs, jobId) => { const id = Object.keys(CERTS).find(k => CERTS[k].jobs.indexOf(jobId) >= 0); return id && certs && certs[id] ? CERTS[id] : null; };
   const modsFor = (certs, jobId) => { const c = forJob(certs, jobId); return c ? { hazard: c.hazard, acc: c.acc, pay: c.pay } : { hazard: 1, acc: 0, pay: 1 }; };
   function buy(certs, id, money) {

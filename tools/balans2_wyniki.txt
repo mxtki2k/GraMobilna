@@ -1,59 +1,59 @@
 Symulacja 60 dni gry, 150 przebiegów na scenariusz (zarobek netto po wszystkich kosztach)
 
 — zmęczenie (próg snu)
-sen przy zmęczeniu nigdy              471 zł/d    45 zł/h·prac  prac.zlec 178  ★ 3.86  zmęcz  87 % awar 28.8  zaśn 19.8  spóźn 74.9  reklam 28368  wypal  90 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-sen przy zmęczeniu 40                 556 zł/d    69 zł/h·prac  prac.zlec 156  ★ 4.15  zmęcz  31 % awar 25.2  zaśn  0.0  spóźn 51.3  reklam 24671  wypal  75 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-sen przy zmęczeniu 60                 581 zł/d    66 zł/h·prac  prac.zlec 167  ★ 4.12  zmęcz  40 % awar 26.9  zaśn  0.0  spóźn 57.0  reklam 26290  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-sen przy zmęczeniu 80                 572 zł/d    63 zł/h·prac  prac.zlec 170  ★ 4.09  zmęcz  52 % awar 27.4  zaśn  0.1  spóźn 59.6  reklam 27119  wypal  87 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+sen przy zmęczeniu nigdy              461 zł/d    44 zł/h·prac  prac.zlec 179  ★ 3.86  zmęcz  88 % awar 28.9  zaśn 20.4  spóźn 76.0  reklam 27914  wypal  90 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+sen przy zmęczeniu 40                 527 zł/d    66 zł/h·prac  prac.zlec 155  ★ 4.14  zmęcz  31 % awar 25.1  zaśn  0.0  spóźn 51.7  reklam 24976  wypal  75 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+sen przy zmęczeniu 60                 563 zł/d    64 zł/h·prac  prac.zlec 167  ★ 4.12  zmęcz  41 % awar 27.0  zaśn  0.0  spóźn 58.0  reklam 26297  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+sen przy zmęczeniu 80                 546 zł/d    60 zł/h·prac  prac.zlec 170  ★ 4.08  zmęcz  53 % awar 27.5  zaśn  0.1  spóźn 60.8  reklam 26877  wypal  87 % wolne 0.0 /urlopy 0.0  OC + 0/-0
 
 — serwis busa
-przegląd poniżej nigdy%               581 zł/d    66 zł/h·prac  prac.zlec 167  ★ 4.12  zmęcz  40 % awar 26.9  zaśn  0.0  spóźn 57.0  reklam 26290  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-przegląd poniżej 40%                  636 zł/d    74 zł/h·prac  prac.zlec 169  ★ 4.15  zmęcz  40 % awar 12.5  zaśn  0.0  spóźn 54.1  reklam 26974  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-przegląd poniżej 60%                  664 zł/d    78 zł/h·prac  prac.zlec 170  ★ 4.17  zmęcz  40 % awar  4.9  zaśn  0.0  spóźn 53.0  reklam 27105  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-przegląd poniżej 80%                  645 zł/d    76 zł/h·prac  prac.zlec 168  ★ 4.17  zmęcz  40 % awar  3.5  zaśn  0.0  spóźn 53.2  reklam 27149  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+przegląd poniżej nigdy%               563 zł/d    64 zł/h·prac  prac.zlec 167  ★ 4.12  zmęcz  41 % awar 27.0  zaśn  0.0  spóźn 58.0  reklam 26297  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+przegląd poniżej 40%                  611 zł/d    71 zł/h·prac  prac.zlec 169  ★ 4.14  zmęcz  40 % awar 12.9  zaśn  0.0  spóźn 56.1  reklam 26569  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+przegląd poniżej 60%                  643 zł/d    75 zł/h·prac  prac.zlec 170  ★ 4.16  zmęcz  40 % awar  5.1  zaśn  0.0  spóźn 55.2  reklam 27062  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+przegląd poniżej 80%                  627 zł/d    74 zł/h·prac  prac.zlec 168  ★ 4.16  zmęcz  40 % awar  3.6  zaśn  0.0  spóźn 54.1  reklam 26555  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
 
 — szkolenia, OC, rywal, styl
-bez dodatków                          664 zł/d    78 zł/h·prac  prac.zlec 170  ★ 4.17  zmęcz  40 % awar  4.9  zaśn  0.0  spóźn 53.0  reklam 27105  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-+ szkolenia                           669 zł/d    84 zł/h·prac  prac.zlec 158  ★ 4.20  zmęcz  41 % awar  4.5  zaśn  0.1  spóźn 49.8  reklam 25329  wypal  85 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-+ OC                                  785 zł/d    92 zł/h·prac  prac.zlec 170  ★ 4.17  zmęcz  40 % awar  4.9  zaśn  0.0  spóźn 53.0  reklam 13615  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 13490/-6209
-bez efektów zaufania klientów         540 zł/d    67 zł/h·prac  prac.zlec 162  ★ 3.91  zmęcz  37 % awar  4.8  zaśn  0.0  spóźn 50.3  reklam 23025  wypal  81 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-rywal: zawsze zbij cenę               651 zł/d    75 zł/h·prac  prac.zlec 171  ★ 4.15  zmęcz  40 % awar  4.8  zaśn  0.0  spóźn 53.5  reklam 26915  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-styl solidny (nie skraca)             728 zł/d    79 zł/h·prac  prac.zlec 139  ★ 4.16  zmęcz  47 % awar  4.1  zaśn  0.0  spóźn 70.4  reklam 3744  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-styl fuszerka                         201 zł/d    50 zł/h·prac  prac.zlec 256  ★ 3.68  zmęcz   7 % awar  7.1  zaśn  0.0  spóźn  0.4  reklam 110219  wypal  74 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-wszystko razem (solid+skraca ostre)    746 zł/d    87 zł/h·prac  prac.zlec 134  ★ 4.24  zmęcz  47 % awar  3.8  zaśn  0.1  spóźn 68.2  reklam 4400  wypal  85 % wolne 0.0 /urlopy 0.0  OC + 4423/-2921
+bez dodatków                          643 zł/d    75 zł/h·prac  prac.zlec 170  ★ 4.16  zmęcz  40 % awar  5.1  zaśn  0.0  spóźn 55.2  reklam 27062  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
++ szkolenia                           649 zł/d    81 zł/h·prac  prac.zlec 158  ★ 4.20  zmęcz  41 % awar  4.7  zaśn  0.1  spóźn 51.4  reklam 24705  wypal  85 % wolne 0.0 /urlopy 0.0  OC + 0/-0
++ OC                                  762 zł/d    89 zł/h·prac  prac.zlec 170  ★ 4.16  zmęcz  40 % awar  5.1  zaśn  0.0  spóźn 55.2  reklam 13690  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 13372/-6253
+bez efektów zaufania klientów         526 zł/d    65 zł/h·prac  prac.zlec 161  ★ 3.91  zmęcz  37 % awar  4.8  zaśn  0.0  spóźn 51.3  reklam 22875  wypal  81 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+rywal: zawsze zbij cenę               635 zł/d    73 zł/h·prac  prac.zlec 172  ★ 4.15  zmęcz  40 % awar  5.1  zaśn  0.0  spóźn 56.4  reklam 26493  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+styl solidny (nie skraca)             728 zł/d    79 zł/h·prac  prac.zlec 140  ★ 4.18  zmęcz  47 % awar  4.3  zaśn  0.0  spóźn 70.6  reklam 3770  wypal  84 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+styl fuszerka                         231 zł/d    57 zł/h·prac  prac.zlec 256  ★ 3.69  zmęcz   7 % awar  7.3  zaśn  0.0  spóźn  0.3  reklam 105301  wypal  74 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+wszystko razem (solid+skraca ostre)    741 zł/d    87 zł/h·prac  prac.zlec 135  ★ 4.25  zmęcz  47 % awar  3.7  zaśn  0.1  spóźn 67.9  reklam 4165  wypal  85 % wolne 0.0 /urlopy 0.0  OC + 4081/-2958
 
 — wypalenie (dzień wolny / urlop)
-dzień wolny przy wypaleniu nigdy      664 zł/d    78 zł/h·prac  prac.zlec 170  ★ 4.17  zmęcz  40 % awar  4.9  zaśn  0.0  spóźn 53.0  reklam 27105  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
-dzień wolny przy wypaleniu 40         718 zł/d    99 zł/h·prac  prac.zlec 161  ★ 4.30  zmęcz  36 % awar  4.6  zaśn  0.0  spóźn 33.7  reklam 26283  wypal  27 % wolne 10.2 /urlopy 0.0  OC + 0/-0
-dzień wolny przy wypaleniu 60         705 zł/d    95 zł/h·prac  prac.zlec 161  ★ 4.28  zmęcz  37 % awar  4.7  zaśn  0.0  spóźn 38.7  reklam 26158  wypal  44 % wolne 9.4 /urlopy 0.0  OC + 0/-0
-dzień wolny przy wypaleniu 80         663 zł/d    88 zł/h·prac  prac.zlec 158  ★ 4.24  zmęcz  38 % awar  4.7  zaśn  0.0  spóźn 43.1  reklam 25443  wypal  59 % wolne 8.9 /urlopy 0.0  OC + 0/-0
-urlop 4 dni przy wypaleniu 60         608 zł/d    95 zł/h·prac  prac.zlec 142  ★ 4.29  zmęcz  37 % awar  4.1  zaśn  0.0  spóźn 31.4  reklam 23029  wypal  29 % wolne 0.0 /urlopy 4.0  OC + 0/-0
-urlop 4 dni przy wypaleniu 80         641 zł/d    93 zł/h·prac  prac.zlec 150  ★ 4.28  zmęcz  38 % awar  4.4  zaśn  0.0  spóźn 35.2  reklam 24180  wypal  37 % wolne 0.0 /urlopy 3.0  OC + 0/-0
-wolne 60 + urlop 85                   705 zł/d    95 zł/h·prac  prac.zlec 161  ★ 4.28  zmęcz  37 % awar  4.7  zaśn  0.0  spóźn 38.7  reklam 26158  wypal  44 % wolne 9.4 /urlopy 0.0  OC + 0/-0
+dzień wolny przy wypaleniu nigdy      643 zł/d    75 zł/h·prac  prac.zlec 170  ★ 4.16  zmęcz  40 % awar  5.1  zaśn  0.0  spóźn 55.2  reklam 27062  wypal  83 % wolne 0.0 /urlopy 0.0  OC + 0/-0
+dzień wolny przy wypaleniu 40         701 zł/d    96 zł/h·prac  prac.zlec 162  ★ 4.30  zmęcz  36 % awar  4.9  zaśn  0.0  spóźn 34.9  reklam 26191  wypal  27 % wolne 10.1 /urlopy 0.0  OC + 0/-0
+dzień wolny przy wypaleniu 60         687 zł/d    93 zł/h·prac  prac.zlec 162  ★ 4.28  zmęcz  37 % awar  4.8  zaśn  0.0  spóźn 38.6  reklam 26332  wypal  44 % wolne 9.5 /urlopy 0.0  OC + 0/-0
+dzień wolny przy wypaleniu 80         638 zł/d    85 zł/h·prac  prac.zlec 158  ★ 4.24  zmęcz  38 % awar  4.9  zaśn  0.0  spóźn 44.1  reklam 25584  wypal  59 % wolne 8.9 /urlopy 0.0  OC + 0/-0
+urlop 4 dni przy wypaleniu 60         589 zł/d    92 zł/h·prac  prac.zlec 141  ★ 4.30  zmęcz  37 % awar  4.1  zaśn  0.0  spóźn 31.9  reklam 23082  wypal  29 % wolne 0.0 /urlopy 4.0  OC + 0/-0
+urlop 4 dni przy wypaleniu 80         621 zł/d    90 zł/h·prac  prac.zlec 150  ★ 4.28  zmęcz  38 % awar  4.4  zaśn  0.0  spóźn 36.2  reklam 24036  wypal  37 % wolne 0.0 /urlopy 3.0  OC + 0/-0
+wolne 60 + urlop 85                   687 zł/d    93 zł/h·prac  prac.zlec 162  ★ 4.28  zmęcz  37 % awar  4.8  zaśn  0.0  spóźn 38.6  reklam 26332  wypal  44 % wolne 9.5 /urlopy 0.0  OC + 0/-0
 
 — ekipa (płatnicy i pomocnicy)
-solo (bez ekipy)                       641 zł/d  ★ 2.50  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 38479
-1 pomocnik, pensje w całości           694 zł/d  ★ 2.46  ekipa 1.0  pensje   3409  fuchy   6015  odeszło 0.0  zlec. 173  zysk netto 41668
-2 pomocników, pensje w całości         729 zł/d  ★ 2.46  ekipa 2.0  pensje   8451  fuchy  13421  odeszło 0.0  zlec. 173  zysk netto 43750
-4 pomocników, pensje w całości         742 zł/d  ★ 2.45  ekipa 4.0  pensje  25583  fuchy  31653  odeszło 0.0  zlec. 172  zysk netto 44544
-2 pomocników, pensje 60%               629 zł/d  ★ 2.49  ekipa 0.0  pensje   1104  fuchy    886  odeszło 4.0  zlec. 170  zysk netto 37762
+solo (bez ekipy)                       642 zł/d  ★ 2.48  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 38542
+1 pomocnik, pensje w całości           686 zł/d  ★ 2.46  ekipa 1.0  pensje   3403  fuchy   5965  odeszło 0.0  zlec. 173  zysk netto 41148
+2 pomocników, pensje w całości         724 zł/d  ★ 2.46  ekipa 2.0  pensje   8435  fuchy  13460  odeszło 0.0  zlec. 172  zysk netto 43468
+4 pomocników, pensje w całości         734 zł/d  ★ 2.47  ekipa 4.0  pensje  25692  fuchy  31872  odeszło 0.0  zlec. 173  zysk netto 44039
+2 pomocników, pensje 60%               622 zł/d  ★ 2.48  ekipa 0.0  pensje   1104  fuchy    881  odeszło 4.0  zlec. 170  zysk netto 37321
 
 — pożyczki (start od zera, 60 dni; zysk netto = kasa minus dług)
-bez pożyczki                           641 zł/d  ★ 2.50  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 38479
-pożyczka: kuzyn 1500 zł                638 zł/d  ★ 2.50  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 38268
-pożyczka: bank 5000 zł                 634 zł/d  ★ 2.50  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 38014
-pożyczka: gienek 3000 zł               503 zł/d  ★ 2.50  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 29932
+bez pożyczki                           642 zł/d  ★ 2.48  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 38542
+pożyczka: kuzyn 1500 zł                639 zł/d  ★ 2.48  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 38337
+pożyczka: bank 5000 zł                 635 zł/d  ★ 2.48  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 38079
+pożyczka: gienek 3000 zł               512 zł/d  ★ 2.48  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 30639
 
 — reputacja i fuszerka (prawdziwa ocena firmy z siedziby.js)
-styl mieszany                          641 zł/d  ★ 2.50  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 38479
-styl solidny                           723 zł/d  ★ 2.75  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 139  zysk netto 43372
-styl fuszerka                          184 zł/d  ★ 2.19  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 241  zysk netto 11030
+styl mieszany                          642 zł/d  ★ 2.48  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 170  zysk netto 38542
+styl solidny                           734 zł/d  ★ 2.75  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 141  zysk netto 44048
+styl fuszerka                          225 zł/d  ★ 2.19  ekipa 0.0  pensje      0  fuchy      0  odeszło 0.0  zlec. 242  zysk netto 13505
 
 — kierowcy (wypadki i mandaty ze swiat.js) i narzędzia z Alledrogo
-kierowca: ty sam                         738 zł/d  ★ 2.45  wypadki   5.0 ( 604 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 0.4 wydano 0  netto 44284
-kierowca: pomocnik                       598 zł/d  ★ 2.49  wypadki  10.4 ( 2883 zł) mandaty  3033  wyp.ekipy 1.1  narzędzia: awarie 0.4 wydano 0  netto 35880
-kierowca: kurier (70 zł)                 654 zł/d  ★ 2.47  wypadki   0.0 ( 0 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 0.3 wydano 0  netto 39266
-narzędzia: brak                          655 zł/d  ★ 2.47  wypadki   4.9 ( 583 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 0.0 wydano 0  netto 39298
-narzędzia: tylko zestaw startowy         660 zł/d  ★ 2.48  wypadki   5.1 ( 617 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 0.3 wydano 0  netto 39629
-narzędzia: kupuje wszędzie (okazje)      671 zł/d  ★ 2.83  wypadki   5.1 ( 612 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 56.9 wydano 10541  netto 40275
-narzędzia: tylko ze sklepu (bezpiecznie)   702 zł/d  ★ 2.79  wypadki   5.6 ( 676 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 31.6 wydano 5826  netto 42115
+kierowca: ty sam                         722 zł/d  ★ 2.47  wypadki   4.7 ( 558 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 0.4 wydano 0  netto 43344
+kierowca: pomocnik                       586 zł/d  ★ 2.47  wypadki  10.5 ( 3030 zł) mandaty  2898  wyp.ekipy 1.3  narzędzia: awarie 0.4 wydano 0  netto 35151
+kierowca: kurier (70 zł)                 634 zł/d  ★ 2.47  wypadki   0.0 ( 0 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 0.3 wydano 0  netto 38019
+narzędzia: brak                          643 zł/d  ★ 2.49  wypadki   5.0 ( 598 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 0.0 wydano 0  netto 38606
+narzędzia: tylko zestaw startowy         637 zł/d  ★ 2.47  wypadki   5.3 ( 632 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 0.3 wydano 0  netto 38218
+narzędzia: kupuje wszędzie (okazje)      647 zł/d  ★ 2.84  wypadki   5.2 ( 629 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 57.5 wydano 10644  netto 38831
+narzędzia: tylko ze sklepu (bezpiecznie)   692 zł/d  ★ 2.79  wypadki   5.2 ( 619 zł) mandaty     0  wyp.ekipy 0.0  narzędzia: awarie 31.6 wydano 5743  netto 41496
