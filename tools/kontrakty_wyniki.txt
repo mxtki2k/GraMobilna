@@ -1,0 +1,9 @@
+Kontrakt kontra te same roboty pojedynczo (zł/h po kosztach, bez kar za spóźnienie), 300 przebiegów
+
+kontrakt       solidnie                  mieszanie                 fuszerka                  
+lazienka       +151 vs +124 (22%)        +75 vs +59 (27%)          -238 vs -96 (147%)        
+kuchnia        +174 vs +145 (20%)        +116 vs +62 (88%)         -820 vs -984 (-17%)       
+zima           +148 vs +119 (24%)        +72 vs +85 (-15%)         -618 vs -18 (3278%)       
+biuro          +221 vs +185 (19%)        +170 vs +126 (35%)        -1206 vs -1210 (0%)       
+mieszkanie     +267 vs +218 (22%)        +132 vs +90 (47%)         -995 vs -748 (33%)        
+tesciowa       +284 vs +230 (23%)        +170 vs +139 (22%)        -340 vs -180 (89%)        

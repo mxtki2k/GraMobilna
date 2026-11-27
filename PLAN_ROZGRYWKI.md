@@ -4,7 +4,7 @@ Stan na teraz: 10 rodzajów robót (4–6 kroków, 3–5 minut każda), niespodz
 Brakuje: długich celów w obrębie jednej sesji, wyborów strategicznych między zleceniami i powodu, by wracać po miesiącach gry.
 Symulacje (`tools/balans*.js`, `tools/tempo.js`) dają solidną podstawę do strojenia każdej fazy.
 
-## Faza A: Kontrakty (dłuższe poziomy) — największy zysk
+## Faza A: Kontrakty (dłuższe poziomy) — ZROBIONE (kontrakty.js, tools/kontrakty_sim.js)
 Kontrakt = kilka robót u jednego klienta w kolejnych dniach (np. „Remont łazienki”: hydraulik → płytki → drzwi → malowanie → odbiór).
 - **Dane:** `kontrakty.js`: lista etapów (id roboty, dzień względny, zależności), zaliczka, transze, kara za opóźnienie całości, premia za odbiór bez poprawek. Czysta logika + testy.
 - **Przebieg:** klient daje zaliczkę (część kasy z góry, to ratuje płynność), każdy etap to normalna robota (istniejące kroki i niespodzianki), pasek postępu kontraktu, wynik końcowy to średnia ocen etapów i zgłoszone usterki z wcześniejszych etapów (ukryte wady z płytek wychodzą przy malowaniu).

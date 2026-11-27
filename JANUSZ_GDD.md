@@ -235,3 +235,9 @@ Bot gra 60 dni gry, 150 przebiegów na scenariusz. Po strojeniu: sen przy 60–8
 - `node tools/nowa_robota.js` waliduje zgodnie z `roboty.test.js` (czasy, wady, fx, niespodzianki, łańcuchy, kurs, narzędzia, klienci) i generuje `roboty_gen.js`, który ładują `jobs.js`, `kalendarz.js`, `szkolenia.js`, `alledrogo.js` i `scenes.js`. Kolejne komendy: `--szablon`, `--lista`.
 - Scena ogólna (bez grafiki): tło wg `tlo` (łazienka, kuchnia, pokój), przedmiot wg `obiekt` (rura, panel, drzwi, okno, kratka), rząd etapów z kolorami dobrze/skrót/fusz i animacje narzędzi z `anim`. Dedykowana scena w `scenes.js` ma pierwszeństwo.
 - Przykład: `roboty/prysznic.rob` (Bateria prysznicowa, 11. robota). Test: `tests/generator.test.js`.
+
+## Kontrakty (faza A planu)
+- `kontrakty.js`: 6 kontraktów (Remont łazienki, Odświeżenie kuchni, Przygotowanie do zimy, Biuro Sebixa, Remont po dziadku, Generalny u teściowej), 3–6 etapów u jednego klienta w kolejnych dniach, odblokowywane liczbą wykonanych zleceń (0, 4, 8, 14, 22, 32).
+- Zasady: zaliczka 25% oczekiwanej wypłaty wpływa przy przyjęciu, każdy etap płaci transzę (75% zwykłej wypłaty), kolejne etapy bez ekranu umowy (warunki z pierwszego) i bez dojazdu (materiały są na miejscu). Jeden aktywny kontrakt naraz.
+- Odbiór końcowy: ukryte wady z wszystkich etapów (vis < 0,5, sev ≥ 2) wychodzą z szansą zależną od uwagi klienta (poprawki 25 zł za punkt wagi, ocena spada o 0,5 za wadę), kara 3% wartości za dzień opóźnienia (max 40%), premia 10% za czysty odbiór w terminie. Rezygnacja: zwrot zaliczki + 10% wartości kary, zaufanie klienta −15.
+- Symulacja (`tools/kontrakty_sim.js`): przy solidnej pracy kontrakt daje ok. +20–24% zł/h względem tych samych robót osobno (oszczędność dojazdów i premia), przy mieszanej +20–50% z wyższą wariancją (u wymagających klientów ukryte wady zjadają zysk), a fuszerka nadal się nie opłaca. Wynik nie uwzględnia kar za spóźnienie ani czekania między etapami.
