@@ -32,7 +32,9 @@ async function dismiss(g) { for (let k = 0; k < 6 && g.visible('#modal'); k++) a
 
   { // 1. start gry + zwykłe zlecenie
     const g = await boot(11);
-    assert(g.$$('.lvl').length >= 30, 'menu ma poziomy');
+    assert(g.$$('.tile').length >= 2, 'menu ma kafelki poziomów (odblokowany i zamknięty)');
+    g.state().unlocked = 40; g.z().renderMenu(); await g.settle(2); assert.strictEqual(g.$$('.tile').length, 6, 'jedna strona to 6 kafelków'); assert(g.$$('.tile canvas.lvthumb').length >= 1);
+    const pg = g.text('.lvhead b'); await g.click('#lvNext'); assert.notStrictEqual(g.text('.lvhead b'), pg, 'strona się zmienia'); g.state().unlocked = 1; g.z().renderMenu(); await g.settle(2);
     const m0 = g.state().money;
     await runJob(g, 0);
     assert.strictEqual(g.state().done, 1); assert.strictEqual(g.state().ratings.length, 1);

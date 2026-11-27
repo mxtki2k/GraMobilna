@@ -166,6 +166,19 @@
   .lvl:has(canvas.lvthumb) { grid-template-columns: 76px 1fr auto !important; }
   details.more > summary { cursor: pointer; list-style: none; color: var(--muted); } details.more > summary::-webkit-details-marker { display: none; }
   details.more[open] > summary { color: var(--hi); } details.more > div { margin-top: 4px; }
+  .tabs6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; } .tabbtn.mini { min-height: 46px; font-size: 15px !important; line-height: 1.05 !important; padding: 2px !important; margin: 2px !important; }
+  .lvhead { display: flex; justify-content: space-between; align-items: center; } .lvhead button { min-height: 34px; width: 38px; padding: 0; margin: 0 2px; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .lvl.tile { display: block !important; grid-template-columns: none !important; padding: 3px !important; min-height: 0 !important; margin: 3px !important; text-align: left; }
+  .tile canvas.lvthumb { width: 100% !important; height: auto !important; aspect-ratio: 8 / 5; display: block; margin-bottom: 3px; }
+  .tile b { display: block; font-size: 17px !important; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .tile small { display: block; font-size: 15px !important; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .av { display: block; text-align: center; font-size: 34px; padding: 10px 0; }
+  details.acc > summary { cursor: pointer; font-size: 21px; padding: 8px 10px; background: #2b3239; box-shadow: 0 0 0 3px #000; margin: 3px; list-style: none; } details.acc > summary::-webkit-details-marker { display: none; }
+  details.acc[open] > summary { background: #3a424b; color: var(--hi); } .accbody { display: grid; gap: 8px; padding: 6px 2px; }
+  main { gap: 8px !important; }
+  .tabs6 > *, .tiles > *, .accs > * { min-width: 0; } main, #menu { min-width: 0; max-width: 100%; }
+  .accs { display: grid; grid-template-columns: 1fr 1fr; gap: 0 4px; } .accs details[open] { grid-column: 1 / -1; } .accs details.acc > summary { font-size: 19px; padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #menu details.more > summary { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .clockbar { font-size: 19px !important; padding: 4px 8px !important; } .clockbar small { font-size: 14px; }
   .clockbar.night { background: #0e1630; color: #9fc2ff; }
   .lvl.nightlvl { background: #141b33; }
   .chip.warn { color: #ff7b72; } .chip.due { color: #ffe27a; }

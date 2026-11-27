@@ -42,24 +42,39 @@
     $('clockbar').className = 'clockbar' + (n ? ' night' : '');
   }
   function stars(n) { return '★'.repeat(n) + '☆'.repeat(5 - n); }
+  /* Menu mieści się na jednym ekranie: kafelki poziomów (6 na stronę), reszta w zwijanych sekcjach. */
+  let lvPage = null;
+  const LV_PER = 6;
+  const acc = (title, html, open) => html ? '<details class="acc"' + (open ? ' open' : '') + '><summary>' + title + '</summary><div class="accbody">' + html + '</div></details>' : '';
+  function levelTile(i) {
+    const l = LEVELS[i], job = JOBS[l.job], cl = CLIENTS[l.client], locked = i + 1 > ST.unlocked, b = ST.best[i];
+    if (locked) return '<button class="lvl tile" data-i="' + i + '" disabled><span class="av">🔒</span><b>' + (i + 1) + '. ???</b><small>odblokuj poprzednie</small></button>';
+    const est = estimateFor(l);
+    return '<button class="lvl tile' + (l.slot === 'noc' ? ' nightlvl' : '') + '" data-i="' + i + '" title="' + Czas.label(Czas.jobStart(ST.clock, l.time, 1)) + '"><canvas class="pxscene lvthumb" width="128" height="80" data-scene="job" data-job="' + job.id + '" data-night="' + (l.slot === 'noc' ? 1 : 0) + '" aria-hidden="true"></canvas>' +
+      '<b>' + (i + 1) + '. ' + job.title + '</b>' +
+      '<small>' + (l.slot === 'noc' ? '🌙' : '☀️') + (l.due ? '⏰' : '') + ' ' + zl(job.base * l.mult * (l.slot === 'noc' ? Czas.NIGHT.payMult : 1)) + (b ? ' · <span class="stars">' + b.stars + '★</span>' : '') + '</small></button>';
+  }
   function renderMenu() {
     renderTop(); ALL.forEach(x => $(x).hidden = true); $('menu').hidden = false;
     const toPay = Math.max(0, ST.nextPay - ST.done);
-    const sea = { name: Czas.season(ST.clock) };
     const flash = ST.flash.length ? '<div class="banner">' + ST.flash.join('<br>') + '</div>' : ''; ST.flash = [];
-    $('menu').innerHTML = flash + '<div class="grid3"><button class="tabbtn' + (ST.crew.some(w => Ekipa.demand(w)) ? ' alert' : '') + '" id="goCrew">👷 Ekipa (' + ST.crew.length + ')</button><button class="tabbtn" id="goHq">🏢 Siedziba</button><button class="tabbtn' + (Finanse.debt(ST.fin) > 0 ? ' alert' : '') + '" id="goFin">💼 Finanse</button><button class="tabbtn" id="goOs">🏘️ Osiedle</button><button class="tabbtn" id="goStory">📖 Fabuła</button><button class="tabbtn' + (ST.orders.length ? ' alert' : '') + '" id="goAlle">🛒 Alledrogo</button></div>' +
-      '<div class="hint" style="text-align:center">Reklamacje: ' + ST.claims.length + ' · ' + sea.name + ' · dzień wypłaty za ' + toPay + ' zlec. · utrzymanie ' + zl(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)) + ' · ' + Siedziba.TIERS[ST.hq.tier].name + '</div>' +
-      contractsHTML() + tendersHTML() + boardHTML() + '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Zlecenia</h3>' + LEVELS.map((l, i) => {
-      const job = JOBS[l.job], cl = CLIENTS[l.client], locked = i + 1 > ST.unlocked, b = ST.best[i], est = estimateFor(l), st = Czas.jobStart(ST.clock, l.time, 1);
-      return '<button class="lvl' + (l.slot === 'noc' ? ' nightlvl' : '') + '" data-i="' + i + '" ' + (locked ? 'disabled' : '') + '><span class="av">' + (locked ? '🔒' : '<canvas class="pxscene lvthumb" width="128" height="80" data-scene="job" data-job="' + job.id + '" data-night="' + (l.slot === 'noc' ? 1 : 0) + '" aria-hidden="true"></canvas>') + '</span><span><b>' + (locked ? '' : cl.em + ' ') + (i + 1) + '. ' + job.title + '</b><small>' + (l.slot === 'noc' ? '🌙 ' : '☀️ ') + Czas.label(st) + '</small><small>' + (l.due ? '⏰ ' + Terminy.KINDS[l.due].name + ' · ' : '') + (Klienci.get(ST.rel, l.client).jobs ? '🤝 ' + Klienci.level(Klienci.get(ST.rel, l.client).trust) + ' · ' : '') + job.place + ' · ' + cl.name + ' · ok. ' + zl(job.base * l.mult * (l.slot === 'noc' ? Czas.NIGHT.payMult : 1)) + ' · ' + perHourTxt(est) + '</small></span><span class="res">' +
-        (b ? '<span class="stars">' + stars(b.stars) + '</span><br>fuszerka ' + b.index + '%' : (locked ? '' : 'nowe')) + '</span></button>';
-    }).join('');
+    const vis = LEVELS.map((_, i) => i).filter(i => i <= ST.unlocked), pages = Math.max(1, Math.ceil(vis.length / LV_PER));
+    if (lvPage === null) { const first = vis.findIndex(i => i < ST.unlocked && !ST.best[i]); lvPage = Math.floor((first < 0 ? 0 : first) / LV_PER); }
+    lvPage = Math.max(0, Math.min(pages - 1, lvPage));
+    const tabs = [['goCrew', '👷', 'Ekipa', ST.crew.some(w => Ekipa.demand(w))], ['goHq', '🏢', 'Siedziba'], ['goFin', '💼', 'Finanse', Finanse.debt(ST.fin) > 0], ['goOs', '🏘️', 'Osiedle'], ['goStory', '📖', 'Fabuła'], ['goAlle', '🛒', 'Alle', ST.orders.length > 0]]
+      .map(t => '<button class="tabbtn mini' + (t[3] ? ' alert' : '') + '" id="' + t[0] + '">' + t[1] + '<br>' + t[2] + '</button>').join('');
+    const kt = contractsHTML(), tn = tendersHTML(), bd = boardHTML();
+    const kN = (KT().active ? 1 : 0) + KT().others.length;
+    $('menu').innerHTML = flash + '<div class="tabs6">' + tabs + '</div>' +
+      '<div class="hint" style="text-align:center">Reklamacje ' + ST.claims.length + ' · ' + Czas.season(ST.clock) + ' · wypłata za ' + toPay + ' zlec. · ' + Siedziba.TIERS[ST.hq.tier].name + '</div>' +
+      '<div class="lvhead"><h3>Zlecenia</h3><span><button id="lvPrev" ' + (lvPage <= 0 ? 'disabled' : '') + '>◀</button> <b>' + (lvPage + 1) + '/' + pages + '</b> <button id="lvNext" ' + (lvPage >= pages - 1 ? 'disabled' : '') + '>▶</button></span></div>' +
+      '<div class="tiles">' + vis.slice(lvPage * LV_PER, lvPage * LV_PER + LV_PER).map(levelTile).join('') + '</div>' +
+      '<div class="accs">' + acc('📋 Kontrakty' + (kN ? ' (' + kN + ')' : ''), kt, !!KT().active) + acc('🏛️ Przetargi', tn, false) + acc('👷 Dla ekipy', bd, false) + acc('⏳ Czekanie', waitHTML(), false) + '</div>' +
+      '<div class="grid3"><button id="goPlan" class="tabbtn mini">📅<br>Plan dnia</button><button id="goWardrobe" class="tabbtn mini">👔<br>Szafa</button><button id="goPrestige" class="tabbtn mini">🏆<br>' + META.points + ' pkt</button></div>';
+    $('lvPrev').onclick = () => { lvPage--; renderMenu(); }; $('lvNext').onclick = () => { lvPage++; renderMenu(); };
     bindContracts(); bindBoard(); bindTenders();
     { const ev = Sezon.active(ST.clock); if (ev.length) $('menu').insertAdjacentHTML('afterbegin', ev.map(e => '<div class="banner">' + e.em + ' <b>' + e.name + '</b>: ' + e.text + (e.demand ? ' Popyt: ' + Object.entries(e.demand).map(([j, m]) => (JOBS[j] ? JOBS[j].title.toLowerCase() : j) + ' ×' + String(m).replace('.', ',')).join(', ') + '.' : '') + (e.pay ? ' Wypłaty ×' + String(e.pay).replace('.', ',') + '.' : '') + (e.toolPrice ? ' Narzędzia ×' + String(e.toolPrice).replace('.', ',') + '.' : '') + '</div>').join('')); }
-    $('menu').insertAdjacentHTML('beforeend', waitHTML());
-    $('menu').insertAdjacentHTML('beforeend', '<button id="goPlan" style="min-height:48px">📅 Plan dnia (kontrakty i ekipa)</button>'); $('goPlan').onclick = () => renderPlan(0);
-    $('menu').insertAdjacentHTML('beforeend', '<button id="goWardrobe" style="min-height:48px">👔 Szafa i sklep z ubraniami</button>'); $('goWardrobe').onclick = renderWardrobe;
-    $('menu').insertAdjacentHTML('beforeend', '<button id="goPrestige" style="min-height:48px">🏆 Prestiż: ' + META.points + ' pkt · gra nr ' + META.games + '</button>'); $('goPrestige').onclick = renderPrestige;
+    $('goPlan').onclick = () => renderPlan(0); $('goWardrobe').onclick = renderWardrobe; $('goPrestige').onclick = renderPrestige;
     $('wait').onclick = waitHour; $('sleep').onclick = sleepNow; $('dayoff').onclick = dayOffNow; $('vac').onclick = vacationNow;
     $('goCrew').onclick = renderCrew; $('goHq').onclick = renderHq; $('goFin').onclick = renderFin; $('goOs').onclick = renderOs; $('goStory').onclick = renderStory; $('goAlle').onclick = renderAlle;
     nextEvent();
