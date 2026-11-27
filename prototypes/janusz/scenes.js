@@ -723,6 +723,49 @@
     return im;
   }
 
+  // ---------------------------------------------------------------- LUDKI: Janusz, klient i pomocnik na scenie zlecenia
+  const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+  /* Wygląd Janusza zależnie od ubioru z szafy (ubrania.js). */
+  const LOOK = { wlasne: { shirt: 'w', pants: 'B' }, dres: { shirt: 'P', pants: 'P', accent: 'w' }, robocze: { shirt: 'o', pants: 'B', accent: 'y' },
+    koszula: { shirt: 'w', pants: 'd', accent: 'G' }, garnitur: { shirt: 'd', pants: 'd', accent: 'r' }, lux: { shirt: 'k', pants: 'k', accent: 'y' } };
+  const hashId = str => { let h = 7; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+  function clientLook(id) { const h = hashId(id); return { skin: ['s', 'S'][h % 2], hair: ['h', 'H', 'w', 'G'][(h >> 3) % 4], shirt: ['b', 'm', 'n', 'p', 'r', 'e'][(h >> 5) % 6], pants: ['d', 'B', 'T'][(h >> 8) % 3], stache: (h >> 11) % 3 === 0 }; }
+  /* Jedna postać 11x21 px. o: flip, skin, hair, shirt, pants, accent, hat, stache, frame, pose (idle|work|cheer|worry|angry|cross), hand [x,y] dla pracy. */
+  function figure(g, x, y, o) {
+    const F = !!o.flip, X = i => (F ? x + 10 - i : x + i), f = o.frame || 0, pose = o.pose || 'idle';
+    const R = (c, i, j, w, h) => { for (let a = 0; a < w; a++) for (let b = 0; b < h; b++) px(g, c, X(i + a), y + j + b); };
+    const b = pose === 'work' ? (f % 2) : (f % 4 >= 2 ? 1 : 0), shirt = o.shirt || 'w', pants = o.pants || 'B', skin = o.skin || 's';
+    R(pants, 3, 15, 2, 5); R(pants, 6, 15, 2, 5); R('k', 2, 20, 3, 1); R('k', 6, 20, 3, 1);            // nogi i buty
+    R('k', 2, 7 + b, 7, 8); R(shirt, 3, 8 + b, 5, 6); R(pants, 3, 14, 5, 1);                           // tułów
+    if (o.accent) R(o.accent, 5, 8 + b, 1, 5);                                                          // krawat, kamizelka, pasek
+    R('k', 3, b, 5, 7); R(skin, 4, 1 + b, 3, 5);                                                        // głowa
+    R(o.hair || 'H', 4, 1 + b, 3, 1); R(o.hair || 'H', 3, b, 5, 1);
+    if (o.hat) { R('k', 2, -1 + b, 7, 1); R('y', 3, -1 + b, 5, 2); }
+    if (f % 8 !== 7) { px(g, 'k', X(4), y + 3 + b); px(g, 'k', X(6), y + 3 + b); }                      // oczy, mrugnięcie co 8 klatek
+    if (o.stache) R(o.hair === 'w' || o.hair === 'G' ? 'g' : (o.hair || 'H'), 4, 4 + b, 3, 1);
+    if (pose === 'cheer') px(g, 'r', X(5), y + 5 + b); else if (pose === 'angry') { px(g, 'r', X(4), y + 2 + b); px(g, 'r', X(6), y + 2 + b); } else px(g, 'R', X(5), y + 5 + b);
+    // ręce
+    R(shirt, 1, 8 + b, 1, 5); px(g, skin, X(1), y + 13 + b);                                            // ręka z tyłu
+    if (pose === 'work' && o.hand) { const sx = X(9), sy = y + 9 + b, [hx, hy] = o.hand; line(g, 'k', sx, sy, hx, hy, 3); line(g, shirt, sx, sy, hx, hy, 1); px(g, skin, hx, hy); }
+    else if (pose === 'cheer') { R(shirt, 9, 3 + b, 1, 6); px(g, skin, X(9), y + 2 + b); px(g, 'w', X(10), y + 2 + b); star(g, X(10) + (F ? -2 : 2), y - 1); }
+    else if (pose === 'worry') { R(shirt, 8, 6 + b, 1, 3); px(g, skin, X(8), y + 5 + b); if (f % 4 < 2) { px(g, 'a', X(9), y + 1 + b); px(g, 'a', X(9), y + 2 + b); } else px(g, 'a', X(9), y + 3 + b); if (y >= 9) spr(g, X(3), y - 8, QMARK); }
+    else if (pose === 'angry') { R(shirt, 9, 4 + b, 1, 5); px(g, 'o', X(9), y + 3 + b); if (y >= 9) spr(g, X(3), y - 8, BANG); }
+    else if (pose === 'cross') { R(shirt, 2, 10 + b, 7, 2); px(g, skin, X(2), y + 10 + b); px(g, skin, X(8), y + 10 + b); }
+    else { R(shirt, 9, 8 + b, 1, 5); px(g, skin, X(9), y + 13 + b); }
+  }
+  /* Nakłada na kopię sceny: Janusza przy miejscu pracy, klienta po drugiej stronie i opcjonalnie pomocnika.
+     o: { at:[x,y], frame, working, outfit (id z ubrania.js), client (id), mood (happy|worry|angry|meh), helper } */
+  function people(grid, o) {
+    o = o || {}; const g = grid.map(r => r.slice()), at = o.at || [64, 36], f = o.frame || 0, right = at[0] < 34;
+    const jx = right ? Math.min(W - 12, at[0] + 8) : clampN(at[0] - 20, 1, W - 30), jy = clampN(at[1] - 8, 5, H - 22);
+    const cx = jx < W / 2 ? W - 13 : 2, cy = H - 22, mood = o.mood || 'meh';
+    const pose = { happy: 'cheer', worry: 'worry', angry: 'angry' }[mood] || 'cross', lk = LOOK[o.outfit] || LOOK.wlasne;
+    figure(g, cx, cy, Object.assign({ flip: cx > W / 2, frame: f + 3, pose }, clientLook(o.client || 'x')));
+    if (o.helper) figure(g, clampN(jx < W / 2 ? jx + 14 : jx - 14, 1, W - 12), jy, { flip: right, frame: f + 1, pose: o.working ? 'work' : 'idle', hand: [at[0], at[1] + 3], skin: 's', hair: 'h', shirt: 'o', pants: 'd', accent: 'y', hat: true });
+    figure(g, jx, jy, { flip: right, frame: f, pose: o.working ? 'work' : (mood === 'happy' ? 'cheer' : mood === 'worry' ? 'worry' : mood === 'angry' ? 'angry' : 'idle'), hand: at, skin: 's', hair: 'H', stache: true, shirt: lk.shirt, pants: lk.pants, accent: lk.accent });
+    return g;
+  }
+
   const JOB_SCENES = { kran, sciana, gniazdko, polka, syfon, drzwi, plytki, grzejnik, okno, malowanie };
   for (const [id, m] of Object.entries(GEN.META)) if (!JOB_SCENES[id]) {
     JOB_SCENES[id] = genericScene(id); const n = GEN.JOBS[id].steps.length, an = m.anim || ['wrench', 'screwdriver', 'pliers', 'tester', 'trowel'];
@@ -736,5 +779,5 @@
   /* Scena zlecenia dla zbioru tokenów stanu i klatki animacji. */
   const job = (id, tokens, frame, opts) => JOB_SCENES[id](tokens instanceof Set ? tokens : new Set(tokens || []), frame || 0, opts || {});
 
-  return { action, actionFor, ACTIONS, TARGETS, TOOLS, nightRGBA, job, draw, JOB_SCENES, hq, sciana, gniazdko, polka, syfon, drzwi, plytki, grzejnik, okno, malowanie, W, H, G, rc, px, dith, line, disc, spr, has, tiledWall, wallpaper, skirting, woodFloor, door, kran, CHECK };
+  return { people, figure, LOOK, clientLook, action, actionFor, ACTIONS, TARGETS, TOOLS, nightRGBA, job, draw, JOB_SCENES, hq, sciana, gniazdko, polka, syfon, drzwi, plytki, grzejnik, okno, malowanie, W, H, G, rc, px, dith, line, disc, spr, has, tiledWall, wallpaper, skirting, woodFloor, door, kran, CHECK };
 });

@@ -23,11 +23,15 @@
     const night = cv.dataset.scene === 'hq' ? Czas.isNight(ST.clock) : cv.dataset.night ? cv.dataset.night === '1' : !!(cur && cur.night);
     let grid = cv.dataset.scene === 'hq' ? Scenes.hq(hqOpts(), sceneFrame) : Scenes.job(cv.dataset.job, sceneTokens, sceneFrame, { night });
     if (anim && cv.dataset.scene !== 'hq') grid = Scenes.action(grid, anim.kind, Math.min(1, (performance.now() - anim.t0) / anim.dur), anim.at);
+    if (cv.dataset.people && cur && cur.job && cv.dataset.job === cur.job.id) {   // ludki: Janusz, klient, pomocnik
+      const n = cur.job.steps.length, ac = Scenes.actionFor(cur.job.id, Math.min(cur.step, n - 1));
+      grid = Scenes.people(grid, { at: anim ? anim.at : ac.at, frame: sceneFrame, working: !!anim, outfit: Ubrania.current(ST.wardrobe).id, client: cur.client.id, mood: cur.mood, helper: !!(cur.helperOn && cur.helper) });
+    }
     Scenes.draw(cv, grid, { night });
   }
   function applyScene(root, tokens) { sceneTokens = tokens; root.querySelectorAll('canvas.pxscene').forEach(paintScene); }
   setInterval(() => { sceneFrame = (sceneFrame + 1) % 8; document.querySelectorAll('canvas.pxscene:not(.lvthumb)').forEach(cv => { if (cv.offsetParent !== null) paintScene(cv); }); }, 250);
-  const sceneHTML = job => '<div class="scene"><canvas class="pxscene" width="128" height="80" data-scene="job" data-job="' + job.id + '" role="img" aria-label="' + job.title + '"></canvas></div>';
+  const sceneHTML = job => '<div class="scene"><canvas class="pxscene" width="128" height="80" data-scene="job" data-people="1" data-job="' + job.id + '" role="img" aria-label="' + job.title + '"></canvas></div>';
 
   // ---------- poziomy ----------
   let cur = null; // bieżące zlecenie
@@ -351,6 +355,7 @@
   }
   function apply(opt, accuracy) {
     const st = E.applyOption(cur, opt, accuracy);
+    cur.mood = opt.id === 'dobrze' ? 'happy' : opt.id === 'fusz' ? 'worry' : 'meh';
     if (st.done) finish(); else if (st.surprise) surprise(st.surprise); else renderJob();
   }
   /* Niespodzianka w trakcie roboty: problem wychodzi dopiero po otwarciu, trzeba wybrać rozwiązanie. */
@@ -391,6 +396,7 @@
   // ---------- odbiór ----------
   function finish() {
     const { night, mods, minutes, endClock, rt, um, sea, gos, cut, payMult, r, te, comment, eco, saved } = E.settleJob(cur);
+    cur.mood = r.stars >= 4 ? 'happy' : r.stars <= 2 ? 'angry' : 'meh';
     save(); renderTop();
     const bar = (v, max) => '<span class="b"><i style="width:' + Math.min(100, v / max * 100) + '%"></i></span>';
     const defs = r.defects.length ? r.defects.slice().sort((a, b) => b.sev - a.sev).map(d => {

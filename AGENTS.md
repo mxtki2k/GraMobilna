@@ -46,3 +46,5 @@ Napisz `roboty/<id>.rob` (szablon: `node tools/nowa_robota.js --szablon`), uruch
 
 - Muzyka: `dzwieki.js` gra pętlę disco polo (Am–F–C–G, 132 BPM, oom-pah) przez filtr „starego radia” (pasmo, przester, falowanie, szum, trzaski). Przycisk 🎵 włącza/wyłącza muzykę, 🔊 całość. Start dopiero po pierwszym dotyku (wymóg przeglądarek, iOS: click/touchend).
 - Wynik zlecenia pokazuje „Zaoszczędzone na skrótach” (czas i materiały względem solidnej roboty): `settleJob().saved`.
+
+- Ludki na scenach: `Scenes.people()` rysuje Janusza (ubiór z szafy, ręka sięga do narzędzia), klienta (reaguje na wybór: kciuk, zmartwienie, złość) i pomocnika na każdym poziomie. Test: `tests/ludki.test.js`.
