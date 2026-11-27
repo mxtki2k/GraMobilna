@@ -21,7 +21,7 @@ Kontrakt = kilka robót u jednego klienta w kolejnych dniach (np. „Remont łaz
 - Drzewko umiejętności (hydraulika, elektryka, wykończenia, stolarka): kursy z `szkolenia.js` odblokowują kontrakty tego typu i przetargi.
 - Przetargi publiczne (szkoła, urząd): wymagają uprawnień i oceny firmy, płacą dużo, mają audyt jakości i kary. Daje cel dla siedziby 4–5.
 
-## Faza D: Rok i prestiż
+## Faza D: Rok i prestiż — ZROBIONE (sezon.js, rok.js, tools/faza_d_sim.js)
 - Podsumowanie roku (grudzień): bilans, ranking osiedla, nagrody. „Nowa Gra+”: powrót z bonusem reputacji, nowa mapa/dzielnica.
 - Wydarzenia sezonowe (zima: awarie ogrzewania, lato: remonty) jako okna premii.
 
@@ -56,3 +56,7 @@ Zasada: lokalny model **pisze szkice według sztywnego formatu**, a **walidator 
 
 Przepływ nowej roboty: `node tools/ollama_robota.js --id okno2 --opis "..."` → `node tools/nowa_robota.js` → `node tests/roboty.test.js` → `node tools/balans.js --style-table` → przegląd tekstów i liczb → commit.
 Wskazówki: model 7–14B (np. `qwen2.5-coder:7b`, `qwen2.5:14b`), `num_ctx` 8192, 3–5 prób; przy słabym modelu skracać opis i prosić o 4 kroki zamiast 6. Szkice, które nie przeszły walidatora, zapisują się jako `roboty/<id>.rob.szkic`.
+
+## Faza E: Sklep z ubraniami (zaplanowane, szczegóły w `CLAUDE.md`)
+Przebieranie się jako szef (wiarygodność rośnie z ceną, ale zależy od klienta i roboty), ciuchy firmowe dla ekipy (wiarygodność firmy, nastrój, przetargi), sklep lokalny i używane na Alledrogo.
+Kolejność: ubrania.js + testy → symulacja → ikony i szafa w UI → ciuchy ekipy → integracja z przetargami i wyprzedażami sezonowymi.

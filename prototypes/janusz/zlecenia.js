@@ -6,7 +6,11 @@
   const rnd = Math.random;
 
   // ---------- stan ----------
-  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), contracts: Kontrakty.fresh(), xp: Spec.fresh(), tenderCool: {}, board: { day: 0, offers: [] }, crewJobs: [], where: 'baza', waited: 0, bus: Bus.fresh(), fatigue: 10, burnout: 0, rel: Klienci.fresh(), certs: {}, oc: Ubezp.fresh(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
+  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), pendingYears: [], contracts: Kontrakty.fresh(), xp: Spec.fresh(), tenderCool: {}, board: { day: 0, offers: [] }, crewJobs: [], where: 'baza', waited: 0, bus: Bus.fresh(), fatigue: 10, burnout: 0, rel: Klienci.fresh(), certs: {}, oc: Ubezp.fresh(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
+  // meta-postęp (prestiż i perki) przetrwa „Zacznij od zera” i Nową Grę+
+  let META = Rok.freshMeta(); try { const m = localStorage.getItem('zlecenia_meta'); if (m) META = Object.assign(Rok.freshMeta(), JSON.parse(m)); } catch (e) {}
+  const saveMeta = () => { try { localStorage.setItem('zlecenia_meta', JSON.stringify(META)); } catch (e) {} };
+  const withMeta = st => { const b = Rok.bonuses(META); st.money += b.startCash; st.ledgerMoney = st.money; for (const id of Object.keys(Jobs.CLIENTS)) st.rel[id] = { trust: b.trust, jobs: 0 }; b.certs.forEach(c => { st.certs[c] = true; }); return st; };
   let ST = fresh();
   try { const r = localStorage.getItem('zlecenia_v1'); if (r) { const saved = JSON.parse(r); ST = Object.assign(fresh(), saved); if (saved.starterGiven === undefined) ST.starterGiven = false; if (saved.clock === undefined) { ST.clock = Czas.startClock() + (saved.done || 0) * 2 * 1440; ST.ledgerMoney = ST.money; } } } catch (e) {}
   (() => {
@@ -29,8 +33,9 @@
   const monthSummary = key => Ksiega.summary(ST.ledger, key || bookKey(), 0);
   /* Przesuwa zegar; przy zmianie miesiąca zamyka stary i planuje raport. */
   function advanceClock(to) {
-    const oldKey = bookKey(); ST.clock = to; const newKey = bookKey();
+    const oldKey = bookKey(), oldClock = ST.clock; ST.clock = to; const newKey = bookKey();
     if (newKey !== oldKey) { ST.monthEnd[oldKey] = ST.money; ST.monthStart[newKey] = ST.money; ST.pendingMonths.push(oldKey); }
+    { const y0 = Czas.dateOf(oldClock).y, y1 = Czas.dateOf(ST.clock).y; for (let y = y0; y < y1; y++) ST.pendingYears.push(String(y)); }
     ST.day = Czas.dateOf(ST.clock).dayIndex;
   }
   /* Zegar widoczny dla gracza: w trakcie zlecenia startowy + postęp pracy. */
@@ -55,7 +60,7 @@
 
   // ---------- poziomy ----------
   let cur = null; // bieżące zlecenie
-  const ALL = ['menu', 'job', 'result', 'crew', 'payday', 'hq', 'fin', 'os', 'story', 'alle'];
+  const ALL = ['menu', 'job', 'result', 'crew', 'payday', 'hq', 'fin', 'os', 'story', 'alle', 'prestige'];
   const co = () => Siedziba.rating(ST.hq, ST.hist, ST.ratings, ST.claims.length, Alledrogo.toolScore(ST.inv));
   function renderTop() {
     $('money').textContent = zl(ST.money);
@@ -80,7 +85,9 @@
         (b ? '<span class="stars">' + stars(b.stars) + '</span><br>fuszerka ' + b.index + '%' : (locked ? '' : 'nowe')) + '</span></button>';
     }).join('');
     bindContracts(); bindBoard(); bindTenders();
+    { const ev = Sezon.active(ST.clock); if (ev.length) $('menu').insertAdjacentHTML('afterbegin', ev.map(e => '<div class="banner">' + e.em + ' <b>' + e.name + '</b>: ' + e.text + (e.demand ? ' Popyt: ' + Object.entries(e.demand).map(([j, m]) => (JOBS[j] ? JOBS[j].title.toLowerCase() : j) + ' ×' + String(m).replace('.', ',')).join(', ') + '.' : '') + (e.pay ? ' Wypłaty ×' + String(e.pay).replace('.', ',') + '.' : '') + (e.toolPrice ? ' Narzędzia ×' + String(e.toolPrice).replace('.', ',') + '.' : '') + '</div>').join('')); }
     $('menu').insertAdjacentHTML('beforeend', waitHTML());
+    $('menu').insertAdjacentHTML('beforeend', '<button id="goPrestige" style="min-height:48px">🏆 Prestiż: ' + META.points + ' pkt · gra nr ' + META.games + '</button>'); $('goPrestige').onclick = renderPrestige;
     $('wait').onclick = waitHour; $('sleep').onclick = sleepNow; $('dayoff').onclick = dayOffNow; $('vac').onclick = vacationNow;
     $('goCrew').onclick = renderCrew; $('goHq').onclick = renderHq; $('goFin').onclick = renderFin; $('goOs').onclick = renderOs; $('goStory').onclick = renderStory; $('goAlle').onclick = renderAlle;
     nextEvent();
@@ -140,6 +147,39 @@
     save(); renderTop(); modalOpen = true; $('mtitle').textContent = '👷 Ekipa wróciła'; $('mtext').textContent = lines.join('\n');
     $('mchoices').innerHTML = '<button data-a="ok">Dalej</button>'; $('modal').hidden = false; $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; renderMenu(); };
     return true;
+  }
+  // ---------- rok firmy, prestiż i Nowa Gra+ (faza D) ----------
+  function yearStats() {
+    const rr = ST.ratings.slice(-80), hh = (ST.hist || []).slice(-30), done = KT().done;
+    return { avgStars: rr.length ? rr.reduce((a, b) => a + b, 0) / rr.length : 0, claimsOpen: ST.claims.length, avgIndex: hh.length ? hh.reduce((a, b) => a + b.index, 0) / hh.length : null,
+      tendersWon: Object.entries(done).filter(([k]) => k.startsWith('p_')).reduce((s, [, v]) => s + v.count, 0), contractsDone: Object.entries(done).filter(([k]) => !k.startsWith('p_')).reduce((s, [, v]) => s + v.count, 0) };
+  }
+  function checkYear() {
+    if (modalOpen || !ST.pendingYears.length) return false;
+    syncLedger(); const yr = ST.pendingYears.shift(), sm = Rok.summary(ST.ledger, yr); if (!sm.months) return checkYear();
+    const st = yearStats(), rk = Rok.ranking(sm, ST.os.rival.power, +yr), aw = Rok.awards(sm, st), pts = Rok.prestige(sm, st, aw, rk.rank);
+    META.points += pts; META.years.push({ year: yr, plus: sm.plus, rank: rk.rank, pts }); saveMeta(); save(); modalOpen = true;
+    const fm = k => Czas.monthName(k);
+    $('mtitle').textContent = '🏆 Podsumowanie roku ' + yr; $('mtext').innerHTML = 'Zysk roku: <b>' + (sm.plus >= 0 ? '+' : '−') + zl(Math.abs(sm.plus)) + '</b> (przychody ' + zl(sm.income) + ', koszty ' + zl(-sm.costs) + '). Zleceń: ' + sm.jobs + ', stawka po kosztach ' + sm.perHour + ' zł/h.' + (sm.best ? ' Najlepszy miesiąc: ' + fm(sm.best.key) + ' (' + zl(sm.best.plus) + ').' : '') +
+      '<div class="econ">' + rk.rows.map((r, i) => '<div class="erow"><span>' + (i + 1) + '. ' + (r.you ? '<b>' + r.name + '</b>' : r.name) + '</span><b class="' + (r.plus >= 0 ? 'pos' : 'neg') + '">' + zl(r.plus) + '</b></div>').join('') + '</div>' +
+      (aw.length ? 'Nagrody: ' + aw.map(a => '🏅 ' + a.name).join(', ') + '. ' : 'Bez nagród w tym roku. ') + 'Punkty prestiżu: <b>+' + pts + '</b> (razem ' + META.points + ').';
+    $('mchoices').innerHTML = '<button data-a="ok">Dalej<small>gramy dalej ten sam rok firmy</small></button><button data-a="pr">🏆 Prestiż i Nowa Gra+<small>perki za punkty, nowy start z bonusami</small></button>'; $('modal').hidden = false;
+    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false; if (b.dataset.a === 'pr') renderPrestige(); else renderMenu(); };
+    return true;
+  }
+  function renderPrestige() {
+    ALL.forEach(x => $(x).hidden = true); $('prestige').hidden = false; renderTop();
+    const perks = Object.entries(Rok.PERKS).map(([id, p]) => { const lv = META.perks[id] || 0, c = Rok.perkCost(META, id);
+      return '<div class="prow"><div class="hd"><span class="nm">⭐ ' + p.name + '</span><span>poziom ' + lv + '/' + p.max + '</span></div><div class="hint">' + p.desc + '</div><button data-perk="' + id + '" ' + (c === null || META.points < c ? 'disabled' : '') + ' style="min-height:44px">' + (c === null ? 'Maksimum' : 'Kup poziom ' + (lv + 1) + ' · ' + c + ' pkt') + '</button></div>'; }).join('');
+    const yrs = META.years.slice(-8).reverse().map(y => '<div class="erow"><span>Rok ' + y.year + ' · miejsce ' + y.rank + '.</span><b class="' + (y.plus >= 0 ? 'pos' : 'neg') + '">' + (y.plus >= 0 ? '+' : '−') + zl(Math.abs(y.plus)) + ' · +' + y.pts + ' pkt</b></div>').join('');
+    $('prestige').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Prestiż</h2><div class="stats"><div class="stat"><small>Punkty</small><b>' + META.points + '</b></div><div class="stat"><small>Gra nr</small><b>' + META.games + '</b></div><div class="stat"><small>Wydane</small><b>' + META.spent + '</b></div></div>' +
+      '<div class="hint">Punkty dostajesz za zysk, ocenę, nagrody, miejsce w rankingu osiedla, kontrakty i przetargi na koniec każdego roku kalendarzowego. Perki zostają na zawsze. Nowa Gra+ zaczyna firmę od zera z bonusami.</div>' + perks + (yrs ? '<h3 style="color:var(--muted);text-transform:uppercase">Historia lat</h3><div class="econ">' + yrs + '</div>' : '') +
+      '<button id="ngp" class="primary">Nowa Gra+ (zaczynasz od zera)</button><button class="primary" id="prBack">Wróć</button>';
+    $('prBack').onclick = renderMenu;
+    $('prestige').onclick = e => { const b = e.target.closest('[data-perk]'); if (b) { const r = Rok.buy(META, b.dataset.perk); if (r.ok) { META = r.meta; saveMeta(); renderPrestige(); } return; }
+      if (e.target.closest('#ngp')) { modalOpen = true; $('mtitle').textContent = 'Nowa Gra+?'; $('mtext').textContent = 'Obecna firma zostanie zamknięta. Zaczynasz od zera z bonusami z perków (' + (Rok.bonuses(META).startCash ? '+' + Rok.bonuses(META).startCash + ' zł, ' : '') + 'wypłaty ×' + Rok.bonuses(META).payMult.toFixed(2).replace('.', ',') + ').';
+        $('mchoices').innerHTML = '<button data-a="yes">Zaczynam nową grę<small>prestiż i perki zostają</small></button><button data-a="no">Jeszcze nie<small>wracasz</small></button>'; $('modal').hidden = false;
+        $('mchoices').onclick = ev => { const bb = ev.target.closest('button'); if (!bb) return; $('modal').hidden = true; modalOpen = false; if (bb.dataset.a === 'yes') { META.games++; saveMeta(); ST = withMeta(fresh()); save(); } renderMenu(); }; } };
   }
   // ---------- przetargi publiczne (faza C) ----------
   const specLevels = () => Object.fromEntries(Object.keys(Spec.AREAS).map(k => [k, Spec.level(ST.xp[k] || 0, k, ST.certs)]));
@@ -264,15 +304,16 @@
     const job = JOBS[l.job], client = CLIENTS[l.client], night = l.slot === 'noc', mods = Czas.mods(night);
     const start = l.startAt || (l.call ? ST.clock + 20 : Czas.jobStart(ST.clock, l.time, 1)), season = Czas.season(start), rt = co();
     const um = Umowa.evaluate(opts.terms || Umowa.DEFAULT, client, () => 1);
-    const sea = Kalendarz.demandMult(season, job.id), gos = Osiedle.gossipMult(ST.os), cut = 1 - Osiedle.undercut(ST.os, { rating: rt.stars, tier: ST.hq.tier });
+    const sea = Kalendarz.demandMult(season, job.id) * Sezon.demand(start, job.id) * Sezon.pay(start), gos = Osiedle.gossipMult(ST.os), cut = 1 - Osiedle.undercut(ST.os, { rating: rt.stars, tier: ST.hq.tier });
     let units = job.deadline * um.deadlineFactor, helperCost = 0;
     if (opts.helper) { const he = Ekipa.helperEffect(opts.helper, (opts.states || {})[opts.helper.id]); units *= he.timeFactor; helperCost = Stawka.helperShare(opts.helper, night); }
     return Stawka.estimate({ base: Math.round(job.base * l.mult), payMult: rt.payMult * um.payMult * sea * gos * cut * mods.payMult * (l.due ? Terminy.KINDS[l.due].pay : 1) * extraPay(l, l.job), deadlineUnits: units, night, helper: helperCost,
       invoice: (opts.terms || Umowa.DEFAULT).invoice, overhead: Stawka.overheadShare(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)), extraMinutes: 15 });
   }
   /* Mnożnik z uprawnień, zaufania klienta i obniżki dla rywala (poza ocenami, umową, sezonem i nocą). */
+  function applyToolSale() { const f = Sezon.toolPrice(ST.clock); if (f < 1 && ST.market) ST.market.listings.forEach(l => { if (!l.sale) { l.price = Math.round(l.price * f); l.sale = f; } }); }
   const specM = jobId => Spec.mods(ST.xp, ST.certs, jobId);
-  const extraPay = (l, jobId) => Szkolenia.modsFor(ST.certs, jobId).pay * specM(jobId).pay * Klienci.payMult(Klienci.get(ST.rel, l.client).trust) * (l.priceMult || 1);
+  const extraPay = (l, jobId) => Rok.bonuses(META).payMult * Szkolenia.modsFor(ST.certs, jobId).pay * specM(jobId).pay * Klienci.payMult(Klienci.get(ST.rel, l.client).trust) * (l.priceMult || 1);
   const perHourTxt = e => 'ok. ' + signed(e.perHour) + '/h';
   function startJob(i, call) {
     const l = call || LEVELS[i], night = l.slot === 'noc';
@@ -346,7 +387,7 @@
     if (cur.level.contract && cur.level.contract.stage > 0) { cur.timeAdj += 1; cur.notes.push('🧱 Materiały i narzędzia już są na miejscu z pierwszego dnia kontraktu. Bez dojazdu.'); save(); renderJob(); return; }
     const drivers = cur.helper && cur.helperOn && !(cur.helper.outJobs > 0) ? [cur.helper] : [];
     const riskTxt = (w, mode) => { const stt = cur.states[w.id] || 'trzezwy', r = Swiat.driveRisk(w, stt, ST.world, mode); return '<span class="chip">wypadek: ' + Swiat.band(r.accident) + '</span><span class="chip">policja: ' + Swiat.band(r.police) + '</span>'; };
-    const oR = Swiat.driveRisk(null, 'trzezwy', ST.world, 'owner'), lvl = ST.hq.assets.bus || 0, bus = ST.bus, bp = Math.round(Bus.chance(bus, lvl, cur.night) * 100);
+    const oR = Swiat.driveRisk(null, 'trzezwy', ST.world, 'owner'), lvl = ST.hq.assets.bus || 0, bus = ST.bus, bp = Math.round(Bus.chance(bus, lvl, cur.night, Sezon.bus(ST.clock)) * 100);
     const busChip = '<span class="chip ' + (bus.broken || bp >= 15 ? 'warn' : '') + '">🚐 bus: ' + Bus.label(bus) + ' (' + Math.round(bus.cond) + '%), awaria ' + bp + '%</span>', dis = bus.broken ? ' disabled' : '';
     $('job').innerHTML = '<div class="bubble"><span class="av">' + cur.client.em + '</span><div><b>' + cur.job.title + '</b> · ' + cur.client.name + '<br><small style="color:var(--muted)">Materiały i narzędzia trzeba dowieźć na miejsce.</small></div></div>' +
       '<h2 style="font-size:1.4rem;text-transform:uppercase">Kto zawozi?</h2><div class="hint">Do wyboru są tylko ci, którzy jadą na zlecenie. ' + (cur.night ? '🌙 W nocy częstsze są wypadki i kontrole policji. ' : '') + 'Ryzyko jest przybliżone.</div>' +
@@ -373,7 +414,7 @@
   }
   function doDrive(id, skipRoll) {
     const mode = id === 'owner' || id === 'courier' ? id : 'worker', w = mode === 'worker' ? ST.crew.find(x => x.id === id) : null;
-    if (mode !== 'courier' && !skipRoll && Bus.rollBreakdown(ST.bus, ST.hq.assets.bus || 0, cur.night, rnd)) { breakdown(id); return; }
+    if (mode !== 'courier' && !skipRoll && Bus.rollBreakdown(ST.bus, ST.hq.assets.bus || 0, cur.night, rnd, Sezon.bus(cur.startClock))) { breakdown(id); return; }
     if (mode !== 'courier') ST.bus = Bus.drive(ST.bus, ST.hq.assets.bus || 0, cur.night);
     ST.world.accMult = Siedziba.effects(ST.hq).accMult; ST.world.night = cur.night;
     const res = Swiat.resolveDrive(w, w ? (cur.states[w.id] || 'trzezwy') : 'trzezwy', ST.world, mode, rnd);
@@ -519,7 +560,7 @@
     advanceClock(endClock);
     const job = Object.assign({}, cur.job, { base: Math.round(cur.job.base * cur.mult), deadline: cur.deadline });
     const rt = co(), um = cur.umowa || { payMult: 1, satDelta: 0, taxRiskDelta: 0 };
-    const sea = Kalendarz.demandMult(cur.season, cur.job.id), gos = Osiedle.gossipMult(ST.os), cut = 1 - Osiedle.undercut(ST.os, { rating: rt.stars, tier: ST.hq.tier });
+    const sea = Kalendarz.demandMult(cur.season, cur.job.id) * Sezon.demand(cur.startClock, cur.job.id) * Sezon.pay(cur.startClock), gos = Osiedle.gossipMult(ST.os), cut = 1 - Osiedle.undercut(ST.os, { rating: rt.stars, tier: ST.hq.tier });
     const payMult = Math.round(rt.payMult * um.payMult * sea * gos * cut * mods.payMult * (cur.dueSpec ? cur.dueSpec.pay : 1) * extraPay(cur.level, cur.job.id) * 1000) / 1000;
     const hz = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id])).hazardMult * mods.hazard * Szkolenia.modsFor(ST.certs, cur.job.id).hazard * specM(cur.job.id).hazard;
     const r = Fuszerka.evaluate(job, cur.picks, cur.client, { time: Math.round(cur.timeAdj), defects: cur.extraDefects, satBonus: rt.satBonus + um.satDelta, payMult, hazardMult: hz, attentionMult: mods.attention });
@@ -549,7 +590,7 @@
       else { ST.inv.push(a.item); ST.flash.push('📦 Dotarła paczka: „' + a.item.brand + '”. Rozpakuj w Alledrogo.'); }
     });
     dl.events.filter(e => e.type === 'damaged').forEach(e => ST.flash.push(e.text));
-    ST.market = Alledrogo.refresh(ST.market, ST.day);
+    ST.market = Alledrogo.refresh(ST.market, ST.day); applyToolSale();
     const th = Siedziba.resolveTheft(ST.hq, rnd, Alledrogo.inventoryValue(ST.inv));
     if (th) {
       ST.hq = th.hq; cash('kradziez', -th.net);
@@ -605,7 +646,7 @@
   function itemName(it) { return Alledrogo.TYPES[it.type].name + ' „' + it.brand + '”'; }
   function renderAlle() {
     ALL.forEach(x => $(x).hidden = true); $('alle').hidden = false;
-    ST.market = Alledrogo.refresh(ST.market, ST.day);
+    ST.market = Alledrogo.refresh(ST.market, ST.day); applyToolSale();
     const tabs = [['oferty', 'Oferty'], ['zam', 'Zamówienia (' + ST.orders.length + ')'], ['moje', 'Moje narzędzia (' + ST.inv.length + ')']];
     let body = '';
     if (alleTab === 'oferty') {
@@ -977,6 +1018,7 @@
   function nextEvent() {
     if (modalOpen) return;
     if (collectCrew()) return;
+    if (!ST.pendingMonths.length && checkYear()) return;
     if (checkContractFinal()) return;
     if (ST.pendingMonths.length) { showMonthReport(ST.pendingMonths.shift()); return; }
     if (ST.done >= ST.nextPay) { startPayday(true); return; }
@@ -1009,7 +1051,7 @@
     return true;
   }
 
-  $('reset').onclick = () => { if ($('reset').dataset.s) { ST = fresh(); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; }, 3000); } };
+  $('reset').onclick = () => { if ($('reset').dataset.s) { ST = withMeta(fresh()); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; }, 3000); } };
 
   // pikselizacja: emoji i znaczniki @postać zamieniane na sprite'y, sceny SVG na obrazy w małej rozdzielczości
   (function () {
@@ -1018,6 +1060,6 @@
     new MutationObserver(() => requestAnimationFrame(run)).observe(document.body, { childList: true, subtree: true });
     run();
   })();
-  window.__z = { Spec, Przetargi, ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
+  window.__z = { get META() { return META; }, renderPrestige, checkYear, Spec, Przetargi, ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
   renderMenu();
 })();

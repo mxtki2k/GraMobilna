@@ -9,12 +9,12 @@
   const fresh = () => ({ cond: 80, broken: false, km: 0, breakdowns: 0 });
   const label = b => b.broken ? 'zepsuty' : b.cond >= 75 ? 'dobry' : b.cond >= 50 ? 'średni' : b.cond >= 25 ? 'zły' : 'ledwo jedzie';
   /* Szansa awarii na jeden przejazd. */
-  function chance(bus, level, night) {
+  function chance(bus, level, night, mult) {
     const c = bus.cond;
     const base = c >= 70 ? 0.02 : c >= 40 ? 0.02 + (70 - c) * 0.004 : 0.14 + (40 - c) * 0.008;
-    return clamp(base * (night ? 1.3 : 1) * (RISK[level || 0] || 1), 0, 0.6);
+    return clamp(base * (night ? 1.3 : 1) * (RISK[level || 0] || 1) * (mult || 1), 0, 0.6);
   }
-  const rollBreakdown = (bus, level, night, rng) => !bus.broken && rng() < chance(bus, level, night);
+  const rollBreakdown = (bus, level, night, rng, mult) => !bus.broken && rng() < chance(bus, level, night, mult);
   /* Zużycie po przejeździe (noc: gorsze drogi i zmęczenie). */
   function drive(bus, level, night) {
     return Object.assign({}, bus, { cond: clamp(Math.round((bus.cond - 4 * (night ? 1.25 : 1) * (WEAR[level || 0] || 1)) * 10) / 10, 0, 100), km: bus.km + 1 });

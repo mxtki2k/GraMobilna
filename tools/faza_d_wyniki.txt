@@ -1,0 +1,21 @@
+Średni mnożnik (popyt × wypłata) wg miesiąca i roboty
+
+mies.  kran  scian gniaz polka syfon drzwi plytk grzej okno  malow prysz   wszystkie
+sty    1.30  1.00  1.00  1.00  1.15  1.00  1.00  1.60  1.20  1.00  1.00    1.11
+lut    1.16  1.00  1.00  1.00  1.08  1.00  1.00  1.31  1.10  1.00  1.00    1.06
+mar    1.18  1.00  1.00  1.00  1.35  1.00  1.07  1.00  1.00  1.00  1.00    1.05
+kwi    1.21  1.04  1.00  1.00  1.42  1.02  1.12  1.00  1.00  1.05  1.00    1.08
+maj    1.00  1.25  1.00  1.00  1.00  1.15  1.25  1.00  1.00  1.30  1.00    1.09
+cze    0.95  1.19  0.95  0.95  0.95  1.09  1.19  0.95  0.95  1.23  0.95    1.03
+lip    0.95  0.95  0.95  0.95  0.95  0.95  0.95  0.95  0.95  0.95  0.95    0.95
+sie    1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00    1.00
+wrz    1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00    1.00
+paź    1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00    1.00
+lis    1.06  1.21  1.13  1.21  1.06  1.06  1.06  1.06  1.06  1.28  1.06    1.11
+gru    1.23  1.23  1.15  1.23  1.15  1.06  1.06  1.41  1.18  1.31  1.06    1.19
+
+średnio w roku: kran 1.09, sciana 1.07, gniazdko 1.01, polka 1.03, syfon 1.09, drzwi 1.03, plytki 1.06, grzejnik 1.11, okno 1.04, malowanie 1.09, prysznic 1.00 
+wszystkie roboty: 1.056
+
+Perki (maksymalne): bonusy na start = {"startCash":3000,"payMult":1.1,"trust":30,"certs":["hydr","wyk","stol"]}
+Koszt wszystkich perków (pkt): 159
