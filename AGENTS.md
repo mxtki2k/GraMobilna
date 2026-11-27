@@ -34,3 +34,9 @@ Napisz `roboty/<id>.rob` (szablon: `node tools/nowa_robota.js --szablon`), uruch
 ## Dźwięki i testy headless
 - `prototypes/janusz/dzwieki.js`: dźwięki syntezowane w WebAudio (bez plików), przycisk 🔊/🔇 w pasku zegara, ustawienie w `zlecenia_dzwiek`. Test: `tests/dzwieki.test.js`.
 - `tools/headless.js` + `tests/scenariusze.test.js`: prawdziwy `zlecenia.html` w jsdom z deterministycznym RNG (R0, część 1: siatka bezpieczeństwa przed wydzieleniem `silnik.js`). Wymaga `npm install` (jsdom); bez niego test się pomija.
+
+## Silnik i widok (R0)
+- `prototypes/janusz/silnik.js`: silnik bez DOM (`Silnik.create({rnd, storage, view})`). Stan, zegar, księga, zapis/wczytanie z migracjami, czekanie/sen/urlop/telefony, ekipa na zleceniach, kontrakty, przetargi, rok/prestiż/Nowa Gra+, szafa, wypłata, reklamacje, upomnienia, raporty miesięczne oraz całe zlecenie: `newJob` → `applyOption` → `settleJob`.
+- Okna wyboru to dane: `ask({kind,title,text,rows,choices:[{id,label,sub}]}, handler)`; odpowiedź to `E.answer(id)`. Widok (`zlecenia.js`) podaje `E.V = {menu, top, screen, prompt}`.
+- `tests/silnik.test.js`: 16 scenariuszy w czystym Node. `tests/scenariusze.test.js`: te same ścieżki przez prawdziwy interfejs w jsdom.
+- Nowa logika rozgrywki idzie do `silnik.js`, a `zlecenia.js` tylko rysuje. W widoku zostają: Alledrogo, Siedziba, Finanse, Osiedle, fabuła, Ekipa (ekrany) i plan dnia.

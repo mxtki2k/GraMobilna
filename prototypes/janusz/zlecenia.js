@@ -4,45 +4,16 @@
   const $ = id => document.getElementById(id);
   const zl = n => Math.round(n).toLocaleString('pl-PL') + ' zł';
   const rnd = Math.random;
-
-  // ---------- stan ----------
-  const fresh = () => ({ money: 0, ratings: [], best: {}, unlocked: 1, claims: [], done: 0, crew: [], nextPay: Ekipa.PAYDAY_EVERY, demandAt: {}, world: Swiat.newWorld(), lastPayDone: -1, hq: Siedziba.fresh(), hist: [], fin: Finanse.fresh(), os: Osiedle.fresh(), story: Fabula.fresh(), day: 1, clock: Czas.startClock(), wardrobe: Ubrania.fresh(), pendingYears: [], contracts: Kontrakty.fresh(), xp: Spec.fresh(), tenderCool: {}, board: { day: 0, offers: [] }, crewJobs: [], where: 'baza', waited: 0, bus: Bus.fresh(), fatigue: 10, burnout: 0, rel: Klienci.fresh(), certs: {}, oc: Ubezp.fresh(), ledger: Ksiega.fresh(), ledgerMoney: 0, monthStart: {}, monthEnd: {}, pendingMonths: [], fav: {}, flash: [], forceAudit: false, inv: [Alledrogo.starterKit()], orders: [], market: null, starterGiven: true });
-  // meta-postęp (prestiż i perki) przetrwa „Zacznij od zera” i Nową Grę+
-  let META = Rok.freshMeta(); try { const m = localStorage.getItem('zlecenia_meta'); if (m) META = Object.assign(Rok.freshMeta(), JSON.parse(m)); } catch (e) {}
-  const saveMeta = () => { try { localStorage.setItem('zlecenia_meta', JSON.stringify(META)); } catch (e) {} };
-  const withMeta = st => { const b = Rok.bonuses(META); st.money += b.startCash; st.ledgerMoney = st.money; for (const id of Object.keys(Jobs.CLIENTS)) st.rel[id] = { trust: b.trust, jobs: 0 }; b.certs.forEach(c => { st.certs[c] = true; }); return st; };
-  let ST = fresh();
-  try { const r = localStorage.getItem('zlecenia_v1'); if (r) { const saved = JSON.parse(r); ST = Object.assign(fresh(), saved); if (saved.starterGiven === undefined) ST.starterGiven = false; if (saved.clock === undefined) { ST.clock = Czas.startClock() + (saved.done || 0) * 2 * 1440; ST.ledgerMoney = ST.money; } } } catch (e) {}
-  (() => {
-    const old = ((ST.hq || {}).assets || {}).narzedzia; // stary system: poziom narzędzi w siedzibie
-    if (old > 0) { ST.inv = (ST.inv || []).concat([Alledrogo.makeItem({ tier: Math.min(3, old), brand: 'Zestaw z siedziby', cond: (ST.hq.cond == null ? 100 : ST.hq.cond), life: 30, source: 'start', sellerName: 'własne' })]); delete ST.hq.assets.narzedzia; }
-    if (ST.hq) delete ST.hq.cond;
-    if (!ST.starterGiven) { // starsze zapisy: raz dostajesz tani zestaw, jeśli nie masz żadnego zestawu ręcznego
-      ST.inv = ST.inv || []; if (!ST.inv.some(i => i.type === 'zestaw')) ST.inv.push(Alledrogo.starterKit()); ST.starterGiven = true;
-    }
-    const f = Siedziba.fresh(); ST.hq = Object.assign(f, ST.hq || {}, { up: Object.assign(f.up, (ST.hq || {}).up), assets: Object.assign(f.assets, (ST.hq || {}).assets) }); if (!ST.hist) ST.hist = []; })();
-  const bookKey = () => Czas.dateOf(ST.clock).monthKey;
-  if (!ST.monthStart[bookKey()]) ST.monthStart[bookKey()] = ST.money;
-  /* Księguje ruch na kasie w kategorii (z uwzględnieniem tego, że kasa nie spada poniżej zera). */
-  function cash(cat, amt) {
-    const before = ST.money; ST.money = Math.max(0, ST.money + amt); const real = ST.money - before;
-    ST.ledger = Ksiega.book(ST.ledger, bookKey(), cat, real); ST.ledgerMoney = ST.money; return real;
-  }
-  /* Ruchy kasy, które nie przeszły przez cash(), trafiają do „inne”. */
-  function syncLedger() { const d = ST.money - (ST.ledgerMoney || 0); if (Math.abs(d) > 0.004) ST.ledger = Ksiega.book(ST.ledger, bookKey(), 'inne', d); ST.ledgerMoney = ST.money; }
-  const monthSummary = key => Ksiega.summary(ST.ledger, key || bookKey(), 0);
-  /* Przesuwa zegar; przy zmianie miesiąca zamyka stary i planuje raport. */
-  function advanceClock(to) {
-    const oldKey = bookKey(), oldClock = ST.clock; ST.clock = to; const newKey = bookKey();
-    if (newKey !== oldKey) { ST.monthEnd[oldKey] = ST.money; ST.monthStart[newKey] = ST.money; ST.pendingMonths.push(oldKey); }
-    { const y0 = Czas.dateOf(oldClock).y, y1 = Czas.dateOf(ST.clock).y; for (let y = y0; y < y1; y++) ST.pendingYears.push(String(y)); }
-    ST.day = Czas.dateOf(ST.clock).dayIndex;
-  }
+  const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  // silnik bez UI (silnik.js): stan, zegar, księga, ekipa, kontrakty, przetargi, rok. Ten plik to widok.
+  const E = Silnik.create({ rnd, storage: { getItem: lsGet, setItem: lsSet } });
+  E.load();
+  const { ST, META, fresh, withMeta, saveMeta, bookKey, cash, syncLedger, monthSummary, advanceClock, save, reputation, co, KT, cLimit, specM, specLevels, extraPay, callP, clothesPrice, estimateFor, perHourTxt, refBonus, applyToolSale, settleJob, crewBusy, crewFree, ensureBoard, tenderCtx, yearStats } = E;
+  const { weekly, checkDemands, checkClaims, checkMonthReport, formalCtx, newJob, applyOption, sleepNow, dayOffNow, vacationNow, askTender, askContract, askCancel, switchContract, checkContractFinal, collectCrew, checkYear, pickWorkerFor, dispatchCrew } = E;
+  const waitHour = () => E.waitHour(startJob);
   /* Zegar widoczny dla gracza: w trakcie zlecenia startowy + postęp pracy. */
   const viewClock = () => cur && !$('job').hidden ? cur.startClock + Czas.minutes(Math.max(0, cur.time + cur.timeAdj), cur.night) : ST.clock;
   let anim = null;
-  const save = () => { syncLedger(); try { localStorage.setItem('zlecenia_v1', JSON.stringify(ST)); } catch (e) {} };
-  const reputation = () => { const r = ST.ratings.slice(-10); return r.length ? r.reduce((a, b) => a + b, 0) / r.length : null; };
 
   // ---------- scenka: tokeny stanu ----------
   /* Rysuje sceny pixel art w kontenerze. Tokeny stanu przekazuje się do sceny zlecenia, siedziba bierze stan z gry. */
@@ -61,7 +32,6 @@
   // ---------- poziomy ----------
   let cur = null; // bieżące zlecenie
   const ALL = ['menu', 'job', 'result', 'crew', 'payday', 'hq', 'fin', 'os', 'story', 'alle', 'prestige', 'wardrobe', 'plan'];
-  const co = () => { const r = Siedziba.rating(ST.hq, ST.hist, ST.ratings, ST.claims.length, Alledrogo.toolScore(ST.inv)); r.stars = Math.min(5, Math.round((r.stars + 0.15 * Ubrania.crewCred(ST.wardrobe, ST.crew, ST.hq.up.szyld || 0)) * 100) / 100); return r; };
   function renderTop() {
     $('money').textContent = zl(ST.money);
     $('rep').textContent = co().stars.toFixed(1).replace('.', ',') + ' ★';
@@ -95,12 +65,6 @@
     nextEvent();
   }
   // ---------- ekipa na własnych zleceniach (faza B) ----------
-  const crewBusy = w => ST.crewJobs.find(j => j.workerId === w.id && j.endAt > ST.clock) || ST.crewJobs.find(j => j.workerId === w.id);
-  const crewDeps = () => ({ evaluate: Fuszerka.evaluate, rollClaim: Fuszerka.rollClaim, minutes: u => Czas.minutes(u, false), jobs: JOBS, clients: CLIENTS });
-  function ensureBoard() {
-    const day = Czas.dateOf(ST.clock).dayIndex; if (ST.board.day === day) return;
-    ST.board = { day, offers: ZlecEkipy.makeBoard(day, rnd, co().stars, Object.keys(JOBS), Object.keys(CLIENTS), ZlecEkipy.boardSize(ST.hq.tier)) };
-  }
   function boardHTML() {
     if (!ST.crew.length) return '';
     ensureBoard();
@@ -111,48 +75,7 @@
     return h + '<div class="hint">Pracownicy robią proste zlecenia sami, w dzień (8–17), z dojazdem. Jakość zależy od umiejętności, trzeźwości i nastroju. Ty w tym czasie bierzesz trudniejsze roboty. Jesteś teraz: ' + ZlecEkipy.DISTRICTS[ST.where] + '.</div>' + (act ? '<div class="econ">' + act + '</div>' : '') + offers;
   }
   function bindBoard() { document.querySelectorAll('[data-offer]').forEach(b => { b.onclick = () => pickWorkerFor(+b.dataset.offer); }); }
-  function pickWorkerFor(id) {
-    const o = ST.board.offers.find(x => x.id === id); if (!o) return;
-    const free = ST.crew.filter(w => !crewBusy(w) && !(w.outJobs > 0) && ZlecEkipy.canDo(w, o.job, ST.certs)); if (!free.length) return;
-    modalOpen = true; $('mtitle').textContent = '👷 Kto jedzie: ' + JOBS[o.job].title; $('mtext').textContent = CLIENTS[o.client].name + ', ' + ZlecEkipy.DISTRICTS[o.district] + '. Pracownik pojedzie sam, wróci z wynikiem. Jakość to szacunek, trzeźwość sprawdzi się w drodze.';
-    $('mchoices').innerHTML = free.map(w => { const p = ZlecEkipy.preview(w, 'trzezwy', o, { from: 'baza', certs: ST.certs }); return '<button data-w="' + w.id + '">' + w.em + ' ' + w.name + ' · ' + p.label + '<small>nastrój ' + Math.round(w.mood) + '% · dojazd ' + p.travelMin + ' min · umiejętności ' + Math.round(w.skill * 100) + '% · poziom w obszarze ' + ZlecEkipy.lvl(w, o.job, ST.certs) + '</small></button>'; }).join('') + '<button data-w="">Anuluj<small>zostaje na tablicy</small></button>';
-    $('modal').hidden = false;
-    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false; if (b.dataset.w) dispatchCrew(o, ST.crew.find(w => w.id === b.dataset.w)); else renderMenu(); };
-  }
-  function dispatchCrew(o, w) {
-    const hour = Czas.dateOf(ST.clock).hour; let start = ST.clock; if (hour < 7 || hour >= 17) start = Czas.nextAt(ST.clock, '08:00');
-    const state = Swiat.rollState(w, { night: false }, rnd);
-    ST.board.offers = ST.board.offers.filter(x => x.id !== o.id);
-    if (Ekipa.attendance(w, rnd, {}) === 'absent') { ST.flash.push('👷 ' + w.name + ' nie odebrał telefonu i nie pojechał do ' + CLIENTS[o.client].name + '. Zlecenie przepadło.'); const c0 = Klienci.get(ST.rel, o.client); ST.rel = Object.assign({}, ST.rel, { [o.client]: { trust: Math.max(-100, c0.trust - 4), jobs: c0.jobs } }); save(); renderMenu(); return; }
-    const rt = co(), sim = ZlecEkipy.simulate(w, state, o, rnd, crewDeps(), { payMult: rt.payMult, satBonus: rt.satBonus + Ubrania.crewSat(ST.wardrobe, w.id, ST.hq.up.szyld || 0), from: 'baza', clock: start, certs: ST.certs });
-    let drive = 0, note = '';
-    const dr = Swiat.resolveDrive(w, state, ST.world, 'worker', rnd); drive = dr.cost; if (dr.notes.length && dr.incident) note = dr.notes[dr.notes.length - 1]; if (dr.claim) ST.claims.push(Object.assign({ client: CLIENTS[o.client].name, due: ST.done + 1 }, dr.claim)); Swiat.tickWorld(ST.world, dr.heatDelta);
-    if (Object.keys(dr.driverPatch).length) ST.crew = ST.crew.map(x => x.id === w.id ? Object.assign({}, x, dr.driverPatch) : x);
-    ST.wardrobe = Ubrania.uniformAfterJob(ST.wardrobe, w.id, o.job);
-    const endAt = sim.endAt + Math.max(0, dr.timeAdj), failed = !!(dr.accident && dr.accident.severity === 'ciezki');
-    ST.crewJobs.push({ id: o.id, workerId: w.id, offer: o, startAt: start, endAt, stars: failed ? 1 : sim.r.stars, index: sim.r.index, payout: failed ? 0 : sim.payout, cost: failed ? 0 : sim.cost, fuel: sim.fuel + drive, trav: sim.travelMin, failed, claim: sim.claimInfo ? sim.claimInfo : null, defects: sim.r.defects.length, drunk: state !== 'trzezwy' ? state : null, note, finished: false });
-    ST.flash.push('👷 ' + w.name + ' jedzie do ' + CLIENTS[o.client].name + ' (' + JOBS[o.job].title + '), wróci ok. ' + Czas.hm(endAt) + '.' + (state !== 'trzezwy' ? ' Uwaga: ' + Swiat.LABEL[state] + '.' : ''));
-    save(); renderTop(); renderMenu();
-  }
   /* Odbiór wyników ekipy, której czas minął: wypłaty, materiały, reklamacje, oceny. */
-  function collectCrew() {
-    if (modalOpen) return false;
-    const due = ST.crewJobs.filter(j => j.endAt <= ST.clock); if (!due.length) return false;
-    const lines = []; ST.crewJobs = ST.crewJobs.filter(j => j.endAt > ST.clock);
-    for (const j of due) {
-      const w = ST.crew.find(x => x.id === j.workerId), cl = CLIENTS[j.offer.client];
-      if (j.failed) { cash('transport', -j.fuel); ST.ratings.push(1); const c0 = Klienci.get(ST.rel, cl.id); ST.rel = Object.assign({}, ST.rel, { [cl.id]: { trust: Math.max(-100, c0.trust - 8), jobs: c0.jobs } });
-        lines.push((w ? w.name : '?') + ': ' + JOBS[j.offer.job].title + ' u ' + cl.name + ': wypadek w drodze, zlecenie nie doszło do skutku (klient wściekły, zaufanie −8).'); continue; }
-      cash('zlecenia', j.payout); cash('materialy', -j.cost); cash('transport', -j.fuel); ST.ratings.push(j.stars); ST.done++; ST.hist.push({ index: j.index }); ST.hist = ST.hist.slice(-12);
-      ST.fin = Finanse.addIncome(ST.fin, j.payout, true); ST.rel = Klienci.afterJob(ST.rel, cl.id, j.stars, Osiedle.GOSSIP[cl.id]);
-      if (j.claim) ST.claims.push(Object.assign({ client: cl.name, due: ST.done + 1 }, j.claim));
-      if (w) ST.crew = ST.crew.map(x => x.id === w.id ? Object.assign({}, ZlecEkipy.addXp(x, j.offer.job, j.stars), { mood: Math.max(0, x.mood - 2) }) : x);
-      lines.push((w ? w.name : '?') + ': ' + JOBS[j.offer.job].title + ' u ' + cl.name + ' ' + stars(j.stars) + ', wpływ ' + zl(j.payout - j.cost - j.fuel) + (j.claim ? ' (grozi reklamacja)' : '') + (j.note ? ' ' + j.note : ''));
-    }
-    save(); renderTop(); modalOpen = true; $('mtitle').textContent = '👷 Ekipa wróciła'; $('mtext').textContent = lines.join('\n');
-    $('mchoices').innerHTML = '<button data-a="ok">Dalej</button>'; $('modal').hidden = false; $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; renderMenu(); };
-    return true;
-  }
   // ---------- plan dnia (oś czasu) ----------
   function renderPlan(offset) {
     offset = offset || 0; ALL.forEach(x => $(x).hidden = true); $('plan').hidden = false; renderTop();
@@ -175,7 +98,6 @@
     $('pToday').onclick = () => renderPlan(0); $('pTom').onclick = () => renderPlan(1); $('pBack').onclick = renderMenu;
   }
   // ---------- szafa i sklep z ubraniami (faza E) ----------
-  const clothesPrice = () => Sezon.clothesPrice(ST.clock);
   function renderWardrobe() {
     ALL.forEach(x => $(x).hidden = true); $('wardrobe').hidden = false; renderTop();
     const W = ST.wardrobe, cur0 = Ubrania.current(W), day = Czas.dateOf(ST.clock).dayIndex, pm = clothesPrice(), icon = o => Pix.icon(o.icon, 'inline');
@@ -191,35 +113,11 @@
       '<h3 style="color:var(--muted);text-transform:uppercase">Ciuchy firmowe dla ekipy</h3><div class="hint">Zestawy z logo (lepsze logo = lepsza wiarygodność ze szyldu). BHP wymagane w przetargach. Nastrój ekipy rośnie, zestawy się zużywają.</div>' + (crew || '<div class="hint">Nie masz jeszcze ekipy.</div>') + '<button class="primary" id="wBack">Wróć</button>';
     $('wBack').onclick = renderMenu;
     $('wardrobe').onclick = e => {
-      const q = sel => e.target.closest(sel);
-      let b;
-      if ((b = q('[data-wear]'))) { ST.wardrobe = Ubrania.wear(ST.wardrobe, +b.dataset.wear); save(); renderWardrobe(); return; }
-      if ((b = q('[data-wash]'))) { const r = Ubrania.wash(ST.wardrobe, +b.dataset.wash, ST.money); if (r.ok) { cash('ubrania', -r.cost); ST.wardrobe = r.w; save(); renderTop(); renderWardrobe(); } return; }
-      if ((b = q('[data-sell]'))) { const r = Ubrania.sell(ST.wardrobe, +b.dataset.sell); if (r.ok) { cash('zakupy', r.price); ST.wardrobe = r.w; save(); renderTop(); renderWardrobe(); } return; }
-      if ((b = q('[data-buy]'))) { const r = Ubrania.buy(ST.wardrobe, b.dataset.buy, ST.money, clothesPrice()); if (r.ok) { cash('zakupy', -r.cost); ST.wardrobe = Ubrania.wear(r.w, r.item.uid); save(); renderTop(); renderWardrobe(); } return; }
-      if ((b = q('[data-lump]'))) { const l = Ubrania.lumpeks(Czas.dateOf(ST.clock).dayIndex).find(x => x.id === +b.dataset.lump); if (l) { const r = Ubrania.buy(ST.wardrobe, l.outfit, ST.money, 1, { price: l.price, cond: l.cond, smell: l.smell }); if (r.ok) { cash('zakupy', -r.cost); ST.wardrobe = Object.assign({}, r.w, { bought: (r.w.bought || []).concat([l.id]) }); save(); renderTop(); renderWardrobe(); } } return; }
-      if ((b = q('[data-uni]'))) { const [wid, uid] = b.dataset.uni.split(':'), r = Ubrania.buyUniform(ST.wardrobe, wid, uid, ST.money); if (r.ok) { cash('zakupy', -r.cost); ST.wardrobe = r.w; save(); renderTop(); renderWardrobe(); } }
+      const OPS = { wear: 'wear', wash: 'wash', sell: 'sell', buy: 'buy', lump: 'lump', uni: 'uni' };
+      for (const [attr, op] of Object.entries(OPS)) { const b = e.target.closest('[data-' + attr + ']'); if (b) { const arg = b.dataset[attr]; if (E.wardrobeCmd(op, arg) && op !== 'wear') renderTop(); if (op !== 'lump' && op !== 'uni' || true) renderWardrobe(); return; } }
     };
   }
   // ---------- rok firmy, prestiż i Nowa Gra+ (faza D) ----------
-  function yearStats() {
-    const rr = ST.ratings.slice(-80), hh = (ST.hist || []).slice(-30), done = KT().done;
-    return { avgStars: rr.length ? rr.reduce((a, b) => a + b, 0) / rr.length : 0, claimsOpen: ST.claims.length, avgIndex: hh.length ? hh.reduce((a, b) => a + b.index, 0) / hh.length : null,
-      tendersWon: Object.entries(done).filter(([k]) => k.startsWith('p_')).reduce((s, [, v]) => s + v.count, 0), contractsDone: Object.entries(done).filter(([k]) => !k.startsWith('p_')).reduce((s, [, v]) => s + v.count, 0) };
-  }
-  function checkYear() {
-    if (modalOpen || !ST.pendingYears.length) return false;
-    syncLedger(); const yr = ST.pendingYears.shift(), sm = Rok.summary(ST.ledger, yr); if (!sm.months) return checkYear();
-    const st = yearStats(), rk = Rok.ranking(sm, ST.os.rival.power, +yr), aw = Rok.awards(sm, st), pts = Rok.prestige(sm, st, aw, rk.rank);
-    META.points += pts; META.years.push({ year: yr, plus: sm.plus, rank: rk.rank, pts }); saveMeta(); save(); modalOpen = true;
-    const fm = k => Czas.monthName(k);
-    $('mtitle').textContent = '🏆 Podsumowanie roku ' + yr; $('mtext').innerHTML = 'Zysk roku: <b>' + (sm.plus >= 0 ? '+' : '−') + zl(Math.abs(sm.plus)) + '</b> (przychody ' + zl(sm.income) + ', koszty ' + zl(-sm.costs) + '). Zleceń: ' + sm.jobs + ', stawka po kosztach ' + sm.perHour + ' zł/h.' + (sm.best ? ' Najlepszy miesiąc: ' + fm(sm.best.key) + ' (' + zl(sm.best.plus) + ').' : '') +
-      '<div class="econ">' + rk.rows.map((r, i) => '<div class="erow"><span>' + (i + 1) + '. ' + (r.you ? '<b>' + r.name + '</b>' : r.name) + '</span><b class="' + (r.plus >= 0 ? 'pos' : 'neg') + '">' + zl(r.plus) + '</b></div>').join('') + '</div>' +
-      (aw.length ? 'Nagrody: ' + aw.map(a => '🏅 ' + a.name).join(', ') + '. ' : 'Bez nagród w tym roku. ') + 'Punkty prestiżu: <b>+' + pts + '</b> (razem ' + META.points + ').';
-    $('mchoices').innerHTML = '<button data-a="ok">Dalej<small>gramy dalej ten sam rok firmy</small></button><button data-a="pr">🏆 Prestiż i Nowa Gra+<small>perki za punkty, nowy start z bonusami</small></button>'; $('modal').hidden = false;
-    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false; if (b.dataset.a === 'pr') renderPrestige(); else renderMenu(); };
-    return true;
-  }
   function renderPrestige() {
     ALL.forEach(x => $(x).hidden = true); $('prestige').hidden = false; renderTop();
     const perks = Object.entries(Rok.PERKS).map(([id, p]) => { const lv = META.perks[id] || 0, c = Rok.perkCost(META, id);
@@ -229,14 +127,10 @@
       '<div class="hint">Punkty dostajesz za zysk, ocenę, nagrody, miejsce w rankingu osiedla, kontrakty i przetargi na koniec każdego roku kalendarzowego. Perki zostają na zawsze. Nowa Gra+ zaczyna firmę od zera z bonusami.</div>' + perks + (yrs ? '<h3 style="color:var(--muted);text-transform:uppercase">Historia lat</h3><div class="econ">' + yrs + '</div>' : '') +
       '<button id="ngp" class="primary">Nowa Gra+ (zaczynasz od zera)</button><button class="primary" id="prBack">Wróć</button>';
     $('prBack').onclick = renderMenu;
-    $('prestige').onclick = e => { const b = e.target.closest('[data-perk]'); if (b) { const r = Rok.buy(META, b.dataset.perk); if (r.ok) { META = r.meta; saveMeta(); renderPrestige(); } return; }
-      if (e.target.closest('#ngp')) { modalOpen = true; $('mtitle').textContent = 'Nowa Gra+?'; $('mtext').textContent = 'Obecna firma zostanie zamknięta. Zaczynasz od zera z bonusami z perków (' + (Rok.bonuses(META).startCash ? '+' + Rok.bonuses(META).startCash + ' zł, ' : '') + 'wypłaty ×' + Rok.bonuses(META).payMult.toFixed(2).replace('.', ',') + ').';
-        $('mchoices').innerHTML = '<button data-a="yes">Zaczynam nową grę<small>prestiż i perki zostają</small></button><button data-a="no">Jeszcze nie<small>wracasz</small></button>'; $('modal').hidden = false;
-        $('mchoices').onclick = ev => { const bb = ev.target.closest('button'); if (!bb) return; $('modal').hidden = true; modalOpen = false; if (bb.dataset.a === 'yes') { META.games++; saveMeta(); ST = withMeta(fresh()); save(); } renderMenu(); }; } };
+    $('prestige').onclick = e => { const b = e.target.closest('[data-perk]'); if (b) { if (E.buyPerk(b.dataset.perk)) renderPrestige(); return; }
+      if (e.target.closest('#ngp')) E.askNewGamePlus(); };
   }
   // ---------- przetargi publiczne (faza C) ----------
-  const specLevels = () => Object.fromEntries(Object.keys(Spec.AREAS).map(k => [k, Spec.level(ST.xp[k] || 0, k, ST.certs)]));
-  const tenderCtx = cid => ({ stars: co().stars, tier: ST.hq.tier, spec: specLevels(), trust: Klienci.get(ST.rel, cid).trust, rivalPower: ST.os.rival.power, outfit: Ubrania.effect(Ubrania.current(ST.wardrobe), cid, { formal: true }).tender });
   function tendersHTML() {
     const h = '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Przetargi publiczne</h3>', day = Czas.dateOf(ST.clock).dayIndex;
     const rows = Object.values(Przetargi.TENDERS).map(t => { const miss = Przetargi.missing(t, tenderCtx(t.client)), cd = Przetargi.cooldownOk(ST.tenderCool, t.id, day), q = Kontrakty.quote(Kontrakty.CONTRACTS[Przetargi.cid(t.id)], JOBS), cl = CLIENTS[t.client], bhp = Ubrania.bhpOk(ST.wardrobe, ST.crew), ok = !miss.length && cd && Kontrakty.canAccept(KT(), cLimit()) && bhp;
@@ -244,19 +138,7 @@
     return h + '<div class="hint">Duże zlecenia publiczne: wysokie stawki, wadium i surowy audyt. Wady zagrażające bezpieczeństwu wykryte przy odbiorze oblewają audyt (kara ' + Math.round(Kontrakty.AUDIT_FAIL * 100) + '% wartości, wadium przepada). Wymagają oceny firmy, siedziby i specjalizacji.</div>' + rows;
   }
   function bindTenders() { document.querySelectorAll('[data-tender]').forEach(b => { b.onclick = () => askTender(b.dataset.tender); }); }
-  function askTender(id) {
-    const t = Przetargi.TENDERS[id], ctx = tenderCtx(t.client); modalOpen = true; $('mtitle').textContent = '🏛️ ' + t.title; $('mtext').textContent = t.desc + ' Wybierz ofertę: niższa cena zwiększa szansę, ale obniża wypłatę. Wadium płacisz przy wygranej, zwrot po zaliczonym audycie. Rywal: ' + ST.os.rival.name + '.';
-    $('mchoices').innerHTML = Object.entries(Przetargi.BIDS).map(([k, b]) => { const tm = Przetargi.terms(t, k, JOBS); return '<button data-b="' + k + '">' + b.name + '<small>szansa ' + Math.round(Przetargi.winChance(k, ctx) * 100) + '% · wartość ok. ' + zl(Math.round(tm.quote.expected * b.mult)) + ' · wadium ' + zl(tm.wadium) + '</small></button>'; }).join('') + '<button data-b="">Rezygnuję<small>bez kosztów</small></button>'; $('modal').hidden = false;
-    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false; if (!b.dataset.b) { renderMenu(); return; }
-      const day = Czas.dateOf(ST.clock).dayIndex, res = Przetargi.bid(b.dataset.b, ctx, rnd); ST.tenderCool[id] = day;
-      if (!res.won) { ST.os.rival.power += 1.5; ST.flash.push('🏛️ Przetarg „' + t.title.replace('Przetarg: ', '') + '” wygrał ' + ST.os.rival.name + ' (twoja szansa: ' + Math.round(res.chance * 100) + '%).'); save(); renderMenu(); return; }
-      const tm = Przetargi.terms(t, b.dataset.b, JOBS), r = Kontrakty.accept(KT(), Przetargi.cid(id), ST.clock, JOBS, { priceMult: tm.priceMult, wadium: tm.wadium }, cLimit());
-      if (!r.ok) { ST.flash.push(r.reason); renderMenu(); return; }
-      ST.contracts = r.state; cash('wadium', -tm.wadium); cash('zlecenia', r.deposit); ST.flash.push('🏛️ Wygrany przetarg „' + t.title.replace('Przetarg: ', '') + '”! Wadium ' + zl(tm.wadium) + ', zaliczka ' + zl(r.deposit) + '.'); save(); renderTop(); renderMenu(); };
-  }
   // ---------- kontrakty ----------
-  const KT = () => { if (!ST.contracts.others) ST.contracts.others = []; return ST.contracts; };
-  const cLimit = () => Kontrakty.slots(ST.hq.tier);
   function contractsHTML() {
     let extra = ''; const a = KT().active, h = '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Kontrakty</h3>';
     if (a) {
@@ -280,132 +162,38 @@
       return '<button class="lvl" data-cswitch="' + o.id + '"><span class="av">' + cl.em + '</span><span><b>' + c.title + ' (w kolejce)</b><small>etap ' + Math.min(o.stage + 1, c.stages.length) + '/' + c.stages.length + ' · termin ' + Czas.dayLabel(o.deadlineAt) + '</small><small>' + (lv ? 'następny: ' + JOBS[lv.job].title + ', ' + Czas.label(lv.startAt) : 'czas na odbiór') + '</small></span><span class="res">przełącz</span></button>'; }).join('');
   }
   function bindContracts() {
-    document.querySelectorAll('[data-cswitch]').forEach(b => { b.onclick = () => { ST.contracts = Kontrakty.switchTo(KT(), b.dataset.cswitch); save(); renderMenu(); }; });
+    document.querySelectorAll('[data-cswitch]').forEach(b => { b.onclick = () => switchContract(b.dataset.cswitch); });
     document.querySelectorAll('[data-cacc]').forEach(b => { b.onclick = () => askContract(b.dataset.cacc); });
     const st = $('cstage'); if (st) st.onclick = () => startJob(-1, Kontrakty.stageLevel(KT(), ST.clock));
     const ca = $('ccancel'); if (ca) ca.onclick = askCancel;
   }
-  function askContract(id) {
-    const c = Kontrakty.CONTRACTS[id], q = Kontrakty.quote(c, JOBS); if (!Kontrakty.canAccept(KT(), cLimit())) { ST.flash.push('Masz już aktywny kontrakt (limit ' + cLimit() + ').'); renderMenu(); return; }
-    modalOpen = true; $('mtitle').textContent = '📋 ' + c.title;
-    $('mtext').textContent = CLIENTS[c.client].name + ': ' + c.desc + ' Zaliczka ' + zl(q.deposit) + ' wpływa od razu. Za każdy etap dostajesz transzę (' + Math.round(Kontrakty.TRANCHE * 100) + '% zwykłej wypłaty). Termin całości: ' + c.deadline + ' dni. Spóźnienie: kara ' + Math.round(Kontrakty.LATE_PCT * 100) + '% wartości za dzień. Czysty odbiór w terminie: premia ' + Math.round(Kontrakty.BONUS * 100) + '%. Ukryte wady z każdego etapu mogą wyjść dopiero przy odbiorze.';
-    $('mchoices').innerHTML = '<button data-a="yes">Przyjmij kontrakt<small>zaliczka ' + zl(q.deposit) + '</small></button><button data-a="no">Nie teraz<small>wracasz do listy</small></button>'; $('modal').hidden = false;
-    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false;
-      if (b.dataset.a === 'yes') { const r = Kontrakty.accept(KT(), id, ST.clock, JOBS, {}, cLimit()); if (r.ok) { ST.contracts = r.state; cash('zlecenia', r.deposit); ST.flash.push('📋 Przyjęty kontrakt „' + c.title + '”. Zaliczka ' + zl(r.deposit) + '.'); save(); renderTop(); } } renderMenu(); };
-  }
-  function askCancel() {
-    const a = KT().active, pen = Math.round(a.deposit + a.nominal * 0.1 + (a.wadium || 0)); modalOpen = true; $('mtitle').textContent = 'Zrezygnować z kontraktu?';
-    $('mtext').textContent = 'Oddasz zaliczkę ' + zl(a.deposit) + ' i zapłacisz karę umowną: razem ' + zl(pen) + '. Klient nie zapomni.';
-    $('mchoices').innerHTML = '<button data-a="yes">Zrezygnuj<small>−' + zl(pen) + ', zaufanie klienta −15</small></button><button data-a="no">Zostaję<small>kontrakt trwa</small></button>'; $('modal').hidden = false;
-    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false;
-      if (b.dataset.a === 'yes') { const cid = CLIENTS[Kontrakty.CONTRACTS[a.id].client].id, r = Kontrakty.cancel(KT()); cash('kary', -r.penalty); ST.contracts = r.state; const c0 = Klienci.get(ST.rel, cid); ST.rel = Object.assign({}, ST.rel, { [cid]: { trust: Math.max(-100, c0.trust - 15), jobs: c0.jobs } }); ST.ratings.push(2); ST.flash.push('📋 Zrezygnowałeś z kontraktu. Kara ' + zl(r.penalty) + '.'); save(); renderTop(); } renderMenu(); };
-  }
   /* Odbiór końcowy po ostatnim etapie: wyłapywanie ukrytych wad, kara za opóźnienie albo premia. */
-  function checkContractFinal() {
-    const a = KT().active; if (!a || modalOpen || a.stage < Kontrakty.CONTRACTS[a.id].stages.length) return false;
-    const c = Kontrakty.CONTRACTS[a.id], cl = CLIENTS[c.client], f = Kontrakty.final(KT(), ST.clock, cl, rnd); modalOpen = true;
-    ST.contracts = f.state; if (f.bonus) cash('zdarzenia', f.bonus); if (f.rework) cash('reklamacje', -f.rework); if (f.latePenalty) cash('kary', -f.latePenalty); if (f.auditPenalty) cash('kary', -f.auditPenalty); if (f.wadiumBack) cash('wadium', f.wadiumBack); if (f.failed) ST.ratings.push(1);
-    ST.ratings.push(f.stars); ST.rel = Klienci.afterJob(ST.rel, cl.id, f.stars, Osiedle.GOSSIP[cl.id]); save(); renderTop();
-    $('mtitle').textContent = '📋 Odbiór końcowy: ' + c.title; $('mtext').textContent = cl.name + ' ocenia całość na ' + stars(f.stars) + ' (średnia etapów ' + f.avg.toFixed(1).replace('.', ',') + '). ' + (f.notes.join(' ') || 'Bez uwag.') + (f.wadiumBack ? ' Wadium ' + zl(f.wadiumBack) + ' wraca.' : '') + ' Wynik odbioru: ' + (f.net >= 0 ? '+' : '−') + zl(Math.abs(f.net)) + '.';
-    $('mchoices').innerHTML = '<button data-a="ok">Dalej</button>'; $('modal').hidden = false; $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; renderMenu(); };
-    return true;
-  }
   const allDone = () => LEVELS.every((_, i) => ST.best[i]);
   const waitHTML = () => '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Czekanie na telefon</h3>' +
     '<div class="hint">' + (allDone() ? 'Zrobiłeś wszystkie zlecenia z listy. Teraz zostaje czekać, aż ktoś zadzwoni.' : 'Nie chcesz brać żadnego z listy? Możesz poczekać, może ktoś zadzwoni.') + ' Szansa na telefon w tej godzinie (' + Czas.hm(ST.clock) + '→' + Czas.hm(ST.clock + 60) + '): ' +
     Math.round(callP(Czas.isNight(ST.clock + 60)) * 100) + '%. Lepsza ocena firmy i kolejne godziny bez telefonu zwiększają szansę.</div>' +
     '<div class="row2"><button id="wait" class="primary">⏳ Poczekaj godzinę</button><button id="sleep" style="min-height:56px">😴 Prześpij się (8 h)</button></div><div class="row2"><button id="dayoff" style="min-height:48px">🛋️ Dzień wolny (24 h)</button><button id="vac" style="min-height:48px" ' + (ST.money >= Wypalenie.VACATION.cost ? '' : 'disabled') + '>🏖️ Urlop (' + Wypalenie.VACATION.days + ' dni, ' + zl(Wypalenie.VACATION.cost) + ')</button></div><div class="hint">Wypalenie narasta z pracy, nie znika we śnie. Dzień wolny: −' + Wypalenie.DAY_OFF.relief + ' pkt. Urlop zeruje wypalenie i podnosi nastrój ekipy, ale klienci cię zapominają, a ' + (ST.os.rival.name) + ' zyskuje przewagę.</div><div class="hint">Czekanie odpoczywa tylko trochę. Sen: ' + (Czas.isNight(ST.clock + 240) ? 'w nocy regeneruje dużo' : 'w dzień regeneruje mało') + '. Telefony od stałych klientów zwiększają szansę (+' + Math.round(refBonus() * 100) + ' pkt).</div>';
-  const refBonus = () => Math.min(0.06, Object.values(ST.rel).filter(r => r.trust >= 50).length * 0.02);
-  const callP = night => Math.min(0.6, Jobs.callChance(night, co().stars, ST.waited) + refBonus());
-  function sleepNow() {
-    advanceClock(ST.clock + 480); ST.fatigue = Zmeczenie.rest(ST.fatigue, 480, true, Czas.isNight(ST.clock - 240));
-    ST.waited = 0; ST.flash.push('😴 Spałeś 8 godzin. Zmęczenie: ' + Zmeczenie.label(ST.fatigue) + ' (' + Math.round(ST.fatigue) + '%).'); save(); renderMenu();
-  }
-  function dayOffNow() {
-    advanceClock(ST.clock + Wypalenie.DAY_OFF.hours * 60); ST.fatigue = Zmeczenie.rest(ST.fatigue, 24 * 60, true, true); ST.burnout = Wypalenie.dayOff(ST.burnout); ST.waited = 0;
-    ST.flash.push('🛋️ Dzień wolny. Zmęczenie ' + Math.round(ST.fatigue) + '%, wypalenie ' + Math.round(ST.burnout) + '%. Nikt nie dzwonił, bo nikt cię nie szukał.'); save(); renderMenu();
-  }
-  function vacationNow() {
-    const V = Wypalenie.VACATION; if (ST.money < V.cost) return;
-    cash('urlop', -V.cost); advanceClock(ST.clock + V.days * 1440); ST.fatigue = 0; ST.burnout = Wypalenie.vacation(ST.burnout); ST.waited = 0;
-    ST.rel = Klienci.decay(ST.rel, V.days, V.trustDecay); ST.os.rival.power += V.rivalGain; ST.crew = ST.crew.map(w => Object.assign({}, w, { mood: Math.min(100, w.mood + V.crewMood) }));
-    ST.flash.push('🏖️ Urlop: ' + V.days + ' dni nad jeziorem. Wypoczęty, ale klienci trochę zapomnieli o tobie, a ' + ST.os.rival.name + ' zbierał zlecenia.'); save(); renderMenu();
-  }
-  function waitHour() {
-    advanceClock(ST.clock + 60); ST.fatigue = Zmeczenie.rest(ST.fatigue, 60, false);
-    const night = Czas.isNight(ST.clock), hit = rnd() < callP(night);
-    if (hit && rnd() < Wypalenie.missCall(ST.burnout)) { ST.flash.push('📵 Telefon dzwonił, ale nie miałeś siły odbierać (wypalenie ' + Math.round(ST.burnout) + '%).'); ST.waited++; save(); renderMenu(); return; }
-    if (!hit) { ST.waited++; save(); renderMenu(); return; }
-    ST.waited = 0;
-    const call = Jobs.rollCall(rnd, co().stars, Czas.isNight(ST.clock + 20)); call.client = Klienci.pick(rnd, Object.keys(CLIENTS), ST.rel); const cl = CLIENTS[call.client], jb = JOBS[call.job];
-    call.intro = cl.name + ' dzwoni o ' + Czas.hm(ST.clock) + ': ' + jb.intro; call.time = Czas.hm(ST.clock + 20); call.due = Terminy.roll(rnd, call.slot === 'noc');
-    const trust = Klienci.get(ST.rel, call.client).trust, rv = ST.os.rival;
-    const contested = rnd() < Klienci.contestChance(rv.power, Osiedle.strength({ rating: co().stars, tier: ST.hq.tier }), trust);
-    const est = estimateFor(call);
-    modalOpen = true; $('mtitle').textContent = '📞 Telefon! ' + jb.title;
-    $('mtext').textContent = (contested ? '⚔️ ' + rv.name + ' też dostał ten telefon! ' : '') + (trust >= 20 ? '(' + Klienci.level(trust) + '.) ' : '') + call.intro + ' (' + (call.slot === 'noc' ? 'noc' : 'dzień') + ', ok. ' + zl(jb.base * call.mult * (call.slot === 'noc' ? Czas.NIGHT.payMult : 1)) + ', stawka po kosztach ' + perHourTxt(est) + ')';
-    $('mchoices').innerHTML = contested
-      ? '<button data-a="cut">Zbij cenę o 15% i jedź<small>wygrywasz na pewno, ale zarabiasz mniej</small></button><button data-a="normal">Jadę normalnie<small>klient wybiera między wami (' + Math.round(Math.max(20, Math.min(80, 50 + trust / 2))) + '% że ciebie)</small></button><button data-a="no">Odpuszczam<small>niech Bogdan ma</small></button>'
-      : '<button data-a="go">Jadę<small>start za 20 minut</small></button><button data-a="no">Odmawiam<small>czekasz dalej</small></button>';
-    $('modal').hidden = false; save(); renderTop();
-    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false; const a = b.dataset.a;
-      if (a === 'go') { startJob(-1, call); return; }
-      if (a === 'no') { renderMenu(); return; }
-      const res = Klienci.contest(a, trust, rnd);
-      if (res.won) { call.priceMult = res.priceMult; startJob(-1, call); }
-      else { ST.os.rival.power += 1.5; ST.flash.push('⚔️ Klient wybrał ' + rv.name + '. Szkoda.'); save(); renderMenu(); } };
-  }
   $('menu').addEventListener('click', e => { const b = e.target.closest('.lvl'); if (b && !b.disabled && b.dataset.i !== undefined) startJob(+b.dataset.i); });
 
   // ---------- zlecenie ----------
   const signed = n => (n >= 0 ? '+' : '−') + zl(Math.abs(n));
   /* Szacunek stawki godzinowej po kosztach dla poziomu: opts { terms, helper, states }. */
-  function estimateFor(l, opts) {
-    opts = opts || {};
-    const job = JOBS[l.job], client = CLIENTS[l.client], night = l.slot === 'noc', mods = Czas.mods(night);
-    const start = l.startAt || (l.call ? ST.clock + 20 : Czas.jobStart(ST.clock, l.time, 1)), season = Czas.season(start), rt = co();
-    const um = Umowa.evaluate(opts.terms || Umowa.DEFAULT, client, () => 1);
-    const sea = Kalendarz.demandMult(season, job.id) * Sezon.demand(start, job.id) * Sezon.pay(start), gos = Osiedle.gossipMult(ST.os), cut = 1 - Osiedle.undercut(ST.os, { rating: rt.stars, tier: ST.hq.tier });
-    let units = job.deadline * um.deadlineFactor, helperCost = 0;
-    if (opts.helper) { const he = Ekipa.helperEffect(opts.helper, (opts.states || {})[opts.helper.id]); units *= he.timeFactor; helperCost = Stawka.helperShare(opts.helper, night); }
-    return Stawka.estimate({ base: Math.round(job.base * l.mult), payMult: rt.payMult * um.payMult * sea * gos * cut * mods.payMult * (l.due ? Terminy.KINDS[l.due].pay : 1) * extraPay(l, l.job), deadlineUnits: units, night, helper: helperCost,
-      invoice: (opts.terms || Umowa.DEFAULT).invoice, overhead: Stawka.overheadShare(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)), extraMinutes: 15 });
-  }
   /* Mnożnik z uprawnień, zaufania klienta i obniżki dla rywala (poza ocenami, umową, sezonem i nocą). */
-  function applyToolSale() { const f = Sezon.toolPrice(ST.clock); if (f < 1 && ST.market) ST.market.listings.forEach(l => { if (!l.sale) { l.price = Math.round(l.price * f); l.sale = f; } }); }
-  const specM = jobId => Spec.mods(ST.xp, ST.certs, jobId);
-  const extraPay = (l, jobId) => Rok.bonuses(META).payMult * Szkolenia.modsFor(ST.certs, jobId).pay * specM(jobId).pay * Klienci.payMult(Klienci.get(ST.rel, l.client).trust) * (l.priceMult || 1);
-  const perHourTxt = e => 'ok. ' + signed(e.perHour) + '/h';
   function startJob(i, call) {
     Dzwieki.play(call ? 'call' : 'start');
-    const l = call || LEVELS[i], night = l.slot === 'noc';
-    cur = { i: call ? -1 : i, level: l, job: JOBS[l.job], client: CLIENTS[l.client], mult: l.mult, step: 0, picks: [], tokens: new Set(['broken']), time: 0, cost: 0,
-      helper: null, helperOn: false, helperPaid: 0, timeAdj: 0, extraDefects: [], notes: [], states: {}, night, intro: l.intro || JOBS[l.job].intro, transportCost: 0, scandal: false };
-    cur.startClock = call ? (call.startAt || ST.clock + 20) : Czas.jobStart(ST.clock, l.time, 1);
-    if (l.contract) { cur.notes.push('📋 Kontrakt „' + l.contract.title + '”, etap ' + (l.contract.stage + 1) + '/' + l.contract.of + '.'); cur.intro = CLIENTS[l.client].name + ' (kontrakt „' + l.contract.title + '”, etap ' + (l.contract.stage + 1) + '): ' + JOBS[l.job].intro; }
-    cur.outfit = outfitFx(); ST.world.night = night; cur.dueSpec = l.due ? Terminy.make(cur.job.deadline, cur.startClock, l.due, night) : null;
-    ST.crew.forEach(w => { cur.states[w.id] = Swiat.rollState(w, { paydayEve: ST.lastPayDone === ST.done, night }, rnd); });
-    cur.season = Czas.season(cur.startClock); cur.deadline = cur.job.deadline; cur.umowa = null; cur.terms = Object.assign({}, Umowa.DEFAULT);
-    cur.mystery = Fabula.rollMystery({ done: ST.done }, rnd);
-    cur.tools = Alledrogo.forJob(ST.inv, cur.job.id); cur.failAt = {}; cur.brokenTools = {};
-    cur.tools.forEach(tl => { cur.failAt[tl.id] = rnd() < Alledrogo.failChance(tl) ? Math.floor(rnd() * cur.job.steps.length) : -1; });
-    { const dist = ZlecEkipy.districtOf(l.client), trav = l.contract && l.contract.stage > 0 ? 0 : ZlecEkipy.travel(ST.where, dist); cur.district = dist; cur.travelMin = trav;
-      if (trav) { cur.timeAdj += trav / Czas.TIME_SCALE; cur.fuel = Math.round(trav * ZlecEkipy.FUEL_PER_MIN); cash('transport', -cur.fuel); cur.transportCost += cur.fuel; cur.notes.push('🚗 Dojazd z ' + ZlecEkipy.DISTRICTS[ST.where] + ' (' + trav + ' min, paliwo ' + zl(cur.fuel) + ').'); } }
-    if (cur.tools.length) cur.notes.push('🧰 Bierzesz ze sobą: ' + cur.tools.map(tl => tl.brand).join(', ') + '.');
-    const wx = Kalendarz.weather(cur.season, rnd); if (wx.delay) { cur.timeAdj += wx.delay; cur.notes.push(wx.text); }
+    cur = newJob(i, call); const l = cur.level;
     ALL.forEach(x => $(x).hidden = true); $('job').hidden = false;
     if (l.contract && l.contract.stage > 0 && KT().active.terms) { cur.terms = Object.assign({}, KT().active.terms); cur.umowa = Umowa.evaluate(cur.terms, cur.client, rnd); cur.notes.push(...cur.umowa.notes); cur.deadline = Math.round(cur.job.deadline * cur.umowa.deadlineFactor); afterUmowa(); return; }
     umowa();
   }
   function afterUmowa() { if (ST.crew.length) pickHelper(); else transport(); }
   const dueNote = () => { const d = cur.dueSpec; if (!d) return ''; const T = Terminy; return '<div class="banner">⏰ Zlecenie terminowe: ' + d.name + '. Skończ do <b>' + Czas.hm(d.dueAt) + '</b> (masz ' + Czas.fmtMin(d.allowed) + ' od startu). Spóźnienie: kara ' + Math.round(d.pct * 100) + '% wypłaty za każde zaczęte ' + T.BLOCK + ' min (max ' + Math.round(T.CAP * 100) + '%). Szybciej niż w 80% czasu: premia ' + Math.round(T.BONUS * 100) + '%. Wypłata ×' + String(d.pay).replace('.', ',') + '.' + (d.kind === 'ostry' ? ' Solidna robota się nie zmieści. Ktoś będzie musiał iść na skróty.' : '') + '</div>'; };
-  const formalCtx = l => !!(l && l.contract && Kontrakty.CONTRACTS[l.contract.id] && Kontrakty.CONTRACTS[l.contract.id].tender);
-  const outfitFx = () => Ubrania.effect(Ubrania.current(ST.wardrobe), cur.client.id, { formal: formalCtx(cur.level), job: cur.job.id });
+  const outfitFx = () => E.outfitFx(cur);
   const outfitNote = () => { const it = Ubrania.current(ST.wardrobe), o = Ubrania.OUTFITS[it.id], e = cur.outfit; return '<div class="hint">' + Pix.icon(o.icon, 'inline') + ' Ubiór: <b>' + o.name + '</b> (stan ' + Math.round(it.cond) + '%' + (it.dirty ? ', brudny' : '') + '). Wrażenie u klienta: ' + (e.imp > 0.3 ? 'świetne' : e.imp > 0.05 ? 'dobre' : e.imp > -0.1 ? 'obojętne' : 'złe') + ' (' + (e.satBonus >= 0 ? '+' : '') + e.satBonus + ' pkt zadowolenia, wypłata ×' + String(e.pay).replace('.', ',') + '). <button id="chgOutfit" style="min-height:32px;padding:0 8px">Przebierz się</button></div>'; };
   function changeOutfit() {
-    modalOpen = true; $('mtitle').textContent = '👔 W co się ubierasz?'; $('mtext').textContent = cur.client.name + (formalCtx(cur.level) ? ' (oficjalnie, przetarg)' : '') + ', ' + cur.job.title + (Ubrania.messy(cur.job.id) >= 0.5 ? ' (brudna robota)' : '') + '.';
+    E.ui.modalOpen = true; $('mtitle').textContent = '👔 W co się ubierasz?'; $('mtext').textContent = cur.client.name + (formalCtx(cur.level) ? ' (oficjalnie, przetarg)' : '') + ', ' + cur.job.title + (Ubrania.messy(cur.job.id) >= 0.5 ? ' (brudna robota)' : '') + '.';
     $('mchoices').innerHTML = ST.wardrobe.owned.map(it => { const o = Ubrania.OUTFITS[it.id], e = Ubrania.effect(it, cur.client.id, { formal: formalCtx(cur.level), job: cur.job.id }); return '<button data-u="' + it.uid + '">' + Pix.icon(o.icon, 'inline') + ' ' + o.name + (it.uid === ST.wardrobe.worn ? ' (masz na sobie)' : '') + '<small>stan ' + Math.round(it.cond) + '%' + (it.dirty ? ' · brudny' : '') + ' · wrażenie ' + (e.imp >= 0 ? '+' : '') + e.imp.toFixed(1).replace('.', ',') + ' · wypłata ×' + String(e.pay).replace('.', ',') + '</small></button>'; }).join('') + '<button data-u="">Zostaw jak jest<small>bez zmiany</small></button>'; $('modal').hidden = false;
-    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; modalOpen = false; if (b.dataset.u) { ST.wardrobe = Ubrania.wear(ST.wardrobe, +b.dataset.u); const it = Ubrania.current(ST.wardrobe); if (it.smell) { ST.flash.push('👔 Ubranie z lumpeksu śmierdzi stęchlizną. Wiarygodność −0,15.'); } cur.outfit = outfitFx(); save(); } umowa(); };
+    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; E.ui.modalOpen = false; if (b.dataset.u) { ST.wardrobe = Ubrania.wear(ST.wardrobe, +b.dataset.u); const it = Ubrania.current(ST.wardrobe); if (it.smell) { ST.flash.push('👔 Ubranie z lumpeksu śmierdzi stęchlizną. Wiarygodność −0,15.'); } cur.outfit = outfitFx(); save(); } umowa(); };
   }
   const nightNote = () => cur.night ? '<div class="banner">🌙 Zlecenie nocne: dopłata ×' + String(Czas.NIGHT.payMult).replace('.', ',') + ', ale ciemno (celność −' + Math.round(Czas.NIGHT.accPenalty * 100) + ' pkt), robota trwa o 10% dłużej, więcej wypadków i kontroli policji, ekipa częściej nie przychodzi. Klient jest zaspany, więc mniej zauważa.</div>' : '';
 
@@ -471,7 +259,7 @@
   /* Awaria busa w drodze: laweta, naprawa samemu albo kurier. */
   function breakdown(id) {
     Dzwieki.play('crash');
-    const night = cur.night; modalOpen = true;
+    const night = cur.night; E.ui.modalOpen = true;
     $('mtitle').textContent = '🚐 Bus stanął!'; $('mtext').textContent = 'Silnik zakaszlał i bus stanął na poboczu. Stan techniczny: ' + Math.round(ST.bus.cond) + '%. Co robisz?';
     $('mchoices').innerHTML = '<button data-k="laweta">Laweta i warsztat<small>' + zl(night ? 260 : 180) + ', ok. 50 min, bus naprawiony</small></button>' +
       '<button data-k="sam">Naprawiasz sam<small>55% szans: 40 zł i 40 min; inaczej i tak laweta, drożej i dłużej</small></button>' +
@@ -480,7 +268,7 @@
     $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return;
       const res = Bus.resolve(b.dataset.k, ST.bus, night, rnd);
       cash('serwis', -res.cost); cur.transportCost += res.cost; cur.timeAdj += res.timeAdj; cur.notes.push(...res.notes); ST.bus = res.bus; save(); renderTop();
-      $('modal').hidden = true; modalOpen = false;
+      $('modal').hidden = true; E.ui.modalOpen = false;
       if (res.courier) { renderJob(); } else doDrive(id, true); };
   }
   function doDrive(id, skipRoll) {
@@ -500,7 +288,7 @@
     save(); renderTop();
     const opts = w ? Swiat.aftermathOptions(w, res) : [];
     if (!opts.length) { renderJob(); return; }
-    modalOpen = true;
+    E.ui.modalOpen = true;
     $('mtitle').textContent = 'Co z ' + w.name + '?'; $('mtext').textContent = res.notes[res.notes.length - 1] + ' Rachunek: ' + zl(res.cost) + '. Decyzja szefa kształtuje, jak ekipa cię traktuje.';
     $('mchoices').innerHTML = opts.map(o => '<button data-a="' + o.id + '">' + o.label + '<small>' + o.sub + '</small></button>').join('');
     $('modal').hidden = false;
@@ -509,7 +297,7 @@
       cash('wypadki', out.money); cur.notes.push(out.note);
       if (out.fired) { ST.crew = ST.crew.filter(x => x.id !== w.id); if (out.rep) ST.ratings.push(out.rep); if (cur.helper && cur.helper.id === w.id) cur.helperOn = false; }
       else ST.crew = ST.crew.map(x => x.id === w.id ? out.worker : x);
-      save(); renderTop(); $('modal').hidden = true; modalOpen = false; renderJob(); };
+      save(); renderTop(); $('modal').hidden = true; E.ui.modalOpen = false; renderJob(); };
   }
   function renderJob() {
     const { job, client, step } = cur, s = job.steps[step], night = cur.night;
@@ -547,51 +335,12 @@
     setTimeout(() => { anim = null; apply(opt, accuracy); }, dur);
   }
   function apply(opt, accuracy) {
-    const mods = Czas.mods(cur.night);
-    if (cur.helperOn && cur.helper) {
-      const he = Ekipa.helperEffect(cur.helper, cur.states[cur.helper.id]);
-      const sl = Ekipa.sloppy(cur.helper, cur.states[cur.helper.id], rnd);
-      if (sl) { cur.extraDefects.push(sl); cur.notes.push('🙄 ' + sl.label + '.'); }
-      const fr = Ekipa.moralFriction(cur.helper, opt.id);
-      if (fr) { cur.helper = Object.assign({}, cur.helper, { mood: Math.max(0, cur.helper.mood - fr), grudge: Math.min(100, (cur.helper.grudge || 0) + 3) }); ST.crew = ST.crew.map(x => x.id === cur.helper.id ? cur.helper : x); cur.notes.push('😒 ' + cur.helper.name + ' krzywi się na fuszerkę: „Ja tak nie robię.”'); }
-      if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + he.accBonus));
-      cur.timeAdj -= Math.round(opt.time * (1 - he.timeFactor) * 10) / 10;
-    }
-    cur.tools.forEach(tl => {
-      if (cur.failAt[tl.id] === cur.step && !cur.brokenTools[tl.id]) {
-        cur.brokenTools[tl.id] = true; ST.inv = ST.inv.map(x => x.id === tl.id ? Alledrogo.breakItem(x) : x); cur.timeAdj += 4;
-        cur.extraDefects.push({ label: 'narzędzie „' + tl.brand + '” padło w trakcie roboty', sev: 1.5, vis: 0.5 });
-        cur.notes.push('🔧💥 „' + tl.brand + '” padło w trakcie roboty (kupione ' + (tl.source === 'sklep' ? 'w sklepie' : 'od: ' + tl.sellerName) + '). Dwadzieścia minut w plecy.');
-      }
-    });
-    const tb = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id]));
-    if (opt.skill) accuracy = Math.max(0, Math.min(1, accuracy + tb.acc - mods.accPenalty + Zmeczenie.accMod(ST.fatigue) + Wypalenie.accMod(ST.burnout) + Szkolenia.modsFor(ST.certs, cur.job.id).acc + specM(cur.job.id).acc));
-    if (rnd() < Zmeczenie.nodChance(ST.fatigue)) { cur.extraDefects.push({ label: 'przysnąłeś przy robocie i coś ci umknęło', sev: 2, vis: 0.5 }); cur.notes.push('😴 Zasnąłeś na stojąco. Zmęczenie ' + Math.round(ST.fatigue) + '%. Czas na sen.'); }
-    cur.timeAdj -= Math.round(opt.time * (tb.time + specM(cur.job.id).time) * 10) / 10;
-    cur.picks.push({ stepId: cur.job.steps[cur.step].id, optionId: opt.id, accuracy });
-    cur.time += opt.time; cur.cost += opt.cost;
-    cur.timeAdj += Math.round(opt.time * (Zmeczenie.timeMult(ST.fatigue) * Wypalenie.timeMult(ST.burnout) - 1) * 10) / 10; // zmęczony i wypalony pracuje wolniej
-    // wystawienie na robotę: po połowie kroków wkurzony pomocnik znika
-    if (cur.helperOn && cur.helper && cur.step + 1 === Math.floor(cur.job.steps.length / 2) && Ekipa.walksOut(cur.helper, rnd)) {
-      cur.helperOn = false; cur.timeAdj += 6;
-      cur.extraDefects.push({ label: 'bałagan po ekipie, która zniknęła w trakcie', sev: 1.5, vis: 0.6 });
-      cur.notes.push('🚪 ' + cur.helper.name + ' rzucił robotę w połowie: „Za takie pieniądze to ja nie będę.” Kończysz sam i tracisz pół godziny.');
-      cur.helper = Object.assign({}, cur.helper, { mood: Math.max(0, cur.helper.mood - 10) });
-      ST.crew = ST.crew.map(w => w.id === cur.helper.id ? cur.helper : w);
-    }
-    opt.fx.split(' ').forEach(t => cur.tokens.add(t));
-    if (opt.fx.includes('seal-') || opt.fx === 'tape' || opt.fx === 'glue') cur.tokens.delete('broken'); // przestało kapać
-    cur.step++;
-    if (cur.step >= cur.job.steps.length) { finish(); return; }
-    let sp = Jobs.rollSurprise(cur.job.id, cur.step - 1, rnd);
-    if (!sp && cur.chain && cur.chain.at === cur.step - 1 && rnd() < 0.75) sp = Jobs.getSurprise(cur.job.id, cur.chain.id); // następstwo wcześniejszej decyzji
-    if (cur.chain && cur.chain.at <= cur.step - 1) cur.chain = null;
-    if (sp) { surprise(sp); return; }
-    renderJob();
+    const st = E.applyOption(cur, opt, accuracy);
+    if (st.done) finish(); else if (st.surprise) surprise(st.surprise); else renderJob();
   }
   /* Niespodzianka w trakcie roboty: problem wychodzi dopiero po otwarciu, trzeba wybrać rozwiązanie. */
   function surprise(sp) {
-    modalOpen = true; $('mtitle').textContent = '⚠️ ' + sp.title; $('mtext').textContent = sp.text;
+    E.ui.modalOpen = true; $('mtitle').textContent = '⚠️ ' + sp.title; $('mtext').textContent = sp.text;
     $('mchoices').innerHTML = sp.options.map(o => '<button data-a="' + o.id + '">' + o.label + '<small>' + o.desc + ' · ⏱ ' + Czas.fmtUnits(o.time, cur.night) + (o.cost ? ' · 💰 ' + zl(o.cost) : '') + '</small></button>').join('');
     $('modal').hidden = false;
     $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return;
@@ -599,7 +348,7 @@
       cur.time += o.time; cur.cost += o.cost; o.defects.forEach(d => cur.extraDefects.push({ label: d.label, sev: d.sev, vis: d.vis, hazard: d.hazard || 0 }));
       cur.notes.push('⚠️ ' + sp.title + ': ' + o.label + '.');
       if (o.then) cur.chain = { id: o.then, at: cur.step }; // skutek wyjdzie po następnym kroku
-      $('modal').hidden = true; modalOpen = false; renderJob(); };
+      $('modal').hidden = true; E.ui.modalOpen = false; renderJob(); };
   }
 
   // ---------- mini-gra na wyczucie: zatrzymaj znacznik w zielonej strefie ----------
@@ -626,68 +375,7 @@
 
   // ---------- odbiór ----------
   function finish() {
-    const night = cur.night, mods = Czas.mods(night);
-    const units = Math.max(1, cur.time + cur.timeAdj), minutes = Czas.minutes(units, night), endClock = cur.startClock + minutes;
-    // zegar: koniec zlecenia i ewentualna zmiana miesiąca
-    advanceClock(endClock);
-    const job = Object.assign({}, cur.job, { base: Math.round(cur.job.base * cur.mult), deadline: cur.deadline });
-    const rt = co(), um = cur.umowa || { payMult: 1, satDelta: 0, taxRiskDelta: 0 };
-    const sea = Kalendarz.demandMult(cur.season, cur.job.id) * Sezon.demand(cur.startClock, cur.job.id) * Sezon.pay(cur.startClock), gos = Osiedle.gossipMult(ST.os), cut = 1 - Osiedle.undercut(ST.os, { rating: rt.stars, tier: ST.hq.tier });
-    const payMult = Math.round(rt.payMult * um.payMult * sea * gos * cut * mods.payMult * (cur.dueSpec ? cur.dueSpec.pay : 1) * extraPay(cur.level, cur.job.id) * cur.outfit.pay * 1000) / 1000;
-    const hz = Alledrogo.totalBonus(cur.tools.filter(tl => !cur.brokenTools[tl.id])).hazardMult * mods.hazard * Szkolenia.modsFor(ST.certs, cur.job.id).hazard * specM(cur.job.id).hazard;
-    const helperSat = cur.helperOn && cur.helper ? Ubrania.crewSat(ST.wardrobe, cur.helper.id, ST.hq.up.szyld || 0) : 0;
-    const r = Fuszerka.evaluate(job, cur.picks, cur.client, { time: Math.round(cur.timeAdj), defects: cur.extraDefects, satBonus: rt.satBonus + um.satDelta + cur.outfit.satBonus + helperSat, payMult, hazardMult: hz, attentionMult: mods.attention * cur.outfit.attention });
-    const te = Terminy.evaluate(cur.dueSpec, minutes, r.payout);
-    const comment = Fuszerka.clientComment(cur.client, r, rnd);
-    const claim = Fuszerka.rollClaim(r, rnd);
-    cash('zlecenia', r.payout); cash('materialy', -r.cost);
-    if (te.penalty) { cash('kary', -te.penalty); cur.notes.push('⏰ Spóźniłeś się o ' + Czas.fmtMin(te.lateMin) + ' (termin był do ' + Czas.hm(cur.dueSpec.dueAt) + '). Kara umowna: −' + zl(te.penalty) + '.'); }
-    if (te.bonus) { cash('zdarzenia', te.bonus); cur.notes.push('⏰ Skończone przed czasem. Premia za terminowość: +' + zl(te.bonus) + '.'); }
-    if (cur.dueSpec && te.onTime && !te.bonus) cur.notes.push('⏰ Zdążyłeś na czas (do ' + Czas.hm(cur.dueSpec.dueAt) + ').'); ST.ratings.push(r.stars); ST.done++;
-    if (ST.fav.materials) { const back = Math.round(r.cost * 0.1); cash('materialy', back); if (back) cur.notes.push('📦 Waldek dał zniżkę na materiały: +' + zl(back) + '.'); ST.fav.materials = false; }
-    ST.fin = Finanse.addIncome(ST.fin, r.payout, cur.terms.invoice); ST.fin.tax.risk = Math.min(100, ST.fin.tax.risk + (cur.umowa ? cur.umowa.taxRiskDelta : 0));
-    ST.os = Osiedle.updateGossip(ST.os, { stars: r.stars, gossipy: Osiedle.GOSSIP[cur.client.id], scandal: !!cur.scandal });
-    if (cur.mystery) { const my = Fabula.resolveMystery(r); cash('zdarzenia', my.money); ST.os.gossip = Math.max(0, Math.min(100, ST.os.gossip + my.gossip)); cur.notes.push(my.text); }
-    ST.hist.push({ index: r.index }); ST.hist = ST.hist.slice(-12);
-    let toolWearCost = 0;
-    if (cur.tools.length) {
-      const ids = cur.tools.map(tl => tl.id), beforeT = ST.inv.filter(it => ids.indexOf(it.id) >= 0);
-      ST.inv = ST.inv.map(it => ids.indexOf(it.id) >= 0 ? Alledrogo.wear(it) : it);
-      toolWearCost = Stawka.toolWear(beforeT, ST.inv.filter(it => ids.indexOf(it.id) >= 0), Alledrogo.value);
-      ST.inv.filter(it => ids.indexOf(it.id) >= 0 && it.status === 'zepsute' && !cur.brokenTools[it.id]).forEach(it => cur.notes.push('🔧 „' + it.brand + '” po tej robocie przestało działać. Tak to bywa z używanym sprzętem.'));
-    }
-    if (night && cur.helper && cur.helperPaid) { ST.crew = ST.crew.map(w => w.id === cur.helper.id ? Object.assign({}, w, { mood: Math.max(0, w.mood - mods.moodHit) }) : w); cur.notes.push('😴 Praca w nocy zmęczyła ekipę (nastrój −' + mods.moodHit + ').'); }
-    const dl = Alledrogo.tickOrders(ST.orders, rnd); ST.orders = dl.orders;
-    dl.arrived.forEach(a => {
-      if (a.lost) { const rf = Alledrogo.refundLost(a.order); cash('zakupy', rf.refund); ST.flash.push('📦 Paczka z „' + a.order.brand + '” zaginęła. Sprzedawca oddał ' + zl(rf.refund) + '.'); }
-      else { ST.inv.push(a.item); ST.flash.push('📦 Dotarła paczka: „' + a.item.brand + '”. Rozpakuj w Alledrogo.'); }
-    });
-    dl.events.filter(e => e.type === 'damaged').forEach(e => ST.flash.push(e.text));
-    ST.market = Alledrogo.refresh(ST.market, ST.day); applyToolSale();
-    const th = Siedziba.resolveTheft(ST.hq, rnd, Alledrogo.inventoryValue(ST.inv));
-    if (th) {
-      ST.hq = th.hq; cash('kradziez', -th.net);
-      if (th.itemStolen && ST.inv.length) { const top = ST.inv.slice().sort((a, b) => Alledrogo.value(b) - Alledrogo.value(a))[0]; ST.inv = ST.inv.filter(x => x.id !== top.id); cur.notes.push('🕵️ Złodziej zabrał też „' + top.brand + '”.'); }
-      cur.notes.push('🕵️ W nocy ktoś włamał się do siedziby: strata ' + zl(th.loss) + (th.recovered ? ', ale kamery pomogły odzyskać ' + zl(th.recovered) : '') + '.' + (th.cameras ? '' : ' Kamery i mocniejsze drzwi by pomogły.'));
-    }
-    ST.crew = Swiat.tickWorkers(ST.crew); Swiat.tickWorld(ST.world, 0); ST.where = cur.district || ST.where;
-    if (cur.i >= 0) { const prev = ST.best[cur.i];
-      if (!prev || r.stars > prev.stars || (r.stars === prev.stars && r.index < prev.index)) ST.best[cur.i] = { stars: r.stars, index: r.index };
-      ST.unlocked = Math.max(ST.unlocked, cur.i + 2); }
-    ST.waited = 0;
-    { const a0 = specM(cur.job.id).level; ST.xp = Spec.addXp(ST.xp, cur.job.id, r.stars, !!cur.level.contract); const a1 = specM(cur.job.id).level;
-      if (a1 > a0) cur.notes.push('🎓 Specjalizacja „' + Spec.AREAS[Spec.areaOf(cur.job.id)].name + '”: poziom ' + a1 + '!'); }
-    if (cur.helperOn && cur.helper) ST.crew = ST.crew.map(x => x.id === cur.helper.id ? ZlecEkipy.addXp(x, cur.job.id, r.stars, true) : x);
-    { const aj = Ubrania.afterJob(ST.wardrobe, cur.job.id, rnd); ST.wardrobe = aj.w; cur.notes.push(...aj.notes); if (cur.helperOn && cur.helper) ST.wardrobe = Ubrania.uniformAfterJob(ST.wardrobe, cur.helper.id, cur.job.id); }
-    if (cur.level.contract) { const rs = Kontrakty.recordStage(KT(), r, r.payout); ST.contracts = rs.state; cur.notes.push('📋 Kontrakt „' + cur.level.contract.title + '”: etap ' + (cur.level.contract.stage + 1) + '/' + cur.level.contract.of + ' zakończony (' + stars(r.stars) + ', transza ' + zl(r.payout) + ').' + (rs.last ? ' To był ostatni etap, czas na odbiór.' : '')); }
-    { const before = Klienci.level(Klienci.get(ST.rel, cur.client.id).trust); ST.rel = Klienci.afterJob(ST.rel, cur.client.id, r.stars, Osiedle.GOSSIP[cur.client.id]); const after = Klienci.level(Klienci.get(ST.rel, cur.client.id).trust);
-      if (before !== after) cur.notes.push('🤝 ' + cur.client.name + ': teraz „' + after + '” (zaufanie ' + Klienci.get(ST.rel, cur.client.id).trust + ').'); }
-    ST.fatigue = Zmeczenie.gain(ST.fatigue, minutes, night); ST.burnout = Wypalenie.afterJob(ST.burnout, ST.fatigue, night);
-    if (claim) ST.claims.push(Object.assign({ client: cur.client.name, due: ST.done + 1 }, claim));
-    // ile zostaje po wszystkich kosztach i stawka godzinowa
-    const eco = Stawka.jobEconomics({ payout: r.payout + te.bonus, penalty: te.penalty, materials: r.cost, transport: cur.transportCost, helper: cur.helperPaid, tools: toolWearCost, tax: cur.terms.invoice ? r.payout * Umowa.TAX_RATE : 0,
-      overhead: Stawka.overheadShare(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)), minutes });
-    ST.ledger = Ksiega.noteJob(ST.ledger, bookKey(), eco.net, eco.hours);
+    const { night, mods, minutes, endClock, rt, um, sea, gos, cut, payMult, r, te, comment, eco } = E.settleJob(cur);
     save(); renderTop();
     const bar = (v, max) => '<span class="b"><i style="width:' + Math.min(100, v / max * 100) + '%"></i></span>';
     const defs = r.defects.length ? r.defects.slice().sort((a, b) => b.sev - a.sev).map(d => {
@@ -716,7 +404,6 @@
     window.__z.last = r; window.__z.eco = eco;
   }
 
-  let modalOpen = false;
   // ---------- Alledrogo ----------
   let alleTab = 'oferty', alleMsg = '', alleAsk = {};
   function itemName(it) { return Alledrogo.TYPES[it.type].name + ' „' + it.brand + '”'; }
@@ -780,14 +467,14 @@
       crew: ST.crew.map(w => w.id), rivalPower: ST.os.rival.power, accountant: ST.fin.tax.accountant, owedContact: Osiedle.owedContact(ST.os), flags: ST.story.flags, fusz: avg };
   }
   function checkStory() {
-    if (modalOpen) return false;
+    if (E.ui.modalOpen) return false;
     const ctx = storyCtx(), b = Fabula.due(ST.story, ctx); if (!b) return false;
-    modalOpen = true; $('mtitle').textContent = b.title; $('mtext').textContent = b.text;
+    E.ui.modalOpen = true; $('mtitle').textContent = b.title; $('mtext').textContent = b.text;
     $('mchoices').innerHTML = b.choices.map((c, i) => '<button data-i="' + i + '" ' + (Fabula.choiceAvailable(c, ctx) ? '' : 'disabled') + '>' + c.label + '<small>' + c.sub + '</small></button>').join('');
     $('modal').hidden = false;
     $('mchoices').onclick = e => { const bt = e.target.closest('button'); if (!bt || bt.disabled) return;
       const r = Fabula.resolve(ST.story, b.id, +bt.dataset.i); ST.story = r.story; applyEffects(r.effects, ctx);
-      $('modal').hidden = true; modalOpen = false; save(); renderTop();
+      $('modal').hidden = true; E.ui.modalOpen = false; save(); renderTop();
       if (r.effects.finale) showEnding(); else renderMenu(); };
     return true;
   }
@@ -809,9 +496,9 @@
   }
   function showEnding() {
     const en = Fabula.ending(storyCtx()); ST.story.ending = en.id; save();
-    modalOpen = true; $('mtitle').textContent = 'Zakończenie: ' + en.title; $('mtext').textContent = en.text + ' (Możesz grać dalej, historia się nie kończy.)';
+    E.ui.modalOpen = true; $('mtitle').textContent = 'Zakończenie: ' + en.title; $('mtext').textContent = en.text + ' (Możesz grać dalej, historia się nie kończy.)';
     $('mchoices').innerHTML = '<button data-a="ok">Graj dalej</button>'; $('modal').hidden = false;
-    $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; renderMenu(); };
+    $('mchoices').onclick = () => { $('modal').hidden = true; E.ui.modalOpen = false; renderMenu(); };
   }
   function renderStory() {
     ALL.forEach(x => $(x).hidden = true); $('story').hidden = false;
@@ -978,42 +665,16 @@
   // ---------- dzień wypłaty ----------
   let PAY = {}, sidePay = null, billText = '';
   function notice(title, text, after) {
-    modalOpen = true; $('mtitle').textContent = title; $('mtext').textContent = text; $('mchoices').innerHTML = '<button data-a="ok">OK</button>'; $('modal').hidden = false;
-    $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; if (after) after(); };
+    E.ui.modalOpen = true; $('mtitle').textContent = title; $('mtext').textContent = text; $('mchoices').innerHTML = '<button data-a="ok">OK</button>'; $('modal').hidden = false;
+    $('mchoices').onclick = () => { $('modal').hidden = true; E.ui.modalOpen = false; if (after) after(); };
   }
-  function weekly() {
-    const notes = [];
-    if (ST.oc.active) { const pr = Ubezp.premium(ST.oc); cash('ubezpieczenie', -pr); notes.push('🛡️ Składka OC: −' + zl(pr) + '.'); }
-    ST.oc = Ubezp.decay(ST.oc);
-    const s = Finanse.settle(ST.fin, Math.floor(ST.money)); ST.fin = s.fin; cash('odsetki', -s.paid); if (s.paid) notes.push('💳 Raty pożyczek: −' + zl(s.paid) + '.');
-    ST.fin.loans.forEach(l => { const c = Finanse.collection(l); if (c) { const loss = Math.round(ST.money * c.moneyPct); cash('kary', -loss); notes.push(c.text + (loss ? ' −' + zl(loss) + '.' : '')); l.missed = 1; if (l.lender === 'gienek') ST.os.gossip = Math.max(0, ST.os.gossip - 4); } });
-    const tp = Finanse.payTax(ST.fin, ST.money); ST.fin = tp.fin; cash('podatki', -tp.paid); if (tp.paid) notes.push('🧾 Podatek od faktur: −' + zl(tp.paid) + '.');
-    const au = Finanse.rollAudit(ST.fin, { cover: !!ST.fav.audit, force: ST.forceAudit }, rnd); ST.fin = au.fin; ST.forceAudit = false;
-    if (au.audit) { cash('kary', -au.audit.penalty); notes.push(au.audit.text); ST.os.gossip = Math.max(0, ST.os.gossip - 5); ST.fav.audit = false; }
-    ST.fin = Finanse.decayRisk(ST.fin);
-    const ac = Finanse.upkeep(ST.fin); if (ac) { cash('utrzymanie', -ac); notes.push('Księgowa: −' + zl(ac) + '.'); }
-    const rv = Osiedle.tickRival(ST.os, { rating: co().stars, tier: ST.hq.tier, crew: ST.crew }, rnd); ST.os = rv.os;
-    rv.events.forEach(ev => {
-      if (ev.type === 'poach') { const w = ST.crew.find(x => x.id === ev.id); if (w) { ST.crew = ST.crew.filter(x => x.id !== ev.id); notes.push('🦈 ' + ST.os.rival.name + ' podkupił ' + w.name + '. Niezadowoleni odchodzą tam, gdzie płacą lepiej.'); } }
-      if (ev.type === 'sabotage') { cash('kary', -ev.cost); notes.push('💥 Ktoś pociął opony w busie i pomazał szyld. Rachunek: ' + zl(ev.cost) + '. Wszyscy wiedzą, kto.'); }
-    });
-    return notes;
-  }
-  let weeklyNotes = [];
   function startPayday(forced) {
     Dzwieki.play('cash');
-    weeklyNotes = weekly();
-    const up = Siedziba.effects(ST.hq).upkeep, tn = Siedziba.TIERS[ST.hq.tier].name;
-    if (!ST.crew.length) {
-      ST.nextPay = ST.done + Ekipa.PAYDAY_EVERY; const paid = Math.min(Math.floor(ST.money), up); cash('utrzymanie', -paid); save(); renderTop();
-      if (paid > 0 || weeklyNotes.length) notice('Rozliczenie tygodnia', (paid > 0 ? tn + ': ' + zl(paid) + ' za utrzymanie siedziby. ' : '') + weeklyNotes.join(' '), renderMenu); else renderMenu();
-      return;
-    }
-    billText = (up ? 'Utrzymanie siedziby (' + tn + '): −' + zl(Math.min(Math.floor(ST.money), up)) + '. ' : '') + weeklyNotes.join(' ') + ' '; cash('utrzymanie', -up);
-    ALL.forEach(x => $(x).hidden = true); $('payday').hidden = false;
-    sidePay = Ekipa.sideGigs(ST.crew, rnd); cash('fuchy', sidePay.total); save(); renderTop();
-    PAY = Ekipa.defaultPay(ST.crew, Math.floor(ST.money));
-    renderPayday();
+    const p = E.startPayday();
+    if (p.kind === 'simple') { notice(p.title, p.text, renderMenu); return; }
+    if (p.kind === 'none') { renderMenu(); return; }
+    billText = p.billText; sidePay = p.sidePay; PAY = p.pay;
+    ALL.forEach(x => $(x).hidden = true); $('payday').hidden = false; renderPayday();
   }
   function renderPayday() {
     const spent = Object.values(PAY).reduce((a, b) => a + b, 0), left = Math.floor(ST.money) - spent;
@@ -1040,42 +701,15 @@
     };
     $('doPay').onclick = confirmPay;
   }
-  const rl = a => a[Math.floor(rnd() * a.length)];
   function confirmPay() {
-    const res = Ekipa.applyPay(ST.crew, PAY, { patienceBonus: Ubrania.crewMood(ST.wardrobe, ST.crew) + Siedziba.effects(ST.hq).comfort * 0.5 - Kalendarz.moodPenalty(Czas.season(ST.clock), Siedziba.effects(ST.hq).comfort) }); cash('pensje', -res.spent); ST.crew = res.workers;
-    const lines = res.details.map(d => {
-      const w = ST.crew.find(x => x.id === d.id);
-      const weaker = ST.crew.filter(o => o.id !== d.id && o.skill < w.skill && (PAY[o.id] || 0) > (PAY[d.id] || 0))[0];
-      let say = d.bonus > 0 ? rl(['„Szef ma głowę do ludzi!”', '„No, to się nazywa wypłata.”']) : d.shortfall > 0 ? rl(['„To ma być wypłata?!”', '„Gdzie reszta? Mam rodzinę.”', '„Policzę, ile mi wisisz, i zapamiętam.”']) : '„Zgadza się, dziękuję.”';
-      if (d.parts.envy < 0 && weaker) say += ' „A czemu ' + weaker.name + ' dostał więcej?”';
-      return '<div class="def"><span><b>' + w.em + ' ' + w.name + '</b> ' + Ekipa.moodEmoji(d.mood) + ' ' + (d.delta >= 0 ? '+' : '') + d.delta + '<br><span style="color:var(--muted)">' + say + '</span></span><span class="tag ' + (d.delta >= 0 ? 'hid' : 'vis') + '">' + zl(d.paid) + '</span></div>'; });
-    // odejścia
-    const left = ST.crew.filter(Ekipa.quits);
-    left.forEach(w => { lines.push('<div class="banner">🚪 ' + w.name + ' odchodzi i opowiada po osiedlu, że jesteś kombinatorem. Reputacja spada.</div>'); ST.ratings.push(2); });
-    ST.crew = ST.crew.filter(w => !Ekipa.quits(w));
-    ST.nextPay = ST.done + Ekipa.PAYDAY_EVERY; ST.lastPayDone = ST.done; save(); renderTop();
+    const res = E.confirmPay(PAY);
+    const lines = res.lines.map(d => '<div class="def"><span><b>' + d.em + ' ' + d.name + '</b> ' + Ekipa.moodEmoji(d.mood) + ' ' + (d.delta >= 0 ? '+' : '') + d.delta + '<br><span style="color:var(--muted)">' + d.say + '</span></span><span class="tag ' + (d.delta >= 0 ? 'hid' : 'vis') + '">' + zl(d.paid) + '</span></div>')
+      .concat(res.quits.map(nm => '<div class="banner">🚪 ' + nm + ' odchodzi i opowiada po osiedlu, że jesteś kombinatorem. Reputacja spada.</div>'));
     $('payday').innerHTML = '<h2 style="font-size:1.5rem;text-transform:uppercase">Po wypłacie</h2><div class="defs">' + lines.join('') + '</div><button class="primary" id="payOk">Dalej</button>';
     $('payOk').onclick = renderMenu;
   }
 
   // ---------- upominanie się ----------
-  function askDemand(w, d) {
-    modalOpen = true;
-    $('mtitle').textContent = w.name + ' się upomina'; $('mtext').textContent = d.text;
-    const pay = Math.min(Math.floor(ST.money), d.amount);
-    $('mchoices').innerHTML = '<button data-a="y">Daj ' + zl(pay) + (d.kind === 'zaleglosc' ? ' na poczet zaległości' : ' zaliczki') + '<small>nastrój +12' + (pay < d.amount ? ' (to wszystko, co masz)' : '') + '</small></button><button data-a="n">Odmów<small>nastrój −' + Math.round(12 * w.greed) + ', ryzyko, że nie przyjdzie</small></button>';
-    $('modal').hidden = false;
-    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return;
-      const yes = b.dataset.a === 'y'; if (yes) cash('pensje', -pay);
-      ST.crew = ST.crew.map(x => x.id === w.id ? Ekipa.answerDemand(x, yes, pay) : x);
-      ST.demandAt[w.id] = ST.done; save(); $('modal').hidden = true; modalOpen = false; renderMenu(); };
-  }
-  function checkDemands() {
-    if (modalOpen) return false;
-    for (const w of ST.crew) { const d = Ekipa.demand(w);
-      if (d && ST.done - (ST.demandAt[w.id] == null ? -9 : ST.demandAt[w.id]) >= 2) { askDemand(w, d); return true; } }
-    return false;
-  }
   /* Raport za zakończony miesiąc: plus, koszty po kategoriach, stawka godzinowa. */
   function monthReportHTML(key) {
     const m = monthSummary(key), rows = Object.entries(m.cats).filter(([, v]) => v).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
@@ -1085,19 +719,12 @@
       '<div class="erow"><span>Zlecenia: ' + m.jobs + ' · przepracowane ' + Czas.fmtMin(m.hours * 60) + '</span><b class="' + (m.perHour >= 0 ? 'pos' : 'neg') + '">' + signed(m.perHour) + '/h</b></div>' +
       (m.invest || m.debt ? '<div class="hint">Poza plusem: inwestycje ' + signed(m.invest) + ', dług ' + signed(m.debt) + '.</div>' : '') + '</div>';
   }
-  function showMonthReport(key) {
-    modalOpen = true; const m = monthSummary(key);
-    $('mtitle').textContent = 'Podsumowanie: ' + Czas.monthName(key);
-    $('mtext').innerHTML = (m.plus >= 0 ? 'Miesiąc na plusie. ' : 'Miesiąc na minusie. ') + 'Stawka po wszystkich kosztach: <b>' + signed(m.perHour) + '/h</b> (' + m.jobs + ' zlec.).' + monthReportHTML(key);
-    $('mchoices').innerHTML = '<button data-a="ok">Dalej</button>'; $('modal').hidden = false;
-    $('mchoices').onclick = () => { $('modal').hidden = true; modalOpen = false; save(); renderMenu(); };
-  }
   function nextEvent() {
-    if (modalOpen) return;
+    if (E.ui.modalOpen) return;
     if (collectCrew()) return;
     if (!ST.pendingMonths.length && checkYear()) return;
     if (checkContractFinal()) return;
-    if (ST.pendingMonths.length) { showMonthReport(ST.pendingMonths.shift()); return; }
+    if (checkMonthReport()) return;
     if (ST.done >= ST.nextPay) { startPayday(true); return; }
     if (checkClaims()) return;
     if (checkDemands()) return;
@@ -1105,30 +732,8 @@
   }
 
   // ---------- reklamacje po tygodniu ----------
-  function checkClaims() {
-    if (modalOpen) return false;
-    const k = ST.claims.findIndex(c => c.due <= ST.done);
-    if (k < 0) return false;
-    const c = ST.claims[k]; modalOpen = true;
-    const acc = c.kind === 'wypadek';
-    $('mtitle').textContent = acc ? 'Wypadek!' : 'Reklamacja po tygodniu';
-    $('mtext').textContent = acc
-      ? c.client + ' dzwoni z oddziału ratunkowego: „' + c.defect + '”. Ktoś musi za to odpowiedzieć.'
-      : c.client + ' dzwoni: „Panie majster, wróciło. ' + c.defect[0].toUpperCase() + c.defect.slice(1) + '.”';
-    const pay0 = Math.min(ST.money, c.amount), cvr = Ubezp.cover(ST.oc, { kind: c.kind, amount: pay0 }), pay = cvr.you;
-    $('mchoices').innerHTML =
-      '<button data-a="pay">' + (acc ? 'Zapłać odszkodowanie' : 'Napraw na własny koszt') + '<small>−' + zl(pay) + (cvr.insurer ? ' (OC pokrywa ' + zl(cvr.insurer) + ')' : '') + (pay0 < c.amount ? ' (wszystko, co masz)' : '') + '</small></button>' +
-      '<button data-a="ignore">' + (acc ? 'Zniknij na tydzień' : 'Zignoruj, nie odbieraj telefonu') + '<small>reputacja −' + (acc ? 2 : 1) + ' ★, kasa −' + (acc ? 30 : 0) + '%</small></button>';
-    $('modal').hidden = false;
-    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return;
-      ST.claims.splice(k, 1);
-      if (b.dataset.a === 'pay') { cash('reklamacje', -pay); ST.oc = cvr.oc; }
-      else { ST.ratings.push(1); if (acc) { ST.ratings.push(1); cash('reklamacje', -ST.money * 0.3); } }
-      save(); $('modal').hidden = true; modalOpen = false; renderMenu(); };
-    return true;
-  }
 
-  $('reset').onclick = () => { if ($('reset').dataset.s) { ST = withMeta(fresh()); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; }, 3000); } };
+  $('reset').onclick = () => { if ($('reset').dataset.s) { E.replace(withMeta(fresh())); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od zera'; }, 3000); } };
 
   // pikselizacja: emoji i znaczniki @postać zamieniane na sprite'y, sceny SVG na obrazy w małej rozdzielczości
   (function () {
@@ -1137,11 +742,21 @@
     new MutationObserver(() => requestAnimationFrame(run)).observe(document.body, { childList: true, subtree: true });
     run();
   })();
-  window.__z = { renderPlan, Ubrania, renderWardrobe, get META() { return META; }, renderPrestige, checkYear, Spec, Przetargi, ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
+  window.__z = { E, renderPlan, Ubrania, renderWardrobe, get META() { return META; }, renderPrestige, checkYear, Spec, Przetargi, ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
   // dźwięki: dotyk przycisków, otwarcie okna, przełącznik w pasku zegara
   Dzwieki.bind(document);
   new MutationObserver(() => { if (!$('modal').hidden) Dzwieki.play('modal'); }).observe($('modal'), { attributes: true, attributeFilter: ['hidden'] });
   const snd = $('snd'); const paintSnd = () => { snd.textContent = Dzwieki.muted() ? '🔇' : '🔊'; snd.setAttribute('aria-label', Dzwieki.muted() ? 'Włącz dźwięk' : 'Wyłącz dźwięk'); };
   snd.onclick = () => { Dzwieki.toggle(); paintSnd(); }; paintSnd();
+  // okna wyboru z silnika jako dane: tytuł, tekst, wiersze, przyciski
+  const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  function showPrompt(p) {
+    $('mtitle').textContent = p.title;
+    $('mtext').innerHTML = esc(p.text) + (p.rows ? '<div class="econ">' + p.rows.map(r => '<div class="erow"><span>' + (r.you ? '<b>' + esc(r.label) + '</b>' : esc(r.label)) + '</span><b class="' + (r.pos ? 'pos' : 'neg') + '">' + esc(r.value) + '</b></div>').join('') + '</div>' : '') + (p.tail ? ' ' + esc(p.tail) : '') + (p.kind === 'miesiac' ? monthReportHTML(p.key) : '');
+    $('mchoices').innerHTML = p.choices.map(c => '<button data-id="' + esc(c.id) + '" data-a="' + esc(c.id) + '">' + esc(c.label) + (c.sub ? '<small>' + esc(c.sub) + '</small>' : '') + '</button>').join('');
+    $('modal').hidden = false;
+    $('mchoices').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('modal').hidden = true; E.answer(b.dataset.id); };
+  }
+  E.V = { menu: () => renderMenu(), top: () => renderTop(), prompt: showPrompt, screen: n => { if (n === 'prestige') renderPrestige(); } };
   renderMenu();
 })();

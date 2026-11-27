@@ -92,4 +92,4 @@ Pełna pętla zleceń z niespodziankami, nocą i terminami, ekipa i siedziba, ko
 4. Przeportować `czas` jako pierwszy moduł; jeśli parytet jest zielony, G0 zamknięty.
 
 ## Status R0
-Część 1 zrobiona: harness headless (jsdom) i scenariusze startowe. Do zrobienia: wydzielenie `silnik.js` z `zlecenia.js`, scenariusze kontraktów, przetargów, ekipy, roku i szafy.
+ZROBIONE (silnik bez DOM). `silnik.js` ma całą pętlę rozgrywki: zlecenie od `newJob` do `settleJob`, czekanie i telefony, ekipę, kontrakty, przetargi, rok i prestiż, szafę, wypłatę, reklamacje. Bramka spełniona: `tests/silnik.test.js` przechodzi ścieżki w czystym Node (bez DOM), `tests/scenariusze.test.js` te same przez interfejs w jsdom. Poza silnikiem zostały ekrany i komendy Alledrogo, siedziby, finansów, osiedla, fabuły: do przeniesienia razem z portem G4 (wzorzec: `ask` + dane zamiast HTML).
