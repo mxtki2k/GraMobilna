@@ -1,0 +1,6 @@
+{
+  "name": "gra-mobilna",
+  "private": true,
+  "description": "Janusz Biznesu: prototyp HTML/JS. Zależność tylko do testów headless (jsdom).",
+  "devDependencies": { "jsdom": "^26.0.0" }
+}

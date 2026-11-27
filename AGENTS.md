@@ -30,3 +30,7 @@ Napisz `roboty/<id>.rob` (szablon: `node tools/nowa_robota.js --szablon`), uruch
 1. Mała zmiana → test → zielone → commit.
 2. Zmiana trudności lub generatora → uruchom statystyki z testów i porównaj przed/po.
 3. Nic poza zakresem MVP z `PLAN.md` bez zgody człowieka.
+
+## Dźwięki i testy headless
+- `prototypes/janusz/dzwieki.js`: dźwięki syntezowane w WebAudio (bez plików), przycisk 🔊/🔇 w pasku zegara, ustawienie w `zlecenia_dzwiek`. Test: `tests/dzwieki.test.js`.
+- `tools/headless.js` + `tests/scenariusze.test.js`: prawdziwy `zlecenia.html` w jsdom z deterministycznym RNG (R0, część 1: siatka bezpieczeństwa przed wydzieleniem `silnik.js`). Wymaga `npm install` (jsdom); bez niego test się pomija.

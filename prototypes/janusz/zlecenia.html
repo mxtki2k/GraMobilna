@@ -158,6 +158,8 @@
   .stat b.pos, .pos { color: var(--ok); } .stat b.neg, .neg { color: #ff7b72; }
   .actbar { height: 14px; background: #000; padding: 2px; } .actbar i { display: block; height: 100%; background: #ffc300; }
   .clockbar { background: #26303a; color: #ffe27a; padding: 6px 10px; text-align: center; font-family: var(--vt); font-size: 22px; box-shadow: 0 0 0 3px #000; }
+  .clockbar { position: relative; }
+  .snd { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: transparent; border: 0; font-size: 18px; color: inherit; padding: 4px 8px; cursor: pointer; }
   .clockbar.night { background: #0e1630; color: #9fc2ff; }
   .lvl.nightlvl { background: #141b33; }
   .chip.warn { color: #ff7b72; } .chip.due { color: #ffe27a; }
@@ -181,7 +183,7 @@
     <div class="stat"><small>⭐ Ocena firmy</small><b id="rep">–</b></div>
     <div class="stat"><small id="plusl">Plus w miesiącu</small><b id="plus">0 zł</b></div>
   </div>
-  <div class="clockbar" id="clockbar"><span id="clock"></span></div>
+  <div class="clockbar" id="clockbar"><span id="clock"></span><button id="snd" type="button" class="snd">🔊</button></div>
   <section id="menu" class="list"></section>
   <section id="job" hidden class="card"></section>
   <section id="result" hidden class="card"></section>
@@ -230,4 +232,5 @@
 <script src="osiedle.js"></script>
 <script src="fabula.js"></script>
 <script src="alledrogo.js"></script>
+<script src="dzwieki.js"></script>
 <script src="zlecenia.js"></script>

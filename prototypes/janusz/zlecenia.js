@@ -377,6 +377,7 @@
   const extraPay = (l, jobId) => Rok.bonuses(META).payMult * Szkolenia.modsFor(ST.certs, jobId).pay * specM(jobId).pay * Klienci.payMult(Klienci.get(ST.rel, l.client).trust) * (l.priceMult || 1);
   const perHourTxt = e => 'ok. ' + signed(e.perHour) + '/h';
   function startJob(i, call) {
+    Dzwieki.play(call ? 'call' : 'start');
     const l = call || LEVELS[i], night = l.slot === 'noc';
     cur = { i: call ? -1 : i, level: l, job: JOBS[l.job], client: CLIENTS[l.client], mult: l.mult, step: 0, picks: [], tokens: new Set(['broken']), time: 0, cost: 0,
       helper: null, helperOn: false, helperPaid: 0, timeAdj: 0, extraDefects: [], notes: [], states: {}, night, intro: l.intro || JOBS[l.job].intro, transportCost: 0, scandal: false };
@@ -469,6 +470,7 @@
   }
   /* Awaria busa w drodze: laweta, naprawa samemu albo kurier. */
   function breakdown(id) {
+    Dzwieki.play('crash');
     const night = cur.night; modalOpen = true;
     $('mtitle').textContent = '🚐 Bus stanął!'; $('mtext').textContent = 'Silnik zakaszlał i bus stanął na poboczu. Stan techniczny: ' + Math.round(ST.bus.cond) + '%. Co robisz?';
     $('mchoices').innerHTML = '<button data-k="laweta">Laweta i warsztat<small>' + zl(night ? 260 : 180) + ', ok. 50 min, bus naprawiony</small></button>' +
@@ -538,6 +540,7 @@
   function perform(opt, accuracy) {
     const a = Scenes.actionFor(cur.job.id, cur.step), dur = opt.id === 'dobrze' ? 1500 : opt.id === 'skrot' ? 950 : 520;
     anim = { kind: a.kind, at: a.at, t0: performance.now(), dur };
+    Dzwieki.tool(a.kind, dur);
     const box = $('opts'); if (box) box.innerHTML = '<div class="hint" style="text-align:center">' + (ACTION_TXT[a.kind] || 'Pracujesz…') + ' <b>' + opt.label + '</b></div><div class="actbar"><i id="actbar" style="width:0"></i></div>';
     const tick = () => { if (!anim) return; const t = Math.min(1, (performance.now() - anim.t0) / anim.dur), bar = $('actbar'); if (bar) bar.style.width = t * 100 + '%'; document.querySelectorAll('canvas.pxscene[data-job]').forEach(paintScene); if (t < 1) requestAnimationFrame(tick); };
     requestAnimationFrame(tick);
@@ -708,6 +711,7 @@
       '<div class="hint">Zadowolenie klienta: ' + r.satisfaction + '%' + (r.late ? ' (spóźnienie)' : '') + '. Szansa reklamacji: ' + Math.round(r.claim.chance * 100) + '%. Ocena firmy ' + rt.stars.toFixed(1).replace('.', ',') + ' ★ · mnożnik wypłaty ×' + payMult.toFixed(2).replace('.', ',') + ' (firma ×' + rt.payMult.toFixed(2).replace('.', ',') + ', umowa ×' + um.payMult.toFixed(2).replace('.', ',') + ', sezon ×' + sea.toFixed(2).replace('.', ',') + ', plotki ×' + gos.toFixed(2).replace('.', ',') + (cut < 1 ? ', rywal ×' + cut.toFixed(2).replace('.', ',') : '') + (night ? ', noc ×' + String(mods.payMult).replace('.', ',') : '') + ').</div>' +
       econHtml +
       '<button class="primary" id="next">Dalej</button>' + (cur.i >= 0 ? '<button id="again" style="background:transparent">Spróbuj to zlecenie jeszcze raz</button>' : '');
+    Dzwieki.result(r.stars); if (r.payout > 0) setTimeout(() => Dzwieki.play('coin'), 700);
     $('next').onclick = () => renderMenu(); if ($('again')) $('again').onclick = () => startJob(cur.i);
     window.__z.last = r; window.__z.eco = eco;
   }
@@ -997,6 +1001,7 @@
   }
   let weeklyNotes = [];
   function startPayday(forced) {
+    Dzwieki.play('cash');
     weeklyNotes = weekly();
     const up = Siedziba.effects(ST.hq).upkeep, tn = Siedziba.TIERS[ST.hq.tier].name;
     if (!ST.crew.length) {
@@ -1133,5 +1138,10 @@
     run();
   })();
   window.__z = { renderPlan, Ubrania, renderWardrobe, get META() { return META; }, renderPrestige, checkYear, Spec, Przetargi, ZlecEkipy, dispatchCrew, collectCrew, ensureBoard, Kontrakty, get ST() { return ST; }, get cur() { return cur; }, renderAlle, renderHq, renderFin, renderOs, renderStory, checkStory, weekly, co, startJob, renderMenu, renderCrew, startPayday };
+  // dźwięki: dotyk przycisków, otwarcie okna, przełącznik w pasku zegara
+  Dzwieki.bind(document);
+  new MutationObserver(() => { if (!$('modal').hidden) Dzwieki.play('modal'); }).observe($('modal'), { attributes: true, attributeFilter: ['hidden'] });
+  const snd = $('snd'); const paintSnd = () => { snd.textContent = Dzwieki.muted() ? '🔇' : '🔊'; snd.setAttribute('aria-label', Dzwieki.muted() ? 'Włącz dźwięk' : 'Wyłącz dźwięk'); };
+  snd.onclick = () => { Dzwieki.toggle(); paintSnd(); }; paintSnd();
   renderMenu();
 })();

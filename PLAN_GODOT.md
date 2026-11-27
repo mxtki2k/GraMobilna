@@ -90,3 +90,6 @@ Pełna pętla zleceń z niespodziankami, nocą i terminami, ekipa i siedziba, ko
 2. Napisać `Rng`, `Mathx.round_js`, `Data` (ładowanie JSON), runner parytetu z raportem pierwszej różnicy.
 3. Napisać `tools/golden.js` i `tools/export_dane.js`; wygenerować złote dane dla `czas`, `ksiega`, `stawka`.
 4. Przeportować `czas` jako pierwszy moduł; jeśli parytet jest zielony, G0 zamknięty.
+
+## Status R0
+Część 1 zrobiona: harness headless (jsdom) i scenariusze startowe. Do zrobienia: wydzielenie `silnik.js` z `zlecenia.js`, scenariusze kontraktów, przetargów, ekipy, roku i szafy.
