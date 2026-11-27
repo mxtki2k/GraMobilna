@@ -20,13 +20,13 @@
   let sceneFrame = 0, sceneTokens = new Set(['broken']);
   function hqOpts() { return { tier: ST.hq.tier, up: ST.hq.up, assets: ST.hq.assets, season: Czas.season(ST.clock), tools: ST.inv.length, night: Czas.isNight(ST.clock) }; }
   function paintScene(cv) {
-    const night = cv.dataset.scene === 'hq' ? Czas.isNight(ST.clock) : !!(cur && cur.night);
+    const night = cv.dataset.scene === 'hq' ? Czas.isNight(ST.clock) : cv.dataset.night ? cv.dataset.night === '1' : !!(cur && cur.night);
     let grid = cv.dataset.scene === 'hq' ? Scenes.hq(hqOpts(), sceneFrame) : Scenes.job(cv.dataset.job, sceneTokens, sceneFrame, { night });
     if (anim && cv.dataset.scene !== 'hq') grid = Scenes.action(grid, anim.kind, Math.min(1, (performance.now() - anim.t0) / anim.dur), anim.at);
     Scenes.draw(cv, grid, { night });
   }
   function applyScene(root, tokens) { sceneTokens = tokens; root.querySelectorAll('canvas.pxscene').forEach(paintScene); }
-  setInterval(() => { sceneFrame = (sceneFrame + 1) % 8; document.querySelectorAll('canvas.pxscene').forEach(cv => { if (cv.offsetParent !== null) paintScene(cv); }); }, 250);
+  setInterval(() => { sceneFrame = (sceneFrame + 1) % 8; document.querySelectorAll('canvas.pxscene:not(.lvthumb)').forEach(cv => { if (cv.offsetParent !== null) paintScene(cv); }); }, 250);
   const sceneHTML = job => '<div class="scene"><canvas class="pxscene" width="128" height="80" data-scene="job" data-job="' + job.id + '" role="img" aria-label="' + job.title + '"></canvas></div>';
 
   // ---------- poziomy ----------
@@ -51,7 +51,7 @@
       '<div class="hint" style="text-align:center">Reklamacje: ' + ST.claims.length + ' · ' + sea.name + ' · dzień wypłaty za ' + toPay + ' zlec. · utrzymanie ' + zl(Siedziba.effects(ST.hq).upkeep + Finanse.upkeep(ST.fin)) + ' · ' + Siedziba.TIERS[ST.hq.tier].name + '</div>' +
       contractsHTML() + tendersHTML() + boardHTML() + '<h3 style="color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Zlecenia</h3>' + LEVELS.map((l, i) => {
       const job = JOBS[l.job], cl = CLIENTS[l.client], locked = i + 1 > ST.unlocked, b = ST.best[i], est = estimateFor(l), st = Czas.jobStart(ST.clock, l.time, 1);
-      return '<button class="lvl' + (l.slot === 'noc' ? ' nightlvl' : '') + '" data-i="' + i + '" ' + (locked ? 'disabled' : '') + '><span class="av">' + (locked ? '🔒' : cl.em) + '</span><span><b>' + (i + 1) + '. ' + job.title + '</b><small>' + (l.slot === 'noc' ? '🌙 ' : '☀️ ') + Czas.label(st) + '</small><small>' + (l.due ? '⏰ ' + Terminy.KINDS[l.due].name + ' · ' : '') + (Klienci.get(ST.rel, l.client).jobs ? '🤝 ' + Klienci.level(Klienci.get(ST.rel, l.client).trust) + ' · ' : '') + job.place + ' · ' + cl.name + ' · ok. ' + zl(job.base * l.mult * (l.slot === 'noc' ? Czas.NIGHT.payMult : 1)) + ' · ' + perHourTxt(est) + '</small></span><span class="res">' +
+      return '<button class="lvl' + (l.slot === 'noc' ? ' nightlvl' : '') + '" data-i="' + i + '" ' + (locked ? 'disabled' : '') + '><span class="av">' + (locked ? '🔒' : '<canvas class="pxscene lvthumb" width="128" height="80" data-scene="job" data-job="' + job.id + '" data-night="' + (l.slot === 'noc' ? 1 : 0) + '" aria-hidden="true"></canvas>') + '</span><span><b>' + (locked ? '' : cl.em + ' ') + (i + 1) + '. ' + job.title + '</b><small>' + (l.slot === 'noc' ? '🌙 ' : '☀️ ') + Czas.label(st) + '</small><small>' + (l.due ? '⏰ ' + Terminy.KINDS[l.due].name + ' · ' : '') + (Klienci.get(ST.rel, l.client).jobs ? '🤝 ' + Klienci.level(Klienci.get(ST.rel, l.client).trust) + ' · ' : '') + job.place + ' · ' + cl.name + ' · ok. ' + zl(job.base * l.mult * (l.slot === 'noc' ? Czas.NIGHT.payMult : 1)) + ' · ' + perHourTxt(est) + '</small></span><span class="res">' +
         (b ? '<span class="stars">' + stars(b.stars) + '</span><br>fuszerka ' + b.index + '%' : (locked ? '' : 'nowe')) + '</span></button>';
     }).join('');
     bindContracts(); bindBoard(); bindTenders();
@@ -735,10 +735,19 @@
 
   $('reset').onclick = () => { if ($('reset').dataset.s) { E.replace(withMeta(fresh())); save(); delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od nowa'; renderMenu(); } else { $('reset').dataset.s = 1; $('reset').textContent = 'Na pewno? Kliknij jeszcze raz'; setTimeout(() => { delete $('reset').dataset.s; $('reset').textContent = 'Zacznij od nowa'; }, 3000); } };
 
+  // krótkie opisy: długie teksty zwijają się do jednego zdania, reszta po dotknięciu
+  function firstSentence(t) { t = t.replace(/\s+/g, ' ').trim(); const m = t.match(/^.{25,}?[.!?](?=\s|$)/); let s = m ? m[0] : t; if (s.length > 64) s = s.slice(0, 62).replace(/\s+\S*$/, '') + '…'; return s; }
+  function collapse(el, min) {
+    if (!el || el.querySelector(':scope > details.more') || el.querySelector('button, .econ, canvas')) return;
+    const txt = el.textContent.replace(/\s+/g, ' ').trim(); if (txt.length <= min) return;
+    const d = document.createElement('details'); d.className = 'more'; const sm = document.createElement('summary'); sm.textContent = 'ℹ️ ' + firstSentence(txt); d.appendChild(sm);
+    const body = document.createElement('div'); body.innerHTML = el.innerHTML; d.appendChild(body); el.innerHTML = ''; el.appendChild(d);
+  }
+  function shortenAll() { document.querySelectorAll('.hint, .intro, .note').forEach(el => collapse(el, 70)); collapse($('mtext'), 110); }
   // pikselizacja: emoji i znaczniki @postać zamieniane na sprite'y, sceny SVG na obrazy w małej rozdzielczości
   (function () {
     let busy = false;
-    const run = () => { if (busy) return; busy = true; try { Pix.pixelize(document.body); document.querySelectorAll('canvas.pxscene:not([data-drawn])').forEach(cv => { cv.dataset.drawn = '1'; paintScene(cv); }); } finally { busy = false; } };
+    const run = () => { if (busy) return; busy = true; try { shortenAll(); Pix.pixelize(document.body); document.querySelectorAll('canvas.pxscene:not([data-drawn])').forEach(cv => { cv.dataset.drawn = '1'; paintScene(cv); }); } finally { busy = false; } };
     new MutationObserver(() => requestAnimationFrame(run)).observe(document.body, { childList: true, subtree: true });
     run();
   })();
