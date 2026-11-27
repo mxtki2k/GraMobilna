@@ -40,3 +40,19 @@ A (2–3 sesje) → B (2) → C (2) → D (1). Po każdej: testy, symulacja, akt
 8. **Krótkie odpowiedzi.** Podsumowania po 5–8 punktów, bez powtarzania całej historii.
 9. **Podział na zadania:** osobna sesja na UI, osobna na dane, osobna na symulacje (każda z krótkim kontekstem).
 10. **Testy jako kontrakt:** gdy testy pilnują schematu (np. `roboty.test.js`), błędy wychodzą od razu, bez długich ręcznych sprawdzeń.
+
+# Delegowanie do lokalnego agenta (Ollama)
+
+Zasada: lokalny model **pisze szkice według sztywnego formatu**, a **walidator i symulacje** (tanie, deterministyczne) odsyłają mu błędy. Chmurowy model tylko przegląda wynik i stroi balans.
+
+| Zadanie | Kto | Dlaczego |
+|---|---|---|
+| Szkic roboty `.rob` (kroki, wady, niespodzianki, poziomy) | lokalny (`tools/ollama_robota.js`) | format sztywny, walidator pilnuje 20+ reguł |
+| Teksty: intra klientów, komentarze, opisy opcji, nazwy marek narzędzi | lokalny | czysty tekst, niska stawka błędu |
+| Sprawdzenie balansu (`balans.js --style-table`, `tempo.js`) | skrypt | bez modelu |
+| Strojenie liczb po symulacji | chmurowy lub człowiek | wymaga oceny |
+| Architektura (kontrakty, ekipa równoległa), UI, sceny pixel art | chmurowy | wiele plików, wysokie ryzyko |
+| Debug testów, refaktor | chmurowy | kontekst całego repo |
+
+Przepływ nowej roboty: `node tools/ollama_robota.js --id okno2 --opis "..."` → `node tools/nowa_robota.js` → `node tests/roboty.test.js` → `node tools/balans.js --style-table` → przegląd tekstów i liczb → commit.
+Wskazówki: model 7–14B (np. `qwen2.5-coder:7b`, `qwen2.5:14b`), `num_ctx` 8192, 3–5 prób; przy słabym modelu skracać opis i prosić o 4 kroki zamiast 6. Szkice, które nie przeszły walidatora, zapisują się jako `roboty/<id>.rob.szkic`.
